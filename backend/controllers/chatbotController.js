@@ -18,13 +18,11 @@ async function safeGenerate(prompt) {
   for (let i = 0; i < apiKeys.length; i++) {
     const client = getNextGenAI();
     try {
-      console.log(`Using API key #${i + 1} for generation...`);
       const model = await client.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);
       const text = typeof result.response.text === "function"
         ? await result.response.text()
         : result.response.text;
-
       if (!text) throw new Error("Empty response from Gemini");
       return text;
     } catch (err) {
@@ -135,11 +133,10 @@ User message: "${message}"`;
       const metricsResultText = await safeGenerate(metricsPrompt);
       const parsed = JSON.parse(cleanJsonString(metricsResultText));
 
-      // Extract metrics & screening
       metricsData = parsed.metrics || {};
       screeningData = parsed.screening || {};
 
-      // Save Metrics
+      // Save Metrics separately
       await Metrics.create({
         userId: user._id,
         message,
@@ -157,7 +154,6 @@ User message: "${message}"`;
     } catch (err) {
       console.error("Metrics/Screening generation or saving error:", err);
 
-      // Fallback data
       metricsData = {
         stress_level: 0, happiness_level: 0, anxiety_level: 0,
         focus_level: 0, energy_level: 0, confidence_level: 0,
@@ -175,8 +171,11 @@ suggest 5 actionable, practical, and empathetic tasks to improve their well-bein
 Conversation history:
 ${history}
 
-Metrics + Screening:
-${JSON.stringify({ metrics: metricsData, screening: screeningData }, null, 2)}
+Metrics:
+${JSON.stringify(metricsData, null, 2)}
+
+Screening:
+${JSON.stringify(screeningData, null, 2)}
 
 Respond ONLY in strict JSON format like:
 {

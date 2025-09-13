@@ -40,7 +40,7 @@ export default function Chart() {
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Load cached chart data
+  // Load cached data
   useEffect(() => {
     const savedData = localStorage.getItem("chartData");
     const savedLabels = localStorage.getItem("chartLabels");
@@ -56,20 +56,54 @@ export default function Chart() {
     if (savedMode) setMode(savedMode);
     if (savedMetricsType) setMetricsType(savedMetricsType);
 
-    setLoading(false);
+    fetchChartData();
   }, []);
 
-  // Save chart data to localStorage
   const saveToCache = (labels, data) => {
     localStorage.setItem("chartLabels", JSON.stringify(labels));
     localStorage.setItem("chartData", JSON.stringify(data));
-    localStorage.setItem("chartType", chartType);
-    localStorage.setItem("chartMode", mode);
-    localStorage.setItem("chartMetricsType", metricsType);
   };
 
-  // Update chart after a new chat
-  // Now receives metrics and screening separately
+  // Fetch metrics & screening from API
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+
+      const metricsRes = await fetch("/api/metrics"); // GET all metrics for user
+      const screeningRes = await fetch("/api/screening"); // GET all screening for user
+
+      const metrics = await metricsRes.json();
+      const screening = await screeningRes.json();
+
+      // Merge by createdAt
+      const merged = [];
+      metrics.forEach((m) => {
+        const s = screening.find((sc) => sc.message === m.message && sc.createdAt === m.createdAt);
+        merged.push({ ...m, ...s });
+      });
+
+      // Build arrays for chart
+      const labels = merged.map((_, i) => `Chat ${i + 1}`);
+      const newChartData = {
+        stress_level: merged.map((m) => m.stress_level ?? 0),
+        happiness_level: merged.map((m) => m.happiness_level ?? 0),
+        anxiety_level: merged.map((m) => m.anxiety_level ?? 0),
+        overall_mood_level: merged.map((m) => m.overall_mood_level ?? 0),
+        phq9_score: merged.map((m) => m.phq9_score ?? 0),
+        gad7_score: merged.map((m) => m.gad7_score ?? 0),
+        ghq_score: merged.map((m) => m.ghq_score ?? 0),
+      };
+
+      setChartLabels(labels);
+      setChartData(newChartData);
+      saveToCache(labels, newChartData);
+    } catch (err) {
+      console.error("Error fetching chart data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
     setChartData((prevData) => {
       const updatedData = {
@@ -92,60 +126,37 @@ export default function Chart() {
     });
   };
 
-  // Expose update function globally
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, [chartType, mode, metricsType]);
+  }, []);
 
-  if (loading)
-    return <p className="chart-message chart-loading">Loading chart...</p>;
+  if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
 
-  // Prepare datasets dynamically
-  const metricsMapping = {
-    emotional: [
-      { label: "Stress", key: "stress_level", color: "rgba(255,99,132,0.6)" },
-      { label: "Happiness", key: "happiness_level", color: "rgba(75,192,192,0.6)" },
-      { label: "Anxiety", key: "anxiety_level", color: "rgba(255,206,86,0.6)" },
-      { label: "Overall Mood", key: "overall_mood_level", color: "rgba(54,162,235,0.6)" },
-    ],
-    screening: [
-      { label: "PHQ-9", key: "phq9_score", color: "rgba(255,99,132,0.6)" },
-      { label: "GAD-7", key: "gad7_score", color: "rgba(54,162,235,0.6)" },
-      { label: "GHQ", key: "ghq_score", color: "rgba(255,206,86,0.6)" },
-    ],
-  };
+  const datasets =
+    metricsType === "emotional"
+      ? [
+          { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+          { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
+          { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+          { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+        ]
+      : [
+          { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+          { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+          { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+        ];
 
-  const datasets = metricsMapping[metricsType].map((m) => ({
-    label: m.label,
-    data: chartData[m.key],
-    borderColor: m.color.replace("0.6", "1"),
-    backgroundColor: m.color,
-    fill: chartType === "line",
-    spanGaps: false,
-  }));
-
-  const data = { labels: chartLabels, datasets };
+  const preparedDatasets = datasets.map((ds) => ({ ...ds, fill: chartType === "line", spanGaps: false }));
+  const data = { labels: chartLabels, datasets: preparedDatasets };
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 500 },
-    plugins: {
-      legend: { position: "top" },
-      title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` },
-      tooltip: { mode: "index", intersect: false },
-    },
-    interaction: { mode: "nearest", axis: "x", intersect: false },
-    scales: {
-      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: {
-        beginAtZero: true,
-        max: metricsType === "emotional" ? 50 : 36,
-        ticks: { stepSize: 5 },
-      },
-    },
+    animation: { duration: 400 },
+    plugins: { legend: { position: "top" }, title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` } },
+    scales: { x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } }, y: { beginAtZero: true, max: metricsType === "emotional" ? 50 : 36 } },
   };
 
   return (
