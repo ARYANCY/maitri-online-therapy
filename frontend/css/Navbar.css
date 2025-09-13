@@ -46,6 +46,20 @@ html, body {
   color: #b388ff;
   -webkit-text-fill-color: #b388ff; /* Safari/WebKit */
 }
+.navbar-chat-btn {
+  background-color: #4A90E2;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin-right: 1rem;
+  transition: background 0.2s;
+}
+
+.navbar-chat-btn:hover {
+  background-color: #357ABD;
+}
 
 .navbar-bottom {
   display: flex;
