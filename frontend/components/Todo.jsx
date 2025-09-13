@@ -1,49 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { v4 as uuidv4 } from "uuid";
 import "../css/Todo.css";
 
-export default function Todo({ tasks = [], onUpdate, loading }) {
+export default function Todo({ tasks: initialTasks = [], onUpdate }) {
+  const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
+  const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  if (loading) return <p>Loading tasks...</p>;
+  // Initialize tasks
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
 
+  // Check if all tasks are completed
+  useEffect(() => {
+    setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
+  }, [tasks]);
+
+  const updateTasks = (updatedTasks) => {
+    setTasks(updatedTasks);
+    onUpdate && onUpdate(updatedTasks);
+  };
+
+  // Add task
   const handleAdd = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
-
     if (tasks.length >= 10) {
       setError("Maximum 10 tasks allowed!");
       return;
     }
-
-    const newTask = {
-      _id: crypto.randomUUID(), // unique ID
-      title: trimmed,
-      completed: false,
-    };
-
-    const updatedTasks = [...tasks, newTask];
-    onUpdate(updatedTasks); // send to parent
+    const newTask = { _id: uuidv4(), title: trimmed, completed: false };
+    updateTasks([...tasks, newTask]);
     setInput("");
     setError("");
   };
 
+  // Toggle task
   const toggleDone = (id) => {
-    const updatedTasks = tasks.map((t) =>
-      t._id === id ? { ...t, completed: !t.completed } : t
-    );
-    onUpdate(updatedTasks);
+    updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
   };
 
+  // Delete task
   const handleDelete = (id) => {
-    const updatedTasks = tasks.filter((t) => t._id !== id);
-    onUpdate(updatedTasks);
+    updateTasks(tasks.filter(t => t._id !== id));
   };
 
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
-
-  const allCompleted = tasks.length > 0 && tasks.every((t) => t.completed);
 
   return (
     <div className="todo-container">
@@ -53,15 +58,14 @@ export default function Todo({ tasks = [], onUpdate, loading }) {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Add a new task..."
           className="todo-input"
         />
-        <button onClick={handleAdd} className="todo-add-btn">
-          Add
-        </button>
+        <button onClick={handleAdd} className="todo-add-btn">Add</button>
       </div>
+
       {error && <p className="todo-error">{error}</p>}
 
       {tasks.length === 0 ? (
@@ -69,7 +73,7 @@ export default function Todo({ tasks = [], onUpdate, loading }) {
       ) : (
         <ul className="todo-list">
           <AnimatePresence>
-            {tasks.map((task) => (
+            {tasks.map(task => (
               <motion.li
                 key={task._id}
                 initial={{ opacity: 0, y: 15, scale: 0.95 }}
@@ -85,10 +89,7 @@ export default function Todo({ tasks = [], onUpdate, loading }) {
                     onChange={() => toggleDone(task._id)}
                     className="todo-checkbox"
                   />
-                  <span
-                    onClick={() => toggleDone(task._id)}
-                    className="todo-text"
-                  >
+                  <span onClick={() => toggleDone(task._id)} className="todo-text">
                     {task.title}
                   </span>
                 </div>
@@ -105,7 +106,7 @@ export default function Todo({ tasks = [], onUpdate, loading }) {
         </ul>
       )}
 
-      {allCompleted && (
+      {allCompleted && tasks.length > 0 && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1, rotate: [0, 5, -5, 0] }}

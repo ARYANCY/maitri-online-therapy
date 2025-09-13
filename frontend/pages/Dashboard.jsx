@@ -12,14 +12,13 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState(null);
   const [chartLabels, setChartLabels] = useState([]);
   const [todos, setTodos] = useState([]);
-  const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
-  const [error, setError] = useState({ user: null, dashboard: null, todos: null });
+  const [loading, setLoading] = useState({ user: true, dashboard: true });
+  const [error, setError] = useState({ user: null, dashboard: null });
 
   // Fetch user session
   const fetchUser = useCallback(async () => {
-    setLoading(prev => ({ ...prev, user: true }));
     try {
-      const res = await API.get("/api/session-check");
+      const res = await API.auth.checkSession();
       if (res.data.user) setUser(res.data.user);
     } catch (err) {
       console.error("Session check failed:", err);
@@ -31,51 +30,48 @@ export default function Dashboard() {
 
   // Fetch dashboard data (chart + todos)
   const fetchDashboardData = useCallback(async () => {
-    setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
     try {
+      setLoading(prev => ({ ...prev, dashboard: true }));
       const res = await API.dashboard.get();
       setChartData(res.data.chartData || null);
       setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
-      setError(prev => ({ ...prev, dashboard: null, todos: null }));
+      setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data.", todos: "Failed to load tasks." }));
+      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
     } finally {
-      setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
+      setLoading(prev => ({ ...prev, dashboard: false }));
     }
   }, []);
 
-  // Update todos both locally and on server
+  // Handle todo updates
   const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos); // update UI immediately
-    setLoading(prev => ({ ...prev, todos: true }));
+    setTodos(updatedTodos); // optimistic update
     try {
-      await API.dashboard.updateTasks(updatedTodos);
-      setError(prev => ({ ...prev, todos: null }));
+      const res = await API.dashboard.updateTasks(updatedTodos);
+      if (res.data.tasks) setTodos(res.data.tasks); // ensure frontend matches server
     } catch (err) {
       console.error("Failed to update tasks:", err);
-      setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
-    } finally {
-      setLoading(prev => ({ ...prev, todos: false }));
+      setError(prev => ({ ...prev, dashboard: "Failed to update tasks." }));
     }
   };
 
-  // Initialize Dashboard
+  // Initialize dashboard
   useEffect(() => {
     fetchUser();
     fetchDashboardData();
   }, [fetchUser, fetchDashboardData]);
 
-  // Allow global updates from chatbot or other components
+  // Global chart update after chatbot message
   useEffect(() => {
-    window.updateDashboardChart = async () => await fetchDashboardData();
-    return () => {
-      window.updateDashboardChart = null;
+    window.updateDashboardChart = async () => {
+      await fetchDashboardData();
     };
+    return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // Render content based on active tab and loading/error states
+  // Render tab content
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
     if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
@@ -86,7 +82,7 @@ export default function Dashboard() {
       case "chart":
         return <Chart chartData={chartData} chartLabels={chartLabels} />;
       case "todo":
-        return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
+        return <Todo tasks={todos} onUpdate={handleTodosUpdate} />;
       default:
         return null;
     }
