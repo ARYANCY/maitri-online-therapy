@@ -1,0 +1,138 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.navbar {
+  position: sticky; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(13, 13, 13, 0.7);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  flex-wrap: wrap; 
+  gap: 0.5rem;
+}
+
+.navbar-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #6c63ff, #b388ff);
+  background-clip: text;
+  -webkit-background-clip: text; /* Safari/WebKit */
+  color: transparent;
+  -webkit-text-fill-color: transparent; /* Safari/WebKit */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.navbar-title:hover {
+  transform: scale(1.05);
+  color: #b388ff;
+  -webkit-text-fill-color: #b388ff; /* Safari/WebKit */
+}
+
+.navbar-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.7rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.navbar-user {
+  font-weight: 500;
+  font-size: 1rem;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.navbar-right button {
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.navbar-right button:hover {
+  color: #b388ff;
+  transform: scale(1.05);
+}
+
+@media (max-width: 1024px) {
+  .navbar-top,
+  .navbar-bottom {
+    padding: 0.8rem 1.5rem;
+  }
+
+  .navbar-title {
+    font-size: 1.6rem;
+  }
+
+  .navbar-user {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-top,
+  .navbar-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .navbar-title {
+    font-size: 1.5rem;
+  }
+
+  .navbar-user {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-top,
+  .navbar-bottom {
+    padding: 0.6rem 1rem;
+  }
+
+  .navbar-title {
+    font-size: 1.3rem;
+  }
+
+  .navbar-user {
+    font-size: 0.85rem;
+  }
+
+  .navbar-right {
+    gap: 0.8rem;
+  }
+}
