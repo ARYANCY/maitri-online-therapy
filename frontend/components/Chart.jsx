@@ -26,45 +26,78 @@ ChartJS.register(
 );
 
 export default function Chart() {
-  const [chartData, setChartData] = useState(null);
+  const [chartData, setChartData] = useState({
+    stress_level: [],
+    happiness_level: [],
+    anxiety_level: [],
+    overall_mood_level: [],
+    screening: { phq9_score: [], gad7_score: [], ghq_score: [] },
+  });
   const [chartLabels, setChartLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState("bar");
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
-  const [todos, setTodos] = useState([]);
 
-  // Load cached chart & todos on first render
+  // Save chart state to localStorage
+  const saveToCache = (labels, data, type, mType, modeValue) => {
+    localStorage.setItem("chartLabels", JSON.stringify(labels));
+    localStorage.setItem("chartData", JSON.stringify(data));
+    localStorage.setItem("chartType", type);
+    localStorage.setItem("chartMetricsType", mType);
+    localStorage.setItem("chartMode", modeValue);
+  };
+
+  // Load cached chart on first render
   useEffect(() => {
-    const savedChartData = localStorage.getItem("chartData");
-    const savedChartLabels = localStorage.getItem("chartLabels");
-    const savedChartType = localStorage.getItem("chartType");
-    const savedMode = localStorage.getItem("chartMode");
+    const savedLabels = localStorage.getItem("chartLabels");
+    const savedData = localStorage.getItem("chartData");
+    const savedType = localStorage.getItem("chartType");
     const savedMetricsType = localStorage.getItem("chartMetricsType");
-    const savedTodos = localStorage.getItem("todos");
+    const savedMode = localStorage.getItem("chartMode");
 
-    if (savedChartData && savedChartLabels) {
-      setChartData(JSON.parse(savedChartData));
-      setChartLabels(JSON.parse(savedChartLabels));
+    if (savedLabels && savedData) {
+      setChartLabels(JSON.parse(savedLabels));
+      setChartData(JSON.parse(savedData));
     }
-
-    if (savedChartType) setChartType(savedChartType);
-    if (savedMode) setMode(savedMode);
+    if (savedType) setChartType(savedType);
     if (savedMetricsType) setMetricsType(savedMetricsType);
-    if (savedTodos) setTodos(JSON.parse(savedTodos));
+    if (savedMode) setMode(savedMode);
 
     setLoading(false);
   }, []);
 
-  // Function to save chart & todos to localStorage
-  const saveToCache = (labels, data, todos) => {
-    localStorage.setItem("chartLabels", JSON.stringify(labels));
-    localStorage.setItem("chartData", JSON.stringify(data));
-    if (todos) localStorage.setItem("todos", JSON.stringify(todos));
+  // Fetch chart data from backend
+  const fetchChartData = async () => {
+    try {
+      const res = await API.get(`/api/dashboard?type=${mode}`);
+      if (res.data) {
+        const labels = res.data.chartLabels || [];
+        const data = res.data.chartData || {};
+
+        // Ensure screening arrays exist
+        data.screening = data.screening || { phq9_score: [], gad7_score: [], ghq_score: [] };
+        data.stress_level = data.stress_level || [];
+        data.happiness_level = data.happiness_level || [];
+        data.anxiety_level = data.anxiety_level || [];
+        data.overall_mood_level = data.overall_mood_level || [];
+
+        setChartLabels(labels);
+        setChartData(data);
+        saveToCache(labels, data, chartType, metricsType, mode);
+      }
+    } catch (err) {
+      console.error("Failed to fetch chart data:", err);
+    }
   };
 
-  // Function to update chart and todos after a new chat
-  const updateAfterChat = (newMetrics, newTodos) => {
+  // Fetch data whenever mode changes
+  useEffect(() => {
+    fetchChartData();
+  }, [mode]);
+
+  // Update chart after a new chat message
+  const updateAfterChat = (newMetrics) => {
     if (!newMetrics) return;
 
     setChartData((prevData) => {
@@ -83,23 +116,18 @@ export default function Chart() {
 
       setChartLabels((prevLabels) => {
         const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
-        saveToCache(newLabels, updatedData, newTodos || todos);
+        saveToCache(newLabels, updatedData, chartType, metricsType, mode);
         return newLabels;
       });
 
       return updatedData;
     });
-
-    if (newTodos) {
-      setTodos(newTodos);
-      saveToCache(chartLabels, chartData, newTodos);
-    }
   };
 
-  // Expose globally so chatbot can call once per new message
+  // Expose globally for chatbot
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, [metricsType, mode, chartType, todos, chartData]);
+  }, [metricsType, chartType, mode]);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
@@ -109,15 +137,50 @@ export default function Chart() {
   const datasets =
     metricsType === "emotional"
       ? [
-          { label: "Stress Level", data: chartData.stress_level || [], borderColor: "rgba(255, 99, 132, 1)", backgroundColor: "rgba(255, 99, 132, 0.6)" },
-          { label: "Happiness Level", data: chartData.happiness_level || [], borderColor: "rgba(75, 192, 192, 1)", backgroundColor: "rgba(75, 192, 192, 0.6)" },
-          { label: "Anxiety Level", data: chartData.anxiety_level || [], borderColor: "rgba(255, 206, 86, 1)", backgroundColor: "rgba(255, 206, 86, 0.6)" },
-          { label: "Overall Mood", data: chartData.overall_mood_level || [], borderColor: "rgba(54, 162, 235, 1)", backgroundColor: "rgba(54, 162, 235, 0.6)" },
+          {
+            label: "Stress Level",
+            data: chartData.stress_level,
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.6)",
+          },
+          {
+            label: "Happiness Level",
+            data: chartData.happiness_level,
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+          },
+          {
+            label: "Anxiety Level",
+            data: chartData.anxiety_level,
+            borderColor: "rgba(255, 206, 86, 1)",
+            backgroundColor: "rgba(255, 206, 86, 0.6)",
+          },
+          {
+            label: "Overall Mood",
+            data: chartData.overall_mood_level,
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+          },
         ]
       : [
-          { label: "PHQ-9 Score", data: chartData.screening?.phq9_score || [], borderColor: "rgba(255, 99, 132, 1)", backgroundColor: "rgba(255, 99, 132, 0.6)" },
-          { label: "GAD-7 Score", data: chartData.screening?.gad7_score || [], borderColor: "rgba(54, 162, 235, 1)", backgroundColor: "rgba(54, 162, 235, 0.6)" },
-          { label: "GHQ Score", data: chartData.screening?.ghq_score || [], borderColor: "rgba(255, 206, 86, 1)", backgroundColor: "rgba(255, 206, 86, 0.6)" },
+          {
+            label: "PHQ-9 Score",
+            data: chartData.screening.phq9_score,
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.6)",
+          },
+          {
+            label: "GAD-7 Score",
+            data: chartData.screening.gad7_score,
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+          },
+          {
+            label: "GHQ Score",
+            data: chartData.screening.ghq_score,
+            borderColor: "rgba(255, 206, 86, 1)",
+            backgroundColor: "rgba(255, 206, 86, 0.6)",
+          },
         ];
 
   const preparedDatasets = datasets.map((ds) => ({
@@ -144,17 +207,17 @@ export default function Chart() {
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select className="chart-select" value={mode} onChange={(e) => setMode(e.target.value)}>
+        <select value={mode} onChange={(e) => setMode(e.target.value)} className="chart-select">
           <option value="entries">Latest Entries</option>
           <option value="daily">Daily Averages</option>
         </select>
 
-        <select className="chart-select" value={chartType} onChange={(e) => setChartType(e.target.value)}>
+        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
 
-        <select className="chart-select" value={metricsType} onChange={(e) => setMetricsType(e.target.value)}>
+        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
@@ -162,19 +225,6 @@ export default function Chart() {
 
       <div className="chart-wrapper">
         {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
-      </div>
-
-      <div className="todo-list">
-        <h3>Todos</h3>
-        {todos.length === 0 ? (
-          <p>No todos yet</p>
-        ) : (
-          <ul>
-            {todos.map((todo, index) => (
-              <li key={index}>{todo.title}</li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   );
