@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Metrics = require("../models/metrics");
+const Screening = require("../models/Screening");
 const Todo = require("../models/todo");
 
 const apiKeys = process.env.GEMINI_API_KEYS?.split(",").map(k => k.trim()) || [];
@@ -50,7 +51,7 @@ exports.getChatbot = (req, res) => {
     if (!userSessions[userId]) userSessions[userId] = { messages: [] };
     const session = userSessions[userId];
 
-    if (session.messages.length === 0) {
+    if (!session.messages.length) {
       session.messages.push({
         sender: "bot",
         text: "Hello! I’m your therapist chatbot. How are you feeling today?",
@@ -83,6 +84,7 @@ exports.postChatbot = async (req, res) => {
 
     let botResponse = "";
     let metricsData = {};
+    let screeningData = {};
     let todosData = [];
 
     // 1️⃣ Chatbot Response
@@ -92,11 +94,8 @@ Conversation so far:
 ${history}
 User just said: "${message}"
 Respond empathetically and naturally.`;
-      
-      console.log("Chatbot prompt:", chatbotPrompt);
-      botResponse = await safeGenerate(chatbotPrompt);
-      console.log("Bot response:", botResponse);
 
+      botResponse = await safeGenerate(chatbotPrompt);
       session.messages.push({ sender: "bot", text: botResponse, timestamp: new Date().toISOString() });
     } catch (err) {
       console.error("Chatbot generation error:", err);
@@ -133,65 +132,39 @@ Respond ONLY in strict JSON format like this:
 
 User message: "${message}"`;
 
-      console.log("Metrics + Screening prompt:", metricsPrompt);
       const metricsResultText = await safeGenerate(metricsPrompt);
-      console.log("Raw metrics + screening result:", metricsResultText);
-
       const parsed = JSON.parse(cleanJsonString(metricsResultText));
 
-      // Normalize parsed metrics & screening
-      metricsData = {
-        metrics: parsed.metrics || {
-          stress_level: 0,
-          happiness_level: 0,
-          anxiety_level: 0,
-          focus_level: 0,
-          energy_level: 0,
-          confidence_level: 0,
-          motivation_level: 0,
-          calmness_level: 0,
-          sadness_level: 0,
-          loneliness_level: 0,
-          gratitude_level: 0,
-          overall_mood_level: 0,
-        },
-        screening: parsed.screening || {
-          phq9_score: 0,
-          gad7_score: 0,
-          ghq_score: 0,
-          risk_level: "low",
-        },
-      };
+      // Extract metrics & screening
+      metricsData = parsed.metrics || {};
+      screeningData = parsed.screening || {};
 
-      // Save to DB
+      // Save Metrics
       await Metrics.create({
         userId: user._id,
         message,
-        metrics: metricsData.metrics,
-        screening: metricsData.screening,
+        ...metricsData,
         createdAt: new Date(),
       });
 
+      // Save Screening separately
+      await Screening.create({
+        userId: user._id,
+        message,
+        ...screeningData,
+        createdAt: new Date(),
+      });
     } catch (err) {
       console.error("Metrics/Screening generation or saving error:", err);
-      // Fallback metrics
+
+      // Fallback data
       metricsData = {
-        metrics: {
-          stress_level: 0,
-          happiness_level: 0,
-          anxiety_level: 0,
-          focus_level: 0,
-          energy_level: 0,
-          confidence_level: 0,
-          motivation_level: 0,
-          calmness_level: 0,
-          sadness_level: 0,
-          loneliness_level: 0,
-          gratitude_level: 0,
-          overall_mood_level: 0,
-        },
-        screening: { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" },
+        stress_level: 0, happiness_level: 0, anxiety_level: 0,
+        focus_level: 0, energy_level: 0, confidence_level: 0,
+        motivation_level: 0, calmness_level: 0, sadness_level: 0,
+        loneliness_level: 0, gratitude_level: 0, overall_mood_level: 0,
       };
+      screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
     }
 
     // 3️⃣ Todo Suggestions
@@ -203,7 +176,7 @@ Conversation history:
 ${history}
 
 Metrics + Screening:
-${JSON.stringify(metricsData, null, 2)}
+${JSON.stringify({ metrics: metricsData, screening: screeningData }, null, 2)}
 
 Respond ONLY in strict JSON format like:
 {
@@ -213,10 +186,7 @@ Respond ONLY in strict JSON format like:
   ]
 }`;
 
-      console.log("Todo prompt:", todoPrompt);
       const todoResultText = await safeGenerate(todoPrompt);
-      console.log("Raw todos result:", todoResultText);
-
       todosData = JSON.parse(cleanJsonString(todoResultText)).todos || [];
 
       await Todo.findOneAndUpdate(
@@ -230,12 +200,13 @@ Respond ONLY in strict JSON format like:
     }
 
     // ✅ Final Response
-    res.json({ 
-      messages: session.messages, 
-      botResponse, 
-      metrics: metricsData, 
-      todos: todosData, 
-      sessionID: userId 
+    res.json({
+      messages: session.messages,
+      botResponse,
+      metrics: metricsData,
+      screening: screeningData,
+      todos: todosData,
+      sessionID: userId,
     });
 
   } catch (err) {

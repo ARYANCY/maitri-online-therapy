@@ -30,19 +30,17 @@ export default function Chart() {
     happiness_level: [],
     anxiety_level: [],
     overall_mood_level: [],
-    // Flattened screening metrics
     phq9_score: [],
     gad7_score: [],
     ghq_score: [],
   });
-
   const [chartLabels, setChartLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState("bar");
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Load cached chart data on first render
+  // Load cached chart data
   useEffect(() => {
     const savedData = localStorage.getItem("chartData");
     const savedLabels = localStorage.getItem("chartLabels");
@@ -54,7 +52,6 @@ export default function Chart() {
       setChartData(JSON.parse(savedData));
       setChartLabels(JSON.parse(savedLabels));
     }
-
     if (savedType) setChartType(savedType);
     if (savedMode) setMode(savedMode);
     if (savedMetricsType) setMetricsType(savedMetricsType);
@@ -66,9 +63,13 @@ export default function Chart() {
   const saveToCache = (labels, data) => {
     localStorage.setItem("chartLabels", JSON.stringify(labels));
     localStorage.setItem("chartData", JSON.stringify(data));
+    localStorage.setItem("chartType", chartType);
+    localStorage.setItem("chartMode", mode);
+    localStorage.setItem("chartMetricsType", metricsType);
   };
 
   // Update chart after a new chat
+  // Now receives metrics and screening separately
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
     setChartData((prevData) => {
       const updatedData = {
@@ -91,113 +92,76 @@ export default function Chart() {
     });
   };
 
-  // Expose update function globally for chatbot integration
+  // Expose update function globally
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, []);
+  }, [chartType, mode, metricsType]);
 
-  if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
+  if (loading)
+    return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
 
-  // Build datasets
-  const datasets =
-    metricsType === "emotional"
-      ? [
-          {
-            label: "Stress",
-            data: chartData.stress_level,
-            borderColor: "rgba(255,99,132,1)",
-            backgroundColor: "rgba(255,99,132,0.6)",
-          },
-          {
-            label: "Happiness",
-            data: chartData.happiness_level,
-            borderColor: "rgba(75,192,192,1)",
-            backgroundColor: "rgba(75,192,192,0.6)",
-          },
-          {
-            label: "Anxiety",
-            data: chartData.anxiety_level,
-            borderColor: "rgba(255,206,86,1)",
-            backgroundColor: "rgba(255,206,86,0.6)",
-          },
-          {
-            label: "Overall Mood",
-            data: chartData.overall_mood_level,
-            borderColor: "rgba(54,162,235,1)",
-            backgroundColor: "rgba(54,162,235,0.6)",
-          },
-        ]
-      : [
-          {
-            label: "PHQ-9",
-            data: chartData.phq9_score,
-            borderColor: "rgba(255,99,132,1)",
-            backgroundColor: "rgba(255,99,132,0.6)",
-          },
-          {
-            label: "GAD-7",
-            data: chartData.gad7_score,
-            borderColor: "rgba(54,162,235,1)",
-            backgroundColor: "rgba(54,162,235,0.6)",
-          },
-          {
-            label: "GHQ",
-            data: chartData.ghq_score,
-            borderColor: "rgba(255,206,86,1)",
-            backgroundColor: "rgba(255,206,86,0.6)",
-          },
-        ];
+  // Prepare datasets dynamically
+  const metricsMapping = {
+    emotional: [
+      { label: "Stress", key: "stress_level", color: "rgba(255,99,132,0.6)" },
+      { label: "Happiness", key: "happiness_level", color: "rgba(75,192,192,0.6)" },
+      { label: "Anxiety", key: "anxiety_level", color: "rgba(255,206,86,0.6)" },
+      { label: "Overall Mood", key: "overall_mood_level", color: "rgba(54,162,235,0.6)" },
+    ],
+    screening: [
+      { label: "PHQ-9", key: "phq9_score", color: "rgba(255,99,132,0.6)" },
+      { label: "GAD-7", key: "gad7_score", color: "rgba(54,162,235,0.6)" },
+      { label: "GHQ", key: "ghq_score", color: "rgba(255,206,86,0.6)" },
+    ],
+  };
 
-  const preparedDatasets = datasets.map((ds) => ({
-    ...ds,
+  const datasets = metricsMapping[metricsType].map((m) => ({
+    label: m.label,
+    data: chartData[m.key],
+    borderColor: m.color.replace("0.6", "1"),
+    backgroundColor: m.color,
     fill: chartType === "line",
     spanGaps: false,
   }));
 
-  const data = { labels: chartLabels, datasets: preparedDatasets };
+  const data = { labels: chartLabels, datasets };
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 400 },
+    animation: { duration: 500 },
     plugins: {
       legend: { position: "top" },
       title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` },
+      tooltip: { mode: "index", intersect: false },
     },
+    interaction: { mode: "nearest", axis: "x", intersect: false },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: { beginAtZero: true, max: metricsType === "emotional" ? 50 : 36 },
+      y: {
+        beginAtZero: true,
+        max: metricsType === "emotional" ? 50 : 36,
+        ticks: { stepSize: 5 },
+      },
     },
   };
 
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          className="chart-select"
-        >
+        <select value={mode} onChange={(e) => setMode(e.target.value)} className="chart-select">
           <option value="entries">Latest Entries</option>
           <option value="daily">Daily Averages</option>
         </select>
 
-        <select
-          value={chartType}
-          onChange={(e) => setChartType(e.target.value)}
-          className="chart-select"
-        >
+        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
 
-        <select
-          value={metricsType}
-          onChange={(e) => setMetricsType(e.target.value)}
-          className="chart-select"
-        >
+        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
