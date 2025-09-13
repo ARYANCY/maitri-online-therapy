@@ -36,3 +36,24 @@ exports.requireLogin = (req, res, next) => {
   req.user = { _id: req.session.userId };
   next();
 };
+// controllers/authController.js
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+
+    const isMatch = await user.comparePassword(password); // your method
+    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+
+    // ✅ Save user ID in session
+    req.session.userId = user._id;
+    req.session.save(err => {
+      if (err) return res.status(500).json({ error: "Session save failed" });
+      res.json({ success: true, user });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Login failed" });
+  }
+};
