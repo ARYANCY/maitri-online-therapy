@@ -25,14 +25,24 @@ ChartJS.register(
 );
 
 export default function Chart() {
-  const [chartData, setChartData] = useState(null);
+  const [chartData, setChartData] = useState({
+    stress_level: [],
+    happiness_level: [],
+    anxiety_level: [],
+    overall_mood_level: [],
+    // Flattened screening metrics
+    phq9_score: [],
+    gad7_score: [],
+    ghq_score: [],
+  });
+
   const [chartLabels, setChartLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState("bar");
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Load cached chart on first render
+  // Load cached chart data on first render
   useEffect(() => {
     const savedData = localStorage.getItem("chartData");
     const savedLabels = localStorage.getItem("chartLabels");
@@ -52,7 +62,7 @@ export default function Chart() {
     setLoading(false);
   }, []);
 
-  // Save to localStorage
+  // Save chart data to localStorage
   const saveToCache = (labels, data) => {
     localStorage.setItem("chartLabels", JSON.stringify(labels));
     localStorage.setItem("chartData", JSON.stringify(data));
@@ -62,15 +72,13 @@ export default function Chart() {
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
     setChartData((prevData) => {
       const updatedData = {
-        // Emotional metrics
-        stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
-        happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
-        anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
-        overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
-        // Screening metrics (flattened)
-        phq9_score: [...(prevData?.phq9_score || []), screening.phq9_score ?? 0],
-        gad7_score: [...(prevData?.gad7_score || []), screening.gad7_score ?? 0],
-        ghq_score: [...(prevData?.ghq_score || []), screening.ghq_score ?? 0],
+        stress_level: [...prevData.stress_level, metrics.stress_level ?? 0],
+        happiness_level: [...prevData.happiness_level, metrics.happiness_level ?? 0],
+        anxiety_level: [...prevData.anxiety_level, metrics.anxiety_level ?? 0],
+        overall_mood_level: [...prevData.overall_mood_level, metrics.overall_mood_level ?? 0],
+        phq9_score: [...prevData.phq9_score, screening.phq9_score ?? 0],
+        gad7_score: [...prevData.gad7_score, screening.gad7_score ?? 0],
+        ghq_score: [...prevData.ghq_score, screening.ghq_score ?? 0],
       };
 
       setChartLabels((prevLabels) => {
@@ -83,10 +91,10 @@ export default function Chart() {
     });
   };
 
-  // Expose globally for chatbot
+  // Expose update function globally for chatbot integration
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, [chartType, mode, metricsType]);
+  }, []);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
@@ -96,15 +104,50 @@ export default function Chart() {
   const datasets =
     metricsType === "emotional"
       ? [
-          { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-          { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-          { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+          {
+            label: "Stress",
+            data: chartData.stress_level,
+            borderColor: "rgba(255,99,132,1)",
+            backgroundColor: "rgba(255,99,132,0.6)",
+          },
+          {
+            label: "Happiness",
+            data: chartData.happiness_level,
+            borderColor: "rgba(75,192,192,1)",
+            backgroundColor: "rgba(75,192,192,0.6)",
+          },
+          {
+            label: "Anxiety",
+            data: chartData.anxiety_level,
+            borderColor: "rgba(255,206,86,1)",
+            backgroundColor: "rgba(255,206,86,0.6)",
+          },
+          {
+            label: "Overall Mood",
+            data: chartData.overall_mood_level,
+            borderColor: "rgba(54,162,235,1)",
+            backgroundColor: "rgba(54,162,235,0.6)",
+          },
         ]
       : [
-          { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-          { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+          {
+            label: "PHQ-9",
+            data: chartData.phq9_score,
+            borderColor: "rgba(255,99,132,1)",
+            backgroundColor: "rgba(255,99,132,0.6)",
+          },
+          {
+            label: "GAD-7",
+            data: chartData.gad7_score,
+            borderColor: "rgba(54,162,235,1)",
+            backgroundColor: "rgba(54,162,235,0.6)",
+          },
+          {
+            label: "GHQ",
+            data: chartData.ghq_score,
+            borderColor: "rgba(255,206,86,1)",
+            backgroundColor: "rgba(255,206,86,0.6)",
+          },
         ];
 
   const preparedDatasets = datasets.map((ds) => ({
@@ -132,17 +175,29 @@ export default function Chart() {
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select value={mode} onChange={(e) => setMode(e.target.value)} className="chart-select">
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+          className="chart-select"
+        >
           <option value="entries">Latest Entries</option>
           <option value="daily">Daily Averages</option>
         </select>
 
-        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
+        <select
+          value={chartType}
+          onChange={(e) => setChartType(e.target.value)}
+          className="chart-select"
+        >
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
 
-        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
+        <select
+          value={metricsType}
+          onChange={(e) => setMetricsType(e.target.value)}
+          className="chart-select"
+        >
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
