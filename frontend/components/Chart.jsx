@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
-import API from "../utils/axiosClient"; // to fetch backend data
+import API from "../utils/axiosClient";
 import "../css/Chart.css";
 import {
   Chart as ChartJS,
@@ -41,17 +41,19 @@ export default function Chart() {
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // 1️⃣ Load cached chart data
+  // Load cached chart data
   useEffect(() => {
     try {
-      const savedData = localStorage.getItem("chartData");
-      const savedLabels = localStorage.getItem("chartLabels");
+      const savedData = JSON.parse(localStorage.getItem("chartData") || "{}");
+      const savedLabels = JSON.parse(localStorage.getItem("chartLabels") || "[]");
+      if (savedLabels.length) {
+        setChartData(savedData);
+        setChartLabels(savedLabels);
+      }
+
       const savedType = localStorage.getItem("chartType");
       const savedMode = localStorage.getItem("chartMode");
       const savedMetricsType = localStorage.getItem("chartMetricsType");
-
-      if (savedData && savedLabels) setChartData(JSON.parse(savedData));
-      if (savedData && savedLabels) setChartLabels(JSON.parse(savedLabels));
       if (savedType) setChartType(savedType);
       if (savedMode) setMode(savedMode);
       if (savedMetricsType) setMetricsType(savedMetricsType);
@@ -60,7 +62,13 @@ export default function Chart() {
     }
   }, []);
 
-  // 2️⃣ Fetch fresh data from backend and merge
+  // Save data to cache
+  const saveToCache = (labels, data) => {
+    localStorage.setItem("chartLabels", JSON.stringify(labels));
+    localStorage.setItem("chartData", JSON.stringify(data));
+  };
+
+  // Fetch backend chart data and merge without duplicates
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -72,19 +80,22 @@ export default function Chart() {
         setChartData(prevData => {
           const merged = { ...prevData };
           Object.keys(backendData).forEach(key => {
-            merged[key] = [...prevData[key], ...backendData[key].slice(prevData[key].length)];
+            merged[key] = [...prevData[key]];
+            backendData[key].forEach((value, i) => {
+              if (prevData[key][i] === undefined) merged[key].push(value);
+            });
           });
           return merged;
         });
 
         setChartLabels(prevLabels => {
-          const mergedLabels = [...prevLabels, ...backendLabels.slice(prevLabels.length)];
+          const mergedLabels = [...prevLabels];
+          backendLabels.forEach((label, i) => {
+            if (!prevLabels[i]) mergedLabels.push(label);
+          });
+          saveToCache(mergedLabels, chartData);
           return mergedLabels;
         });
-
-        // Save merged data back to localStorage
-        localStorage.setItem("chartData", JSON.stringify(chartData));
-        localStorage.setItem("chartLabels", JSON.stringify(chartLabels));
       } catch (err) {
         console.error("Failed to fetch backend chart data:", err);
       } finally {
@@ -94,12 +105,7 @@ export default function Chart() {
     fetchDashboardData();
   }, []);
 
-  const saveToCache = (labels, data) => {
-    localStorage.setItem("chartLabels", JSON.stringify(labels));
-    localStorage.setItem("chartData", JSON.stringify(data));
-  };
-
-  // 3️⃣ Update after chatbot message
+  // Update chart after chatbot message
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
     setChartData(prevData => {
       const updatedData = {
@@ -146,7 +152,6 @@ export default function Chart() {
         ];
 
   const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
-
   const data = { labels: chartLabels, datasets: preparedDatasets };
 
   const options = {
