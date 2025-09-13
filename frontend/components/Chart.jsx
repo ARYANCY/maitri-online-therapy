@@ -41,11 +41,10 @@ export default function Chart() {
     const savedMetricsType = localStorage.getItem("chartMetricsType");
 
     if (savedData && savedLabels) setChartData(JSON.parse(savedData));
-    if (savedData && savedLabels) setChartLabels(JSON.parse(savedLabels));
+    if (savedLabels) setChartLabels(JSON.parse(savedLabels));
     if (savedType) setChartType(savedType);
     if (savedMode) setMode(savedMode);
     if (savedMetricsType) setMetricsType(savedMetricsType);
-
     setLoading(false);
   }, []);
 
@@ -54,26 +53,27 @@ export default function Chart() {
     localStorage.setItem("chartData", JSON.stringify(data));
   };
 
-  const updateAfterChat = ({ metrics = {}, screening = {} }) => {
-    setChartData((prevData) => {
-      const prevScreening = prevData?.screening || {
-        phq9_score: [],
-        gad7_score: [],
-        ghq_score: [],
-      };
+  // Robust chart update function
+  const updateAfterChat = (data) => {
+    if (!data) return;
 
+    // Handle different nesting
+    const metrics = data.metrics || data || {};
+    const screening =
+      data.screening ||
+      (data.metrics && data.metrics.screening) ||
+      {};
+
+    setChartData((prevData) => {
       const updatedData = {
-        // Emotional metrics
         stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
         happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
         anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
         overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
-
-        // Screening metrics
         screening: {
-          phq9_score: [...(prevScreening.phq9_score || []), screening.phq9_score ?? 0],
-          gad7_score: [...(prevScreening.gad7_score || []), screening.gad7_score ?? 0],
-          ghq_score: [...(prevScreening.ghq_score || []), screening.ghq_score ?? 0],
+          phq9_score: [...(prevData?.screening?.phq9_score || []), screening.phq9_score ?? 0],
+          gad7_score: [...(prevData?.screening?.gad7_score || []), screening.gad7_score ?? 0],
+          ghq_score: [...(prevData?.screening?.ghq_score || []), screening.ghq_score ?? 0],
         },
       };
 
@@ -87,15 +87,15 @@ export default function Chart() {
     });
   };
 
+  // Expose globally for chatbot
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, []);
+  }, [chartType, mode, metricsType]);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
 
-  // Build datasets
   const datasets =
     metricsType === "emotional"
       ? [
