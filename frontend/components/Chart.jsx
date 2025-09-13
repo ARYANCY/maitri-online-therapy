@@ -24,56 +24,96 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart({ chartData }) {
+export default function Chart() {
+  const [chartData, setChartData] = useState({
+    stress_level: [],
+    happiness_level: [],
+    anxiety_level: [],
+    overall_mood_level: [],
+    phq9_score: [],
+    gad7_score: [],
+    ghq_score: [],
+  });
+  const [chartLabels, setChartLabels] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState("bar");
-  const [metricsType, setMetricsType] = useState("emotional"); // emotional or screening
-  const [mode, setMode] = useState("entries"); // entries or daily
-  const [preparedData, setPreparedData] = useState({ labels: [], datasets: [] });
+  const [mode, setMode] = useState("entries");
+  const [metricsType, setMetricsType] = useState("emotional");
 
-  // Prepare datasets for ChartJS
+  // Load cached chart data
   useEffect(() => {
-    if (!chartData) return;
+    try {
+      const savedData = localStorage.getItem("chartData");
+      const savedLabels = localStorage.getItem("chartLabels");
+      const savedType = localStorage.getItem("chartType");
+      const savedMode = localStorage.getItem("chartMode");
+      const savedMetricsType = localStorage.getItem("chartMetricsType");
 
-    const { chartLabels, chartData: data } = chartData;
-
-    let datasets = [];
-    if (metricsType === "emotional") {
-      datasets = [
-        { label: "Stress", data: data.stress_level, borderColor: "#FF6384", backgroundColor: "rgba(255,99,132,0.6)" },
-        { label: "Happiness", data: data.happiness_level, borderColor: "#4BC0C0", backgroundColor: "rgba(75,192,192,0.6)" },
-        { label: "Anxiety", data: data.anxiety_level, borderColor: "#FFCE56", backgroundColor: "rgba(255,206,86,0.6)" },
-        { label: "Overall Mood", data: data.overall_mood_level, borderColor: "#36A2EB", backgroundColor: "rgba(54,162,235,0.6)" },
-      ];
-    } else {
-      // Screening metrics
-      datasets = [
-        { label: "PHQ-9", data: data.phq9_score, borderColor: "#FF6384", backgroundColor: "rgba(255,99,132,0.6)" },
-        { label: "GAD-7", data: data.gad7_score, borderColor: "#36A2EB", backgroundColor: "rgba(54,162,235,0.6)" },
-        { label: "GHQ", data: data.ghq_score, borderColor: "#FFCE56", backgroundColor: "rgba(255,206,86,0.6)" },
-      ];
+      if (savedData && savedLabels) setChartData(JSON.parse(savedData));
+      if (savedData && savedLabels) setChartLabels(JSON.parse(savedLabels));
+      if (savedType) setChartType(savedType);
+      if (savedMode) setMode(savedMode);
+      if (savedMetricsType) setMetricsType(savedMetricsType);
+    } catch (err) {
+      console.error("Error loading cached chart data:", err);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    // Set fill for line chart
-    const updatedDatasets = datasets.map(ds => ({
-      ...ds,
-      fill: chartType === "line",
-      spanGaps: true,
-    }));
+  const saveToCache = (labels, data) => {
+    localStorage.setItem("chartLabels", JSON.stringify(labels));
+    localStorage.setItem("chartData", JSON.stringify(data));
+  };
 
-    setPreparedData({
-      labels: chartLabels,
-      datasets: updatedDatasets,
+  const updateAfterChat = ({ metrics = {}, screening = {} }) => {
+    setChartData((prevData) => {
+      const updatedData = {
+        stress_level: [...prevData.stress_level, metrics.stress_level ?? 0],
+        happiness_level: [...prevData.happiness_level, metrics.happiness_level ?? 0],
+        anxiety_level: [...prevData.anxiety_level, metrics.anxiety_level ?? 0],
+        overall_mood_level: [...prevData.overall_mood_level, metrics.overall_mood_level ?? 0],
+        phq9_score: [...prevData.phq9_score, screening.phq9_score ?? 0],
+        gad7_score: [...prevData.gad7_score, screening.gad7_score ?? 0],
+        ghq_score: [...prevData.ghq_score, screening.ghq_score ?? 0],
+      };
+
+      setChartLabels((prevLabels) => {
+        const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
+        saveToCache(newLabels, updatedData);
+        return newLabels;
+      });
+
+      return updatedData;
     });
+  };
 
-    // Save preferences to localStorage
-    localStorage.setItem("chartType", chartType);
-    localStorage.setItem("chartMetricsType", metricsType);
-    localStorage.setItem("chartMode", mode);
-  }, [chartData, chartType, metricsType, mode]);
+  // Make updateAfterChat available globally
+  useEffect(() => {
+    window.updateAfterChat = updateAfterChat;
+  }, []);
 
-  if (!chartData || !chartData.chartLabels || chartData.chartLabels.length === 0) {
+  if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
+  if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
-  }
+
+  const datasets =
+    metricsType === "emotional"
+      ? [
+          { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+          { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
+          { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+          { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+        ]
+      : [
+          { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+          { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+          { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+        ];
+
+  const preparedDatasets = datasets.map((ds) => ({ ...ds, fill: chartType === "line", spanGaps: true }));
+
+  const data = { labels: chartLabels, datasets: preparedDatasets };
 
   const options = {
     responsive: true,
@@ -109,7 +149,7 @@ export default function Chart({ chartData }) {
       </div>
 
       <div className="chart-wrapper" style={{ height: "400px" }}>
-        {chartType === "bar" ? <Bar data={preparedData} options={options} /> : <Line data={preparedData} options={options} />}
+        {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
       </div>
     </div>
   );
