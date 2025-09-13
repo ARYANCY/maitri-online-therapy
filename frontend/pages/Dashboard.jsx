@@ -17,6 +17,7 @@ export default function Dashboard() {
 
   // Fetch user session
   const fetchUser = useCallback(async () => {
+    setLoading(prev => ({ ...prev, user: true }));
     try {
       const res = await API.get("/api/session-check");
       if (res.data.user) setUser(res.data.user);
@@ -30,16 +31,16 @@ export default function Dashboard() {
 
   // Fetch dashboard data (chart + todos)
   const fetchDashboardData = useCallback(async () => {
+    setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
     try {
-      setLoading(prev => ({ ...prev, dashboard: true }));
       const res = await API.dashboard.get();
       setChartData(res.data.chartData || null);
       setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
-      setError(prev => ({ ...prev, dashboard: null }));
+      setError(prev => ({ ...prev, dashboard: null, todos: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
+      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data.", todos: "Failed to load tasks." }));
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
     }
@@ -66,12 +67,12 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [fetchUser, fetchDashboardData]);
 
-  // Make chart update available globally (e.g., after chatbot updates)
+  // Allow global updates from chatbot or other components
   useEffect(() => {
-    window.updateDashboardChart = async () => {
-      await fetchDashboardData();
+    window.updateDashboardChart = async () => await fetchDashboardData();
+    return () => {
+      window.updateDashboardChart = null;
     };
-    return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
   // Render content based on active tab and loading/error states
@@ -85,13 +86,7 @@ export default function Dashboard() {
       case "chart":
         return <Chart chartData={chartData} chartLabels={chartLabels} />;
       case "todo":
-        return (
-          <Todo
-            tasks={todos}
-            onUpdate={handleTodosUpdate}
-            loading={loading.todos}
-          />
-        );
+        return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
       default:
         return null;
     }

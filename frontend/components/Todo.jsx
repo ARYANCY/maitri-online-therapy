@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { v4 as uuidv4 } from "uuid";
 import "../css/Todo.css";
 
-export default function Todo({ tasks = [], onUpdate, loading = false }) {
+export default function Todo({ tasks = [], onUpdate, loading }) {
   const [input, setInput] = useState("");
-  const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Track if all tasks are completed
-  useEffect(() => {
-    setAllCompleted(tasks.length > 0 && tasks.every((t) => t.completed));
-  }, [tasks]);
+  if (loading) return <p>Loading tasks...</p>;
 
-  // Add a new task
   const handleAdd = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
@@ -23,32 +17,33 @@ export default function Todo({ tasks = [], onUpdate, loading = false }) {
       return;
     }
 
-    const newTask = { _id: uuidv4(), title: trimmed, completed: false };
-    const updatedTasks = [...tasks, newTask];
+    const newTask = {
+      _id: crypto.randomUUID(), // unique ID
+      title: trimmed,
+      completed: false,
+    };
 
+    const updatedTasks = [...tasks, newTask];
+    onUpdate(updatedTasks); // send to parent
     setInput("");
     setError("");
-    onUpdate(updatedTasks); // Update parent and server
   };
 
-  // Toggle task completion
   const toggleDone = (id) => {
-    const updatedTasks = tasks.map((task) =>
-      task._id === id ? { ...task, completed: !task.completed } : task
+    const updatedTasks = tasks.map((t) =>
+      t._id === id ? { ...t, completed: !t.completed } : t
     );
     onUpdate(updatedTasks);
   };
 
-  // Delete task
   const handleDelete = (id) => {
-    const updatedTasks = tasks.filter((task) => task._id !== id);
+    const updatedTasks = tasks.filter((t) => t._id !== id);
     onUpdate(updatedTasks);
   };
 
-  // Add task on Enter key
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
-  if (loading) return <p>Loading tasks...</p>;
+  const allCompleted = tasks.length > 0 && tasks.every((t) => t.completed);
 
   return (
     <div className="todo-container">
@@ -63,7 +58,9 @@ export default function Todo({ tasks = [], onUpdate, loading = false }) {
           placeholder="Add a new task..."
           className="todo-input"
         />
-        <button onClick={handleAdd} className="todo-add-btn">Add</button>
+        <button onClick={handleAdd} className="todo-add-btn">
+          Add
+        </button>
       </div>
       {error && <p className="todo-error">{error}</p>}
 
@@ -88,7 +85,10 @@ export default function Todo({ tasks = [], onUpdate, loading = false }) {
                     onChange={() => toggleDone(task._id)}
                     className="todo-checkbox"
                   />
-                  <span onClick={() => toggleDone(task._id)} className="todo-text">
+                  <span
+                    onClick={() => toggleDone(task._id)}
+                    className="todo-text"
+                  >
                     {task.title}
                   </span>
                 </div>
@@ -105,7 +105,7 @@ export default function Todo({ tasks = [], onUpdate, loading = false }) {
         </ul>
       )}
 
-      {allCompleted && tasks.length > 0 && (
+      {allCompleted && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1, rotate: [0, 5, -5, 0] }}
