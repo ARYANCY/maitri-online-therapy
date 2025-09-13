@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
-import API from "../utils/axiosClient";
 import "../css/Chart.css";
 import {
   Chart as ChartJS,
@@ -25,134 +24,38 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart() {
-  const [chartData, setChartData] = useState({
-    stress_level: [],
-    happiness_level: [],
-    anxiety_level: [],
-    overall_mood_level: [],
-    phq9_score: [],
-    gad7_score: [],
-    ghq_score: [],
-  });
-  const [chartLabels, setChartLabels] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Chart({ chartData: propsData = null, chartLabels: propsLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
-  const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
+  const [data, setData] = useState({ datasets: [], labels: [] });
 
-  // Load cached chart data
+  // Prepare chart data whenever props or type change
   useEffect(() => {
-    try {
-      const savedData = JSON.parse(localStorage.getItem("chartData") || "{}");
-      const savedLabels = JSON.parse(localStorage.getItem("chartLabels") || "[]");
-      if (savedLabels.length) {
-        setChartData(savedData);
-        setChartLabels(savedLabels);
-      }
+    if (!propsData || !propsLabels.length) return;
 
-      const savedType = localStorage.getItem("chartType");
-      const savedMode = localStorage.getItem("chartMode");
-      const savedMetricsType = localStorage.getItem("chartMetricsType");
-      if (savedType) setChartType(savedType);
-      if (savedMode) setMode(savedMode);
-      if (savedMetricsType) setMetricsType(savedMetricsType);
-    } catch (err) {
-      console.error("Error loading cached chart data:", err);
-    }
-  }, []);
+    const datasets =
+      metricsType === "emotional"
+        ? [
+            { label: "Stress", data: propsData.stress_level || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+            { label: "Happiness", data: propsData.happiness_level || [], borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
+            { label: "Anxiety", data: propsData.anxiety_level || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+            { label: "Overall Mood", data: propsData.overall_mood_level || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+          ]
+        : [
+            { label: "PHQ-9", data: propsData.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+            { label: "GAD-7", data: propsData.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+            { label: "GHQ", data: propsData.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+          ];
 
-  // Save data to cache
-  const saveToCache = (labels, data) => {
-    localStorage.setItem("chartLabels", JSON.stringify(labels));
-    localStorage.setItem("chartData", JSON.stringify(data));
-  };
+    const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
 
-  // Fetch backend chart data and merge without duplicates
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const res = await API.dashboard.get();
-        const backendData = res.data.chartData || {};
-        const backendLabels = res.data.chartLabels || [];
+    setData({ labels: propsLabels, datasets: preparedDatasets });
+  }, [propsData, propsLabels, chartType, metricsType]);
 
-        setChartData(prevData => {
-          const merged = { ...prevData };
-          Object.keys(backendData).forEach(key => {
-            merged[key] = [...prevData[key]];
-            backendData[key].forEach((value, i) => {
-              if (prevData[key][i] === undefined) merged[key].push(value);
-            });
-          });
-          return merged;
-        });
-
-        setChartLabels(prevLabels => {
-          const mergedLabels = [...prevLabels];
-          backendLabels.forEach((label, i) => {
-            if (!prevLabels[i]) mergedLabels.push(label);
-          });
-          saveToCache(mergedLabels, chartData);
-          return mergedLabels;
-        });
-      } catch (err) {
-        console.error("Failed to fetch backend chart data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, []);
-
-  // Update chart after chatbot message
-  const updateAfterChat = ({ metrics = {}, screening = {} }) => {
-    setChartData(prevData => {
-      const updatedData = {
-        stress_level: [...prevData.stress_level, metrics.stress_level ?? 0],
-        happiness_level: [...prevData.happiness_level, metrics.happiness_level ?? 0],
-        anxiety_level: [...prevData.anxiety_level, metrics.anxiety_level ?? 0],
-        overall_mood_level: [...prevData.overall_mood_level, metrics.overall_mood_level ?? 0],
-        phq9_score: [...prevData.phq9_score, screening.phq9_score ?? 0],
-        gad7_score: [...prevData.gad7_score, screening.gad7_score ?? 0],
-        ghq_score: [...prevData.ghq_score, screening.ghq_score ?? 0],
-      };
-
-      setChartLabels(prevLabels => {
-        const newLabel = metrics.createdAt ? new Date(metrics.createdAt).toLocaleDateString() : `Chat ${prevLabels.length + 1}`;
-        const newLabels = [...prevLabels, newLabel];
-        saveToCache(newLabels, updatedData);
-        return newLabels;
-      });
-
-      return updatedData;
-    });
-  };
-
-  useEffect(() => {
-    window.updateAfterChat = updateAfterChat;
-  }, []);
-
-  if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
-  if (!chartData || chartLabels.length === 0)
-    return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
-
-  const datasets =
-    metricsType === "emotional"
-      ? [
-          { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-          { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-          { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-        ]
-      : [
-          { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-          { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-        ];
-
-  const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
-  const data = { labels: chartLabels, datasets: preparedDatasets };
+  // Handle empty state
+  if (!propsData || propsLabels.length === 0) {
+    return <p className="chart-message chart-no-data">📉 No metrics available yet.</p>;
+  }
 
   const options = {
     responsive: true,
@@ -160,7 +63,7 @@ export default function Chart() {
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` },
+      title: { display: true, text: `User Metrics Chart (${metricsType})` },
     },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
@@ -171,17 +74,11 @@ export default function Chart() {
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select value={mode} onChange={e => setMode(e.target.value)} className="chart-select">
-          <option value="entries">Latest Entries</option>
-          <option value="daily">Daily Averages</option>
-        </select>
-
-        <select value={chartType} onChange={e => setChartType(e.target.value)} className="chart-select">
+        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
-
-        <select value={metricsType} onChange={e => setMetricsType(e.target.value)} className="chart-select">
+        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>

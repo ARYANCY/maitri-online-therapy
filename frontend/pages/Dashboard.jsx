@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Chatbot from "../components/Chatbot";
 import Chart from "../components/Chart";
 import Todo from "../components/Todo";
-import API from "../utils/axiosClient";
 import Navbar from "../components/Navbar";
+import API from "../utils/axiosClient";
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
@@ -12,33 +12,31 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState(null);
   const [chartLabels, setChartLabels] = useState([]);
   const [todos, setTodos] = useState([]);
-  const [loading, setLoading] = useState({ dashboard: true, todos: true, user: true });
-  const [error, setError] = useState({ dashboard: null, todos: null, user: null });
+  const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
+  const [error, setError] = useState({ user: null, dashboard: null, todos: null });
 
   // Fetch user session
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await API.get("/api/session-check");
-        if (res.data.user) setUser(res.data.user);
-      } catch (err) {
-        console.error("Session check failed:", err);
-        setError(prev => ({ ...prev, user: "Failed to fetch user." }));
-      } finally {
-        setLoading(prev => ({ ...prev, user: false }));
-      }
-    };
-    fetchUser();
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await API.get("/api/session-check");
+      if (res.data.user) setUser(res.data.user);
+    } catch (err) {
+      console.error("Session check failed:", err);
+      setError(prev => ({ ...prev, user: "Failed to fetch user." }));
+    } finally {
+      setLoading(prev => ({ ...prev, user: false }));
+    }
   }, []);
 
-  // Fetch dashboard data (chart + todos)
-  const fetchDashboard = useCallback(async () => {
+  // Fetch dashboard data
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
-      const res = await API.dashboard.get(); // Use helper method
+      const res = await API.dashboard.get();
       setChartData(res.data.chartData || null);
       setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
+      setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
@@ -47,46 +45,36 @@ export default function Dashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
-
   // Handle todo updates
   const handleTodosUpdate = async (updatedTodos) => {
     setTodos(updatedTodos); // optimistic update
     try {
       await API.dashboard.updateTasks(updatedTodos);
+      setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
       console.error("Failed to update tasks:", err);
       setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
     }
   };
 
-  // Handle chart update after chatbot message
+  // Initialize on mount
+  useEffect(() => {
+    fetchUser();
+    fetchDashboardData();
+  }, [fetchUser, fetchDashboardData]);
+
+  // Global update for chart after chatbot message
   useEffect(() => {
     window.updateDashboardChart = async () => {
-      try {
-        const res = await API.dashboard.get();
-        setChartData(res.data.chartData || null);
-        setChartLabels(res.data.chartLabels || []);
-        setTodos(res.data.todos || []);
-      } catch (err) {
-        console.error("Failed to update chart after chat:", err);
-      }
+      await fetchDashboardData();
     };
-    return () => {
-      window.updateDashboardChart = null; // cleanup
-    };
-  }, []);
+    return () => { window.updateDashboardChart = null; };
+  }, [fetchDashboardData]);
 
-  // Loading or error display helper
+  // Render content based on active tab and loading/error states
   const renderContent = () => {
-    if (loading.dashboard || loading.user) {
-      return <p className="dashboard-loading">Loading...</p>;
-    }
-    if (error.dashboard) {
-      return <p className="dashboard-error">{error.dashboard}</p>;
-    }
+    if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
+    if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
 
     switch (activeTab) {
       case "chatbot":
@@ -103,10 +91,9 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <Navbar user={user} />
-
       <div className="dashboard-container">
         <ul className="dashboard-tabs">
-          {["chatbot", "chart", "todo"].map((tab) => (
+          {["chatbot", "chart", "todo"].map(tab => (
             <li key={tab}>
               <button
                 className={`dashboard-tab-btn ${activeTab === tab ? "active" : ""}`}
@@ -117,7 +104,6 @@ export default function Dashboard() {
             </li>
           ))}
         </ul>
-
         <div className="dashboard-content">{renderContent()}</div>
       </div>
     </div>
