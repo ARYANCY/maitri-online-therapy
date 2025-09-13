@@ -8,21 +8,22 @@ export default function Chatbot({ onTodosUpdate }) {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Scroll to bottom whenever messages change
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages]);
+
+  // Fetch chatbot messages and todos
   const fetchMessages = async () => {
     try {
-      const sessionRes = await API.get("/api/session-check");
-      if (!sessionRes.data.user) {
+      const session = await API.auth.checkSession();
+      if (!session.user) {
         setMessages([{ sender: "bot", text: "Please log in first." }]);
         return;
       }
 
       const res = await API.get("/api/chatbot");
-      setMessages(res.data.messages || []);
-      if (onTodosUpdate) onTodosUpdate(res.data.todos || []);
+      setMessages(res.messages || []);
+      if (onTodosUpdate) onTodosUpdate(res.todos || []);
     } catch (err) {
       console.error("Fetch messages error:", err);
       setMessages([{ sender: "bot", text: "Cannot connect to server." }]);
@@ -33,17 +34,19 @@ export default function Chatbot({ onTodosUpdate }) {
     fetchMessages();
   }, []);
 
+  // Send user message to chatbot
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, { sender: "user", text: input }]);
+    const userMessage = { sender: "user", text: input };
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
       const res = await API.post("/api/chatbot", { message: input });
-      setMessages(res.data.messages || []);
-      if (onTodosUpdate) onTodosUpdate(res.data.todos || []);
+      setMessages(res.messages || []);
+      if (onTodosUpdate) onTodosUpdate(res.todos || []);
     } catch (err) {
       console.error("Send message error:", err);
       setMessages(prev => [

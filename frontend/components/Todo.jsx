@@ -9,19 +9,24 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Initialize tasks
-  useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
+  // Initialize tasks from props
+  useEffect(() => setTasks(initialTasks), [initialTasks]);
 
   // Check if all tasks are completed
   useEffect(() => {
     setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
   }, [tasks]);
 
-  const updateTasks = (updatedTasks) => {
-    setTasks(updatedTasks);
-    onUpdate && onUpdate(updatedTasks); // update server
+  // Local + server update
+  const updateTasks = async (updatedTasks) => {
+    setTasks(updatedTasks); // optimistic update
+    try {
+      if (onUpdate) await onUpdate(updatedTasks);
+      setError("");
+    } catch (err) {
+      console.error("Failed to sync tasks:", err);
+      setError("Failed to update tasks on server.");
+    }
   };
 
   // Add task
@@ -35,18 +40,18 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
     updateTasks([...tasks, newTask]);
     setInput("");
-    setError("");
   };
 
   // Toggle task completion
-  const toggleDone = (id) => updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
+  const toggleDone = (id) =>
+    updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
 
   // Delete task
   const handleDelete = (id) => updateTasks(tasks.filter(t => t._id !== id));
 
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
-  if (loading) return <p>Loading tasks...</p>;
+  if (loading) return <p className="todo-loading">Loading tasks...</p>;
 
   return (
     <div className="todo-container">

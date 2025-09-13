@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
 
-  // Fetch user session
+  // ----- Fetch user session -----
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -26,13 +26,13 @@ export default function Dashboard() {
       setUser(data.user);
     } catch (err) {
       console.error("Session check failed:", err);
-      window.location.href = "/login";
+      window.location.href = "/login"; // force login
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
   }, []);
 
-  // Fetch dashboard data including todos
+  // ----- Fetch dashboard data -----
   const fetchDashboardData = useCallback(async () => {
     if (!user) return; // only fetch if user exists
     try {
@@ -54,10 +54,10 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  // Update todos locally and on server
+  // ----- Update todos -----
   const handleTodosUpdate = async (updatedTodos) => {
     const prevTodos = [...todos];
-    setTodos(updatedTodos); // optimistic UI
+    setTodos(updatedTodos); // optimistic update
     setLoading(prev => ({ ...prev, todos: true }));
 
     try {
@@ -72,25 +72,19 @@ export default function Dashboard() {
     }
   };
 
-  // Init: fetch user first
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  // ----- Init: fetch user first -----
+  useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  // Fetch dashboard only after user is set
-  useEffect(() => {
-    fetchDashboardData();
-  }, [user, fetchDashboardData]);
+  // ----- Fetch dashboard only after user is set -----
+  useEffect(() => { fetchDashboardData(); }, [user, fetchDashboardData]);
 
-  // Expose a global function to refresh chart
+  // ----- Expose global chart refresh -----
   useEffect(() => {
-    window.updateDashboardChart = async () => {
-      await fetchDashboardData();
-    };
+    window.updateDashboardChart = fetchDashboardData;
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // Render content
+  // ----- Render content -----
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
     if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
