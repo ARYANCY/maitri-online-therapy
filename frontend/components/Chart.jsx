@@ -42,7 +42,7 @@ export default function Chart() {
     localStorage.setItem("chartMetricsType", mType);
   };
 
-  // Fetch chart data from backend
+  // Fetch initial chart data once
   const fetchChartData = async () => {
     try {
       const res = await API.get(`/api/dashboard?type=${mode}`);
@@ -50,7 +50,7 @@ export default function Chart() {
         let labels = res.data.chartLabels || [];
         let data = res.data.chartData || {};
 
-        // Ensure screening metrics are arrays for charting
+        // Ensure screening arrays exist
         if (data.screening) {
           data.screening.phq9_score = data.screening.phq9_score || [];
           data.screening.gad7_score = data.screening.gad7_score || [];
@@ -68,7 +68,7 @@ export default function Chart() {
     }
   };
 
-  // Load cached data
+  // Load cached data on first render
   useEffect(() => {
     const savedData = localStorage.getItem("chartData");
     const savedLabels = localStorage.getItem("chartLabels");
@@ -79,34 +79,30 @@ export default function Chart() {
     if (savedData && savedLabels) {
       setChartData(JSON.parse(savedData));
       setChartLabels(JSON.parse(savedLabels));
+    } else {
+      fetchChartData(); // fetch from backend if no cache
     }
+
     if (savedMode) setMode(savedMode);
     if (savedType) setChartType(savedType);
     if (savedMetricsType) setMetricsType(savedMetricsType);
-
-    setLoading(false);
   }, []);
 
-  // Fetch chart data periodically
-  useEffect(() => {
-    fetchChartData();
-    const interval = setInterval(fetchChartData, 10000); // 10s refresh
-    return () => clearInterval(interval);
-  }, [mode]);
-
-  // Update chart after new chat
+  // Update chart after chat message
   const updateChartAfterChat = (newMetrics) => {
     setChartData((prevData) => {
+      if (!prevData) return prevData;
+
       const updatedData = {
         ...prevData,
-        stress_level: [...(prevData?.stress_level || []), newMetrics.stress],
-        happiness_level: [...(prevData?.happiness_level || []), newMetrics.happiness],
-        anxiety_level: [...(prevData?.anxiety_level || []), newMetrics.anxiety],
-        overall_mood_level: [...(prevData?.overall_mood_level || []), newMetrics.mood],
+        stress_level: [...(prevData?.stress_level || []), newMetrics.stress || 0],
+        happiness_level: [...(prevData?.happiness_level || []), newMetrics.happiness || 0],
+        anxiety_level: [...(prevData?.anxiety_level || []), newMetrics.anxiety || 0],
+        overall_mood_level: [...(prevData?.overall_mood_level || []), newMetrics.mood || 0],
         screening: {
-          phq9_score: [...(prevData?.screening?.phq9_score || []), newMetrics.phq9],
-          gad7_score: [...(prevData?.screening?.gad7_score || []), newMetrics.gad7],
-          ghq_score: [...(prevData?.screening?.ghq_score || []), newMetrics.ghq],
+          phq9_score: [...(prevData?.screening?.phq9_score || []), newMetrics.phq9 || 0],
+          gad7_score: [...(prevData?.screening?.gad7_score || []), newMetrics.gad7 || 0],
+          ghq_score: [...(prevData?.screening?.ghq_score || []), newMetrics.ghq || 0],
         },
       };
 
@@ -120,15 +116,16 @@ export default function Chart() {
     });
   };
 
+  // Expose to chatbot
   useEffect(() => {
     window.updateChartAfterChat = updateChartAfterChat;
-  }, [metricsType]);
+  }, [mode, chartType, metricsType]);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
 
-  // Build datasets based on selected metricsType
+  // Build datasets
   let datasets = [];
   if (metricsType === "emotional") {
     datasets = [
@@ -155,37 +152,54 @@ export default function Chart() {
 
   const options = {
     responsive: true,
+    animation: { duration: 400 }, // smooth update, no vibration
     plugins: {
       legend: { position: "top" },
       title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` },
     },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: { beginAtZero: true, max: metricsType === "emotional" ? 50 : 36 },
+      y: { beginAtZero: true, suggestedMax: metricsType === "emotional" ? 50 : 36 }, // avoid shaking
     },
   };
 
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select className="chart-select chart-mode-select" value={mode} onChange={(e) => setMode(e.target.value)}>
+        <select
+          className="chart-select chart-mode-select"
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+        >
           <option value="entries">Latest Entries</option>
           <option value="daily">Daily Averages</option>
         </select>
 
-        <select className="chart-select chart-type-select" value={chartType} onChange={(e) => setChartType(e.target.value)}>
+        <select
+          className="chart-select chart-type-select"
+          value={chartType}
+          onChange={(e) => setChartType(e.target.value)}
+        >
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
 
-        <select className="chart-select chart-metrics-type-select" value={metricsType} onChange={(e) => setMetricsType(e.target.value)}>
+        <select
+          className="chart-select chart-metrics-type-select"
+          value={metricsType}
+          onChange={(e) => setMetricsType(e.target.value)}
+        >
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
       </div>
 
       <div className="chart-wrapper">
-        {chartType === "bar" ? <Bar className="chart-bar" data={data} options={options} /> : <Line className="chart-line" data={data} options={options} />}
+        {chartType === "bar" ? (
+          <Bar className="chart-bar" data={data} options={options} />
+        ) : (
+          <Line className="chart-line" data={data} options={options} />
+        )}
       </div>
     </div>
   );
