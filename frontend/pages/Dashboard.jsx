@@ -28,15 +28,15 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch dashboard data
+  // Fetch dashboard data (chart + todos)
   const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
+      setLoading(prev => ({ ...prev, dashboard: true }));
       const res = await API.dashboard.get();
       setChartData(res.data.chartData || null);
       setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
-      setError(prev => ({ ...prev, dashboard: null, todos: null }));
+      setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
@@ -45,25 +45,28 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Handle todo updates
+  // Update todos both locally and on server
   const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos); // optimistic UI update
+    setTodos(updatedTodos); // update UI immediately
+    setLoading(prev => ({ ...prev, todos: true }));
     try {
       await API.dashboard.updateTasks(updatedTodos);
       setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
       console.error("Failed to update tasks:", err);
       setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
+    } finally {
+      setLoading(prev => ({ ...prev, todos: false }));
     }
   };
 
-  // Initialize dashboard and user
+  // Initialize Dashboard
   useEffect(() => {
     fetchUser();
     fetchDashboardData();
   }, [fetchUser, fetchDashboardData]);
 
-  // Global chart update for chatbot
+  // Make chart update available globally (e.g., after chatbot updates)
   useEffect(() => {
     window.updateDashboardChart = async () => {
       await fetchDashboardData();
@@ -71,7 +74,7 @@ export default function Dashboard() {
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // Render tab content
+  // Render content based on active tab and loading/error states
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
     if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
@@ -82,7 +85,13 @@ export default function Dashboard() {
       case "chart":
         return <Chart chartData={chartData} chartLabels={chartLabels} />;
       case "todo":
-        return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
+        return (
+          <Todo
+            tasks={todos}
+            onUpdate={handleTodosUpdate}
+            loading={loading.todos}
+          />
+        );
       default:
         return null;
     }
@@ -91,7 +100,6 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <Navbar user={user} />
-
       <div className="dashboard-container">
         <ul className="dashboard-tabs">
           {["chatbot", "chart", "todo"].map(tab => (
@@ -105,7 +113,6 @@ export default function Dashboard() {
             </li>
           ))}
         </ul>
-
         <div className="dashboard-content">{renderContent()}</div>
       </div>
     </div>

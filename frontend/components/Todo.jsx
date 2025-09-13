@@ -1,50 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
-import API from "../utils/axiosClient";
 import "../css/Todo.css";
 
-export default function Todo({ initialTasks = [] }) {
-  const [tasks, setTasks] = useState([]);
+export default function Todo({ tasks = [], onUpdate, loading = false }) {
   const [input, setInput] = useState("");
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  // Fetch tasks from server
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await API.get("/api/dashboard/tasks");
-        const fetchedTasks = res.data.tasks.map((t) => ({ ...t, _id: t._id || uuidv4() }));
-        setTasks(fetchedTasks.length ? fetchedTasks : initialTasks);
-      } catch (err) {
-        console.error("Failed to fetch tasks:", err);
-        setTasks(initialTasks);
-        setError("Failed to load tasks.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTasks();
-  }, [initialTasks]);
-
-  // Check if all tasks are completed
+  // Track if all tasks are completed
   useEffect(() => {
     setAllCompleted(tasks.length > 0 && tasks.every((t) => t.completed));
   }, [tasks]);
 
-  // Update tasks on server
-  const updateServerTasks = async (updatedTasks) => {
-    try {
-      await API.dashboard.updateTasks(updatedTasks);
-    } catch (err) {
-      console.error("Failed to update tasks:", err);
-      setError("Failed to update tasks. Try again.");
-    }
-  };
-
-  // Add new task
+  // Add a new task
   const handleAdd = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
@@ -56,10 +25,10 @@ export default function Todo({ initialTasks = [] }) {
 
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
     const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
+
     setInput("");
     setError("");
-    updateServerTasks(updatedTasks);
+    onUpdate(updatedTasks); // Update parent and server
   };
 
   // Toggle task completion
@@ -67,15 +36,13 @@ export default function Todo({ initialTasks = [] }) {
     const updatedTasks = tasks.map((task) =>
       task._id === id ? { ...task, completed: !task.completed } : task
     );
-    setTasks(updatedTasks);
-    updateServerTasks(updatedTasks);
+    onUpdate(updatedTasks);
   };
 
   // Delete task
   const handleDelete = (id) => {
     const updatedTasks = tasks.filter((task) => task._id !== id);
-    setTasks(updatedTasks);
-    updateServerTasks(updatedTasks);
+    onUpdate(updatedTasks);
   };
 
   // Add task on Enter key
