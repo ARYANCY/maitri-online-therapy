@@ -5,6 +5,6 @@ module.exports = (req, res, next) => {
     return res.status(401).json({ success: false, message: "Please log in first" });
   }
 
-  req.user = req.session.user;
+  if (!req.user) req.user = { _id: req.session.userId };
   next();
 };
