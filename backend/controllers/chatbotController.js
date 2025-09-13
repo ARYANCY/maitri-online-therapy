@@ -139,19 +139,59 @@ User message: "${message}"`;
 
       const parsed = JSON.parse(cleanJsonString(metricsResultText));
 
+      // Normalize parsed metrics & screening
+      metricsData = {
+        metrics: parsed.metrics || {
+          stress_level: 0,
+          happiness_level: 0,
+          anxiety_level: 0,
+          focus_level: 0,
+          energy_level: 0,
+          confidence_level: 0,
+          motivation_level: 0,
+          calmness_level: 0,
+          sadness_level: 0,
+          loneliness_level: 0,
+          gratitude_level: 0,
+          overall_mood_level: 0,
+        },
+        screening: parsed.screening || {
+          phq9_score: 0,
+          gad7_score: 0,
+          ghq_score: 0,
+          risk_level: "low",
+        },
+      };
+
       // Save to DB
       await Metrics.create({
         userId: user._id,
         message,
-        metrics: parsed.metrics,
-        screening: parsed.screening,
+        metrics: metricsData.metrics,
+        screening: metricsData.screening,
         createdAt: new Date(),
       });
 
-      metricsData = parsed;
     } catch (err) {
       console.error("Metrics/Screening generation or saving error:", err);
-      metricsData = {};
+      // Fallback metrics
+      metricsData = {
+        metrics: {
+          stress_level: 0,
+          happiness_level: 0,
+          anxiety_level: 0,
+          focus_level: 0,
+          energy_level: 0,
+          confidence_level: 0,
+          motivation_level: 0,
+          calmness_level: 0,
+          sadness_level: 0,
+          loneliness_level: 0,
+          gratitude_level: 0,
+          overall_mood_level: 0,
+        },
+        screening: { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" },
+      };
     }
 
     // 3️⃣ Todo Suggestions

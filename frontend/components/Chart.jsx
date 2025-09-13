@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import API from "../utils/axiosClient";
 import { Bar, Line } from "react-chartjs-2";
 import "../css/Chart.css";
 import {
@@ -33,7 +32,7 @@ export default function Chart() {
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Load cached chart on first render
+  // Load cached chart
   useEffect(() => {
     const savedData = localStorage.getItem("chartData");
     const savedLabels = localStorage.getItem("chartLabels");
@@ -41,11 +40,8 @@ export default function Chart() {
     const savedMode = localStorage.getItem("chartMode");
     const savedMetricsType = localStorage.getItem("chartMetricsType");
 
-    if (savedData && savedLabels) {
-      setChartData(JSON.parse(savedData));
-      setChartLabels(JSON.parse(savedLabels));
-    }
-
+    if (savedData && savedLabels) setChartData(JSON.parse(savedData));
+    if (savedData && savedLabels) setChartLabels(JSON.parse(savedLabels));
     if (savedType) setChartType(savedType);
     if (savedMode) setMode(savedMode);
     if (savedMetricsType) setMetricsType(savedMetricsType);
@@ -53,28 +49,31 @@ export default function Chart() {
     setLoading(false);
   }, []);
 
-  // Save to localStorage
   const saveToCache = (labels, data) => {
     localStorage.setItem("chartLabels", JSON.stringify(labels));
     localStorage.setItem("chartData", JSON.stringify(data));
   };
 
-  // Update chart after a new chat
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
-    if (!metrics && !screening) return;
-
     setChartData((prevData) => {
+      const prevScreening = prevData?.screening || {
+        phq9_score: [],
+        gad7_score: [],
+        ghq_score: [],
+      };
+
       const updatedData = {
         // Emotional metrics
         stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
         happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
         anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
         overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
+
         // Screening metrics
         screening: {
-          phq9_score: [...(prevData?.screening?.phq9_score || []), screening.phq9_score ?? 0],
-          gad7_score: [...(prevData?.screening?.gad7_score || []), screening.gad7_score ?? 0],
-          ghq_score: [...(prevData?.screening?.ghq_score || []), screening.ghq_score ?? 0],
+          phq9_score: [...(prevScreening.phq9_score || []), screening.phq9_score ?? 0],
+          gad7_score: [...(prevScreening.gad7_score || []), screening.gad7_score ?? 0],
+          ghq_score: [...(prevScreening.ghq_score || []), screening.ghq_score ?? 0],
         },
       };
 
@@ -88,10 +87,9 @@ export default function Chart() {
     });
   };
 
-  // Expose globally for chatbot
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
-  }, [chartType, mode, metricsType]);
+  }, []);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
@@ -107,9 +105,9 @@ export default function Chart() {
           { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
         ]
       : [
-          { label: "PHQ-9", data: chartData.screening?.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "GAD-7", data: chartData.screening?.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-          { label: "GHQ", data: chartData.screening?.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+          { label: "PHQ-9", data: chartData.screening?.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+          { label: "GAD-7", data: chartData.screening?.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+          { label: "GHQ", data: chartData.screening?.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
         ];
 
   const preparedDatasets = datasets.map((ds) => ({
