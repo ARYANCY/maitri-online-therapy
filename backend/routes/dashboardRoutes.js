@@ -1,13 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const dashboardController = require("../controllers/dashboardController");
-const isAuth = require("../middleware/authMiddleware"); // your auth middleware
+const { getDashboard, getTasks, updateTasks } = require("../controllers/dashboardController");
+const requireLogin = require("../middleware/authMiddleware");
 
-// All dashboard routes require login
-router.use(isAuth);
-
-router.get("/", dashboardController.getDashboard);
-router.get("/tasks", dashboardController.getTasks);
-router.put("/tasks", dashboardController.updateTasks);
+// ✅ All dashboard routes protected
+router.get("/", requireLogin, getDashboard);
+router.get("/tasks", requireLogin, getTasks);
+router.put("/tasks", requireLogin, updateTasks);
 
 module.exports = router;
