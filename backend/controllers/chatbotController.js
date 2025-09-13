@@ -1,221 +1,245 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Bar, Line } from "react-chartjs-2";
-import "../css/Chart.css";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Metrics = require("../models/metrics");
+const Todo = require("../models/todo");
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const apiKeys = process.env.GEMINI_API_KEYS?.split(",").map(k => k.trim()) || [];
+if (!apiKeys.length) console.error("No GEMINI_API_KEYS found in .env");
 
-export default function Chart() {
-  const [chartData, setChartData] = useState(null);
-  const [chartLabels, setChartLabels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [chartType, setChartType] = useState("bar");
-  const [mode, setMode] = useState("entries");
-  const [metricsType, setMetricsType] = useState("emotional");
+let currentKeyIndex = 0;
+function getNextGenAI() {
+  const key = apiKeys[currentKeyIndex];
+  currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+  return new GoogleGenerativeAI(key);
+}
 
-  const ensureShape = useCallback((labels, data = {}) => {
-    const keys = [
-      "stress_level",
-      "happiness_level",
-      "anxiety_level",
-      "overall_mood_level",
-      "phq9_score",
-      "gad7_score",
-      "ghq_score",
-    ];
-    const shaped = {};
-    for (const key of keys) {
-      const src = Array.isArray(data[key]) ? data[key] : [];
-      let arr = src.slice(0, labels.length);
-      if (arr.length < labels.length) {
-        arr = arr.concat(Array(labels.length - arr.length).fill(0));
-      }
-      shaped[key] = arr;
-    }
-    return shaped;
-  }, []);
-
-  const saveToCache = useCallback((labels, data) => {
+async function safeGenerate(prompt) {
+  let lastError;
+  for (let i = 0; i < apiKeys.length; i++) {
+    const client = getNextGenAI();
     try {
-      localStorage.setItem("chartLabels", JSON.stringify(labels));
-      localStorage.setItem("chartData", JSON.stringify(data));
-    } catch {}
-  }, []);
+      console.log(`Using API key #${i + 1} for generation...`);
+      const model = await client.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const text = typeof result.response.text === "function"
+        ? await result.response.text()
+        : result.response.text;
 
-  // Initial load from cache
-  useEffect(() => {
-    try {
-      const savedDataRaw = localStorage.getItem("chartData");
-      const savedLabelsRaw = localStorage.getItem("chartLabels");
-      const savedType = localStorage.getItem("chartType");
-      const savedMode = localStorage.getItem("chartMode");
-      const savedMetricsType = localStorage.getItem("chartMetricsType");
-
-      const labels = savedLabelsRaw ? JSON.parse(savedLabelsRaw) : [];
-      const data = savedDataRaw ? JSON.parse(savedDataRaw) : null;
-
-      if (labels.length) {
-        setChartLabels(labels);
-        setChartData(ensureShape(labels, data || {}));
-      }
-
-      if (savedType) setChartType(savedType);
-      if (savedMode) setMode(savedMode);
-      if (savedMetricsType) setMetricsType(savedMetricsType);
-    } catch {
-      // ignore parse errors
-    } finally {
-      setLoading(false);
+      if (!text) throw new Error("Empty response from Gemini");
+      return text;
+    } catch (err) {
+      console.error(`API key attempt ${i + 1} failed:`, err.message);
+      lastError = err;
     }
-  }, [ensureShape]);
+  }
+  throw lastError;
+}
 
-  // Persist user selections
-  useEffect(() => {
-    try { localStorage.setItem("chartType", chartType); } catch {}
-  }, [chartType]);
-  useEffect(() => {
-    try { localStorage.setItem("chartMode", mode); } catch {}
-  }, [mode]);
-  useEffect(() => {
-    try { localStorage.setItem("chartMetricsType", metricsType); } catch {}
-  }, [metricsType]);
+let userSessions = {};
+function cleanJsonString(str) {
+  if (!str) return "{}";
+  return str.trim().replace(/^```json\s*/, "").replace(/```$/, "").trim();
+}
 
-  // Robust chart update function: pass { metrics, screening } from backend response.metrics
-  const updateAfterChat = useCallback(({ metrics = {}, screening = {} } = {}) => {
-    const noMetrics = !metrics || Object.keys(metrics).length === 0;
-    const noScreening = !screening || Object.keys(screening).length === 0;
-    if (noMetrics && noScreening) return;
+// GET Chatbot Session
+exports.getChatbot = (req, res) => {
+  try {
+    const user = req.user;
+    if (!user?._id) return res.status(401).json({ error: "Unauthorized" });
 
-    setChartLabels(prevLabels => {
-      const nextLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
+    const userId = user._id.toString();
+    if (!userSessions[userId]) userSessions[userId] = { messages: [] };
+    const session = userSessions[userId];
 
-      setChartData(prevData => {
-        const current = ensureShape(prevLabels, prevData || {});
-        const nextData = {
-          ...current,
-          stress_level: [...current.stress_level, Number(metrics.stress_level ?? 0)],
-          happiness_level: [...current.happiness_level, Number(metrics.happiness_level ?? 0)],
-          anxiety_level: [...current.anxiety_level, Number(metrics.anxiety_level ?? 0)],
-          overall_mood_level: [...current.overall_mood_level, Number(metrics.overall_mood_level ?? 0)],
-          phq9_score: [...current.phq9_score, Number(screening.phq9_score ?? 0)],
-          gad7_score: [...current.gad7_score, Number(screening.gad7_score ?? 0)],
-          ghq_score: [...current.ghq_score, Number(screening.ghq_score ?? 0)],
-        };
+    if (session.messages.length === 0) {
+      session.messages.push({
+        sender: "bot",
+        text: "Hello! I’m your therapist chatbot. How are you feeling today?",
+        timestamp: new Date().toISOString()
+      });
+    }
 
-        saveToCache(nextLabels, nextData);
-        return nextData;
+    res.json({ messages: session.messages, sessionID: userId });
+  } catch (err) {
+    console.error("Error getting chatbot session:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+};
+
+// POST Chatbot Message
+exports.postChatbot = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user?._id) return res.status(401).json({ error: "Unauthorized" });
+    const userId = user._id.toString();
+
+    if (!userSessions[userId]) userSessions[userId] = { messages: [] };
+    const session = userSessions[userId];
+
+    const { message } = req.body;
+    if (!message || !message.trim()) return res.status(400).json({ error: "Message cannot be empty" });
+
+    session.messages.push({ sender: "user", text: message, timestamp: new Date().toISOString() });
+    const history = session.messages.map(m => `${m.sender}: ${m.text}`).join("\n");
+
+    let botResponse = "";
+    let metricsData = {};
+    let todosData = [];
+
+    // 1️⃣ Chatbot Response
+    try {
+      const chatbotPrompt = `You are a friendly therapist chatbot.
+Conversation so far:
+${history}
+User just said: "${message}"
+Respond empathetically and naturally.`;
+      
+      console.log("Chatbot prompt:", chatbotPrompt);
+      botResponse = await safeGenerate(chatbotPrompt);
+      console.log("Bot response:", botResponse);
+
+      session.messages.push({ sender: "bot", text: botResponse, timestamp: new Date().toISOString() });
+    } catch (err) {
+      console.error("Chatbot generation error:", err);
+      botResponse = "Sorry, I couldn't process that message.";
+      session.messages.push({ sender: "bot", text: botResponse });
+    }
+
+    // 2️⃣ Metrics + Screening
+    try {
+      const metricsPrompt = `Analyze the user's emotional state and screening results.
+Return BOTH:
+
+1. Emotional metrics (0–50 scale):
+   stress_level, happiness_level, anxiety_level, focus_level,
+   energy_level, confidence_level, motivation_level, calmness_level,
+   sadness_level, loneliness_level, gratitude_level, overall_mood_level
+
+2. Screening results:
+   - phq9_score (0–27)
+   - gad7_score (0–21)
+   - ghq_score (0–36)
+   - risk_level: "low", "moderate", or "high"
+
+Respond ONLY in strict JSON format like this:
+{
+  "metrics": { ... },
+  "screening": {
+    "phq9_score": 12,
+    "gad7_score": 8,
+    "ghq_score": 20,
+    "risk_level": "moderate"
+  }
+}
+
+User message: "${message}"`;
+
+      console.log("Metrics + Screening prompt:", metricsPrompt);
+      const metricsResultText = await safeGenerate(metricsPrompt);
+      console.log("Raw metrics + screening result:", metricsResultText);
+
+      const parsed = JSON.parse(cleanJsonString(metricsResultText));
+
+      // Normalize parsed metrics & screening
+      metricsData = {
+        metrics: parsed.metrics || {
+          stress_level: 0,
+          happiness_level: 0,
+          anxiety_level: 0,
+          focus_level: 0,
+          energy_level: 0,
+          confidence_level: 0,
+          motivation_level: 0,
+          calmness_level: 0,
+          sadness_level: 0,
+          loneliness_level: 0,
+          gratitude_level: 0,
+          overall_mood_level: 0,
+        },
+        screening: parsed.screening || {
+          phq9_score: 0,
+          gad7_score: 0,
+          ghq_score: 0,
+          risk_level: "low",
+        },
+      };
+
+      // Save to DB
+      await Metrics.create({
+        userId: user._id,
+        message,
+        metrics: metricsData.metrics,
+        screening: metricsData.screening,
+        createdAt: new Date(),
       });
 
-      return nextLabels;
+    } catch (err) {
+      console.error("Metrics/Screening generation or saving error:", err);
+      // Fallback metrics
+      metricsData = {
+        metrics: {
+          stress_level: 0,
+          happiness_level: 0,
+          anxiety_level: 0,
+          focus_level: 0,
+          energy_level: 0,
+          confidence_level: 0,
+          motivation_level: 0,
+          calmness_level: 0,
+          sadness_level: 0,
+          loneliness_level: 0,
+          gratitude_level: 0,
+          overall_mood_level: 0,
+        },
+        screening: { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" },
+      };
+    }
+
+    // 3️⃣ Todo Suggestions
+    try {
+      const todoPrompt = `You are a wellness assistant. Based on the user's conversation and metrics below, 
+suggest 5 actionable, practical, and empathetic tasks to improve their well-being.
+
+Conversation history:
+${history}
+
+Metrics + Screening:
+${JSON.stringify(metricsData, null, 2)}
+
+Respond ONLY in strict JSON format like:
+{
+  "todos": [
+    { "title": "...", "completed": false },
+    ...
+  ]
+}`;
+
+      console.log("Todo prompt:", todoPrompt);
+      const todoResultText = await safeGenerate(todoPrompt);
+      console.log("Raw todos result:", todoResultText);
+
+      todosData = JSON.parse(cleanJsonString(todoResultText)).todos || [];
+
+      await Todo.findOneAndUpdate(
+        { userId: user._id },
+        { tasks: todosData, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+    } catch (err) {
+      console.error("Todos generation or saving error:", err);
+      todosData = [];
+    }
+
+    // ✅ Final Response
+    res.json({ 
+      messages: session.messages, 
+      botResponse, 
+      metrics: metricsData, 
+      todos: todosData, 
+      sessionID: userId 
     });
-  }, [ensureShape, saveToCache]);
 
-  // Expose globally for chatbot integration
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.updateAfterChat = updateAfterChat;
-      return () => { delete window.updateAfterChat; };
-    }
-  }, [updateAfterChat]);
-
-  if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
-  if (!chartData || chartLabels.length === 0)
-    return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
-
-  const datasetsBase = useMemo(() => {
-    if (metricsType === "emotional") {
-      return [
-        { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-        { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-        { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-        { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-      ];
-    }
-    return [
-      { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-      { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-      { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-    ];
-  }, [metricsType, chartData]);
-
-  const preparedDatasets = useMemo(
-    () => datasetsBase.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: false })),
-    [datasetsBase, chartType]
-  );
-
-  const data = useMemo(
-    () => ({ labels: chartLabels, datasets: preparedDatasets }),
-    [chartLabels, preparedDatasets]
-  );
-
-  const maxScreen = useMemo(() => {
-    if (!chartData) return 0;
-    const vals = [
-      ...(chartData.phq9_score || []),
-      ...(chartData.gad7_score || []),
-      ...(chartData.ghq_score || []),
-    ].map(Number).filter(v => Number.isFinite(v));
-    return vals.length ? Math.max(...vals) : 0;
-  }, [chartData]);
-
-  const options = useMemo(() => {
-    const screeningSuggestedMax = Math.max(10, Math.min(36, Math.ceil((maxScreen || 0) * 1.2)));
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 400 },
-      plugins: {
-        legend: { position: "top" },
-        title: { display: true, text: `User Metrics Chart (${mode} - ${metricsType})` },
-      },
-      scales: {
-        x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-        y: { beginAtZero: true, suggestedMax: metricsType === "emotional" ? 50 : screeningSuggestedMax },
-      },
-    };
-  }, [mode, metricsType, maxScreen]);
-
-  return (
-    <div className="chart-card">
-      <div className="chart-controls">
-        <select value={mode} onChange={(e) => setMode(e.target.value)} className="chart-select">
-          <option value="entries">Latest Entries</option>
-          <option value="daily">Daily Averages</option>
-        </select>
-
-        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
-          <option value="bar">Bar Chart</option>
-          <option value="line">Line Chart</option>
-        </select>
-
-        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
-          <option value="emotional">Emotional Metrics</option>
-          <option value="screening">Screening Metrics</option>
-        </select>
-      </div>
-
-      <div className="chart-wrapper" style={{ height: "400px" }}>
-        {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
-      </div>
-    </div>
-  );
-}
+  } catch (err) {
+    console.error("Unexpected error in postChatbot:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+};
