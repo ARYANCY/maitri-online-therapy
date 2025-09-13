@@ -1,156 +1,119 @@
-const mongoose = require("mongoose");
-const Metrics = require("../models/metrics");
-const Screening = require("../models/Screening");
-const Todo = require("../models/todo");
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { v4 as uuidv4 } from "uuid";
+import "../css/Todo.css";
 
-exports.getDashboard = async (req, res) => {
-  try {
-    // 1️⃣ Get User ID safely
-    const userId = req.user?._id || req.query.userId || req.session?.userId;
-    if (!userId) return res.status(401).json({ error: "User ID is missing." });
-    const userIdStr = userId.toString();
-    const type = req.query.type || "entries";
+export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
+  const [tasks, setTasks] = useState([]);
+  const [input, setInput] = useState("");
+  const [allCompleted, setAllCompleted] = useState(false);
+  const [error, setError] = useState("");
 
-    let metricsRecords = [];
-    let screeningRecords = [];
+  // Initialize tasks
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
 
-    // 2️⃣ Fetch Metrics and Screening
-    if (type === "daily") {
-      // Aggregate daily
-      const aggregateMetrics = [
-        { $match: { userId: userIdStr } },
-        {
-          $group: {
-            _id: {
-              year: { $year: "$createdAt" },
-              month: { $month: "$createdAt" },
-              day: { $dayOfMonth: "$createdAt" },
-            },
-            stress: { $avg: "$metrics.stress_level" },
-            happiness: { $avg: "$metrics.happiness_level" },
-            anxiety: { $avg: "$metrics.anxiety_level" },
-            mood: { $avg: "$metrics.overall_mood_level" },
-          },
-        },
-        { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
-        { $limit: 7 },
-      ];
+  // Check if all tasks are completed
+  useEffect(() => {
+    setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
+  }, [tasks]);
 
-      metricsRecords = (await Metrics.aggregate(aggregateMetrics))
-        .reverse()
-        .map(r => ({
-          createdAt: new Date(r._id.year, r._id.month - 1, r._id.day),
-          metrics: {
-            stress_level: r.stress || 0,
-            happiness_level: r.happiness || 0,
-            anxiety_level: r.anxiety || 0,
-            overall_mood_level: r.mood || 0,
-          },
-        }));
+  const updateTasks = (updatedTasks) => {
+    setTasks(updatedTasks);
+    onUpdate && onUpdate(updatedTasks); // update server
+  };
 
-      const aggregateScreening = [
-        { $match: { userId: userIdStr } },
-        {
-          $group: {
-            _id: {
-              year: { $year: "$createdAt" },
-              month: { $month: "$createdAt" },
-              day: { $dayOfMonth: "$createdAt" },
-            },
-            phq9: { $avg: "$phq9_score" },
-            gad7: { $avg: "$gad7_score" },
-            ghq: { $avg: "$ghq_score" },
-          },
-        },
-        { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
-        { $limit: 7 },
-      ];
-
-      screeningRecords = (await Screening.aggregate(aggregateScreening))
-        .reverse()
-        .map(r => ({
-          createdAt: new Date(r._id.year, r._id.month - 1, r._id.day),
-          screening: {
-            phq9_score: r.phq9 || 0,
-            gad7_score: r.gad7 || 0,
-            ghq_score: r.ghq || 0,
-          },
-        }));
-    } else {
-      // Latest 7 entries
-      metricsRecords = (await Metrics.find({ userId: userIdStr }).sort({ createdAt: -1 }).limit(7).lean()).reverse();
-      screeningRecords = (await Screening.find({ userId: userIdStr }).sort({ createdAt: -1 }).limit(7).lean()).reverse();
+  // Add task
+  const handleAdd = () => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    if (tasks.length >= 10) {
+      setError("Maximum 10 tasks allowed!");
+      return;
     }
+    const newTask = { _id: uuidv4(), title: trimmed, completed: false };
+    updateTasks([...tasks, newTask]);
+    setInput("");
+    setError("");
+  };
 
-    // 3️⃣ Sort arrays by date
-    metricsRecords.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    screeningRecords.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  // Toggle task completion
+  const toggleDone = (id) => updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
 
-    // 4️⃣ Safe helper
-    const getValue = (obj, field) => obj?.screening?.[field] ?? obj?.[field] ?? 0;
+  // Delete task
+  const handleDelete = (id) => updateTasks(tasks.filter(t => t._id !== id));
 
-    // 5️⃣ Prepare chart data
-    const length = Math.max(metricsRecords.length, screeningRecords.length);
-    const chartLabels = length
-      ? Array.from({ length }, (_, i) => {
-          const date = metricsRecords[i]?.createdAt || screeningRecords[i]?.createdAt || new Date();
-          return date.toISOString().split("T")[0];
-        })
-      : ["No Data"];
+  const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
-    const chartData = {
-      stress_level: metricsRecords.map(m => m.metrics?.stress_level ?? 0).slice(0, length),
-      happiness_level: metricsRecords.map(m => m.metrics?.happiness_level ?? 0).slice(0, length),
-      anxiety_level: metricsRecords.map(m => m.metrics?.anxiety_level ?? 0).slice(0, length),
-      overall_mood_level: metricsRecords.map(m => m.metrics?.overall_mood_level ?? 0).slice(0, length),
-      phq9_score: screeningRecords.map(s => getValue(s, "phq9_score")).slice(0, length),
-      gad7_score: screeningRecords.map(s => getValue(s, "gad7_score")).slice(0, length),
-      ghq_score: screeningRecords.map(s => getValue(s, "ghq_score")).slice(0, length),
-    };
+  if (loading) return <p>Loading tasks...</p>;
 
-    // 6️⃣ Fetch todos safely
-    const todosRecord = await Todo.findOne({ userId: userIdStr }).lean();
-    const todos = Array.isArray(todosRecord?.tasks) ? todosRecord.tasks : [];
+  return (
+    <div className="todo-container">
+      <h2 className="todo-title">My Tasks</h2>
 
-    res.json({ chartLabels, chartData, todos, mode: type });
-  } catch (err) {
-    console.error("Dashboard fetch error:", err);
-    res.status(500).json({ error: "Error fetching dashboard data." });
-  }
-};
+      <div className="todo-input-area">
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder="Add a new task..."
+          className="todo-input"
+        />
+        <button onClick={handleAdd} className="todo-add-btn">Add</button>
+      </div>
 
-exports.getTasks = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      {error && <p className="todo-error">{error}</p>}
 
-    let todo = await Todo.findOne({ userId });
-    if (!todo) todo = await Todo.create({ userId, tasks: [] });
+      {tasks.length === 0 ? (
+        <p className="todo-empty">No tasks yet.</p>
+      ) : (
+        <ul className="todo-list">
+          <AnimatePresence>
+            {tasks.map(task => (
+              <motion.li
+                key={task._id}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 50, scale: 0.9 }}
+                transition={{ duration: 0.25 }}
+                className={`todo-item ${task.completed ? "completed" : ""}`}
+              >
+                <div className="todo-left">
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => toggleDone(task._id)}
+                    className="todo-checkbox"
+                  />
+                  <span onClick={() => toggleDone(task._id)} className="todo-text">
+                    {task.title}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDelete(task._id)}
+                  className="todo-delete"
+                  aria-label={`Delete ${task.title}`}
+                >
+                  ✕
+                </button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </ul>
+      )}
 
-    res.json({ tasks: Array.isArray(todo.tasks) ? todo.tasks : [] });
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
-    res.status(500).json({ error: "Failed to fetch tasks" });
-  }
-};
-
-exports.updateTasks = async (req, res) => {
-  try {
-    const userId = req.user?._id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
-    const { tasks } = req.body;
-    if (!Array.isArray(tasks)) return res.status(400).json({ error: "Invalid tasks array" });
-
-    const todo = await Todo.findOneAndUpdate(
-      { userId },
-      { tasks },
-      { new: true, upsert: true }
-    );
-
-    res.json({ success: true, tasks: Array.isArray(todo.tasks) ? todo.tasks : [] });
-  } catch (err) {
-    console.error("Error updating tasks:", err);
-    res.status(500).json({ error: "Failed to update tasks" });
-  }
-};
+      {allCompleted && tasks.length > 0 && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1, rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 0.6, type: "spring", stiffness: 250 }}
+          className="todo-celebration"
+        >
+          🎉 All tasks completed! Amazing! 🎉
+        </motion.div>
+      )}
+    </div>
+  );
+}

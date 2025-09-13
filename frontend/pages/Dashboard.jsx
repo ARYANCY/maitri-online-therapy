@@ -18,53 +18,63 @@ export default function Dashboard() {
   // Fetch user session
   const fetchUser = useCallback(async () => {
     try {
-      const res = await API.auth.checkSession();
-      if (res.data.user) setUser(res.data.user);
+      const data = await API.auth.checkSession();
+      setUser(data.user || null);
     } catch (err) {
       console.error("Session check failed:", err);
-      setError(prev => ({ ...prev, user: "Failed to fetch user." }));
+      setError(prev => ({ ...prev, user: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
   }, []);
 
-  // Fetch dashboard data
+  // Fetch dashboard data including todos
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
-      const res = await API.dashboard.get();
-      setChartData(res.data.chartData || null);
-      setChartLabels(res.data.chartLabels || []);
-      setTodos(res.data.todos || []);
+      const data = await API.dashboard.get();
+      setChartData(data.chartData || null);
+      setChartLabels(data.chartLabels || []);
+      setTodos(data.todos || []);
       setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
+      setError(prev => ({ ...prev, dashboard: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
     }
   }, []);
 
-  // Update todos both locally and on server
+  // Update todos locally and on server
   const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos); // update UI immediately
+    setTodos(updatedTodos); // Optimistic UI
     setLoading(prev => ({ ...prev, todos: true }));
     try {
       await API.dashboard.updateTasks(updatedTodos);
       setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
       console.error("Failed to update tasks:", err);
-      setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
+      setError(prev => ({ ...prev, todos: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, todos: false }));
     }
   };
 
+  // Init
   useEffect(() => {
     fetchUser();
     fetchDashboardData();
   }, [fetchUser, fetchDashboardData]);
 
+  // Make chart update globally available
+  useEffect(() => {
+    window.updateDashboardChart = async () => {
+      await fetchDashboardData();
+    };
+    return () => { window.updateDashboardChart = null; };
+  }, [fetchDashboardData]);
+
+  // Render content
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
     if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
@@ -75,13 +85,7 @@ export default function Dashboard() {
       case "chart":
         return <Chart chartData={chartData} chartLabels={chartLabels} />;
       case "todo":
-        return (
-          <Todo
-            tasks={todos}
-            onUpdate={handleTodosUpdate}
-            loading={loading.todos}
-          />
-        );
+        return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
       default:
         return null;
     }
