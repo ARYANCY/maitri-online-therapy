@@ -32,69 +32,39 @@ export default function Chart() {
   const [chartType, setChartType] = useState("bar");
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
+  const [todos, setTodos] = useState([]);
 
-  // Save chart state to localStorage
-  const saveToCache = (labels, data, mode, type, mType) => {
-    localStorage.setItem("chartLabels", JSON.stringify(labels));
-    localStorage.setItem("chartData", JSON.stringify(data));
-    localStorage.setItem("chartMode", mode);
-    localStorage.setItem("chartType", type);
-    localStorage.setItem("chartMetricsType", mType);
-  };
-
-  // Fetch chart data from backend
-  const fetchChartData = async () => {
-    try {
-      const res = await API.get(`/api/dashboard?type=${mode}`);
-      if (res.data) {
-        const labels = res.data.chartLabels || [];
-        const data = res.data.chartData || {};
-
-        if (data.screening) {
-          data.screening.phq9_score = data.screening.phq9_score || [];
-          data.screening.gad7_score = data.screening.gad7_score || [];
-          data.screening.ghq_score = data.screening.ghq_score || [];
-        }
-
-        setChartLabels(labels);
-        setChartData(data);
-        saveToCache(labels, data, mode, chartType, metricsType);
-      }
-    } catch (err) {
-      console.error("Failed to fetch chart data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load cached data on first render
+  // Load cached chart & todos on first render
   useEffect(() => {
-    const savedData = localStorage.getItem("chartData");
-    const savedLabels = localStorage.getItem("chartLabels");
+    const savedChartData = localStorage.getItem("chartData");
+    const savedChartLabels = localStorage.getItem("chartLabels");
+    const savedChartType = localStorage.getItem("chartType");
     const savedMode = localStorage.getItem("chartMode");
-    const savedType = localStorage.getItem("chartType");
     const savedMetricsType = localStorage.getItem("chartMetricsType");
+    const savedTodos = localStorage.getItem("todos");
 
-    if (savedData && savedLabels) {
-      setChartData(JSON.parse(savedData));
-      setChartLabels(JSON.parse(savedLabels));
-    } else {
-      fetchChartData();
+    if (savedChartData && savedChartLabels) {
+      setChartData(JSON.parse(savedChartData));
+      setChartLabels(JSON.parse(savedChartLabels));
     }
 
+    if (savedChartType) setChartType(savedChartType);
     if (savedMode) setMode(savedMode);
-    if (savedType) setChartType(savedType);
     if (savedMetricsType) setMetricsType(savedMetricsType);
+    if (savedTodos) setTodos(JSON.parse(savedTodos));
+
+    setLoading(false);
   }, []);
 
-  // Optional: periodic fetch (once every minute) to keep data fresh
-  useEffect(() => {
-    const interval = setInterval(fetchChartData, 60000); // 60s
-    return () => clearInterval(interval);
-  }, [mode]);
+  // Function to save chart & todos to localStorage
+  const saveToCache = (labels, data, todos) => {
+    localStorage.setItem("chartLabels", JSON.stringify(labels));
+    localStorage.setItem("chartData", JSON.stringify(data));
+    if (todos) localStorage.setItem("todos", JSON.stringify(todos));
+  };
 
-  // Update chart after new chat message
-  const updateChartAfterChat = (newMetrics) => {
+  // Function to update chart and todos after a new chat
+  const updateAfterChat = (newMetrics, newTodos) => {
     if (!newMetrics) return;
 
     setChartData((prevData) => {
@@ -113,18 +83,23 @@ export default function Chart() {
 
       setChartLabels((prevLabels) => {
         const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
-        saveToCache(newLabels, updatedData, mode, chartType, metricsType);
+        saveToCache(newLabels, updatedData, newTodos || todos);
         return newLabels;
       });
 
       return updatedData;
     });
+
+    if (newTodos) {
+      setTodos(newTodos);
+      saveToCache(chartLabels, chartData, newTodos);
+    }
   };
 
-  // Expose function to chatbot globally
+  // Expose globally so chatbot can call once per new message
   useEffect(() => {
-    window.updateChartAfterChat = updateChartAfterChat;
-  }, [metricsType, mode, chartType]);
+    window.updateAfterChat = updateAfterChat;
+  }, [metricsType, mode, chartType, todos, chartData]);
 
   if (loading) return <p className="chart-message chart-loading">Loading chart...</p>;
   if (!chartData || chartLabels.length === 0)
@@ -187,6 +162,19 @@ export default function Chart() {
 
       <div className="chart-wrapper">
         {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
+      </div>
+
+      <div className="todo-list">
+        <h3>Todos</h3>
+        {todos.length === 0 ? (
+          <p>No todos yet</p>
+        ) : (
+          <ul>
+            {todos.map((todo, index) => (
+              <li key={index}>{todo.title}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
