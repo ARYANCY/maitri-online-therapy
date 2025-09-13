@@ -148,9 +148,13 @@ User message: "${message}"`;
       await Screening.create({
         userId: user._id,
         message,
-        ...screeningData,
+        phq9_score: Number(screeningData.phq9_score) || 0,
+        gad7_score: Number(screeningData.gad7_score) || 0,
+        ghq_score: Number(screeningData.ghq_score) || 0,
+        risk_level: screeningData.risk_level || "low",
         createdAt: new Date(),
       });
+
     } catch (err) {
       console.error("Metrics/Screening generation or saving error:", err);
 

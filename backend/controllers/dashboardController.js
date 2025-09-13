@@ -89,10 +89,13 @@ exports.getDashboard = async (req, res) => {
       happiness_level: metricsRecords.map((m) => m.metrics?.happiness_level ?? null),
       anxiety_level: metricsRecords.map((m) => m.metrics?.anxiety_level ?? null),
       overall_mood_level: metricsRecords.map((m) => m.metrics?.overall_mood_level ?? null),
-      phq9_score: screeningRecords.map((s) => s.phq9_score ?? null),
-      gad7_score: screeningRecords.map((s) => s.gad7_score ?? null),
-      ghq_score: screeningRecords.map((s) => s.ghq_score ?? null),
+
+      // Fix: unwrap screening if it exists
+      phq9_score: screeningRecords.map((s) => (s.screening?.phq9_score ?? s.phq9_score ?? null)),
+      gad7_score: screeningRecords.map((s) => (s.screening?.gad7_score ?? s.gad7_score ?? null)),
+      ghq_score: screeningRecords.map((s) => (s.screening?.ghq_score ?? s.ghq_score ?? null)),
     };
+
 
     const todosRecord = await Todo.findOne({ userId: userIdStr }).lean();
     const todos = todosRecord?.tasks || [];
