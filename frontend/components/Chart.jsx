@@ -60,19 +60,21 @@ export default function Chart() {
   };
 
   // Update chart after a new chat
-  const updateAfterChat = (metrics) => {
-    if (!metrics) return;
+  const updateAfterChat = ({ metrics = {}, screening = {} }) => {
+    if (!metrics && !screening) return;
 
     setChartData((prevData) => {
       const updatedData = {
-        stress_level: [...(prevData?.stress_level || []), metrics.stress_level || 0],
-        happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level || 0],
-        anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level || 0],
-        overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level || 0],
+        // Emotional metrics
+        stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
+        happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
+        anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
+        overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
+        // Screening metrics
         screening: {
-          phq9_score: [...(prevData?.screening?.phq9_score || []), metrics.screening?.phq9_score || 0],
-          gad7_score: [...(prevData?.screening?.gad7_score || []), metrics.screening?.gad7_score || 0],
-          ghq_score: [...(prevData?.screening?.ghq_score || []), metrics.screening?.ghq_score || 0],
+          phq9_score: [...(prevData?.screening?.phq9_score || []), screening.phq9_score ?? 0],
+          gad7_score: [...(prevData?.screening?.gad7_score || []), screening.gad7_score ?? 0],
+          ghq_score: [...(prevData?.screening?.ghq_score || []), screening.ghq_score ?? 0],
         },
       };
 
@@ -120,7 +122,7 @@ export default function Chart() {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // fix blur
+    maintainAspectRatio: false,
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
