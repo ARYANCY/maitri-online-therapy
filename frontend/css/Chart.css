@@ -15,10 +15,7 @@
   animation: fadeIn 0.4s ease-in-out;
 }
 
-.chart-card:hover {
-  transform: translateY(-5px) scale(1.01);
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.35);
-}
+
 
 /* ===== Chart Controls ===== */
 .chart-controls {
