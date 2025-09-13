@@ -20,7 +20,7 @@ export default function Navbar({ user }) {
             rel="noopener noreferrer"
             className="navbar-chat-btn"
           >
-            Feeling lonely? Talk to or make a friend
+            Feeling down? Make a new friend!
           </a>
         </div>
 
