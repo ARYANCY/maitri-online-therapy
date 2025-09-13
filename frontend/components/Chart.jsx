@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
+import API from "../utils/axiosClient"; // to fetch backend data
 import "../css/Chart.css";
 import {
   Chart as ChartJS,
@@ -40,7 +41,7 @@ export default function Chart() {
   const [mode, setMode] = useState("entries");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Load cached chart data
+  // 1️⃣ Load cached chart data
   useEffect(() => {
     try {
       const savedData = localStorage.getItem("chartData");
@@ -56,9 +57,41 @@ export default function Chart() {
       if (savedMetricsType) setMetricsType(savedMetricsType);
     } catch (err) {
       console.error("Error loading cached chart data:", err);
-    } finally {
-      setLoading(false);
     }
+  }, []);
+
+  // 2️⃣ Fetch fresh data from backend and merge
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const res = await API.dashboard.get();
+        const backendData = res.data.chartData || {};
+        const backendLabels = res.data.chartLabels || [];
+
+        setChartData(prevData => {
+          const merged = { ...prevData };
+          Object.keys(backendData).forEach(key => {
+            merged[key] = [...prevData[key], ...backendData[key].slice(prevData[key].length)];
+          });
+          return merged;
+        });
+
+        setChartLabels(prevLabels => {
+          const mergedLabels = [...prevLabels, ...backendLabels.slice(prevLabels.length)];
+          return mergedLabels;
+        });
+
+        // Save merged data back to localStorage
+        localStorage.setItem("chartData", JSON.stringify(chartData));
+        localStorage.setItem("chartLabels", JSON.stringify(chartLabels));
+      } catch (err) {
+        console.error("Failed to fetch backend chart data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
   }, []);
 
   const saveToCache = (labels, data) => {
@@ -66,9 +99,9 @@ export default function Chart() {
     localStorage.setItem("chartData", JSON.stringify(data));
   };
 
-  // Update chart after a chatbot message
+  // 3️⃣ Update after chatbot message
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
-    setChartData((prevData) => {
+    setChartData(prevData => {
       const updatedData = {
         stress_level: [...prevData.stress_level, metrics.stress_level ?? 0],
         happiness_level: [...prevData.happiness_level, metrics.happiness_level ?? 0],
@@ -79,11 +112,8 @@ export default function Chart() {
         ghq_score: [...prevData.ghq_score, screening.ghq_score ?? 0],
       };
 
-      setChartLabels((prevLabels) => {
-        // Dynamic label: use date if available or fallback to "Chat X"
-        const newLabel = metrics.createdAt
-          ? new Date(metrics.createdAt).toLocaleDateString()
-          : `Chat ${prevLabels.length + 1}`;
+      setChartLabels(prevLabels => {
+        const newLabel = metrics.createdAt ? new Date(metrics.createdAt).toLocaleDateString() : `Chat ${prevLabels.length + 1}`;
         const newLabels = [...prevLabels, newLabel];
         saveToCache(newLabels, updatedData);
         return newLabels;
@@ -93,7 +123,6 @@ export default function Chart() {
     });
   };
 
-  // Expose global function
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
   }, []);
@@ -116,7 +145,7 @@ export default function Chart() {
           { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
         ];
 
-  const preparedDatasets = datasets.map((ds) => ({ ...ds, fill: chartType === "line", spanGaps: true }));
+  const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
 
   const data = { labels: chartLabels, datasets: preparedDatasets };
 
@@ -137,17 +166,17 @@ export default function Chart() {
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select value={mode} onChange={(e) => setMode(e.target.value)} className="chart-select">
+        <select value={mode} onChange={e => setMode(e.target.value)} className="chart-select">
           <option value="entries">Latest Entries</option>
           <option value="daily">Daily Averages</option>
         </select>
 
-        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
+        <select value={chartType} onChange={e => setChartType(e.target.value)} className="chart-select">
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
 
-        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
+        <select value={metricsType} onChange={e => setMetricsType(e.target.value)} className="chart-select">
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
