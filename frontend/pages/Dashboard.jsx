@@ -31,12 +31,12 @@ export default function Dashboard() {
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(prev => ({ ...prev, dashboard: true }));
+      setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
       const res = await API.dashboard.get();
       setChartData(res.data.chartData || null);
       setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
-      setError(prev => ({ ...prev, dashboard: null }));
+      setError(prev => ({ ...prev, dashboard: null, todos: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   // Handle todo updates
   const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos); // optimistic update
+    setTodos(updatedTodos); // optimistic UI update
     try {
       await API.dashboard.updateTasks(updatedTodos);
       setError(prev => ({ ...prev, todos: null }));
@@ -57,13 +57,13 @@ export default function Dashboard() {
     }
   };
 
-  // Initialize on mount
+  // Initialize dashboard and user
   useEffect(() => {
     fetchUser();
     fetchDashboardData();
   }, [fetchUser, fetchDashboardData]);
 
-  // Global update for chart after chatbot message
+  // Global chart update for chatbot
   useEffect(() => {
     window.updateDashboardChart = async () => {
       await fetchDashboardData();
@@ -71,7 +71,7 @@ export default function Dashboard() {
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // Render content based on active tab and loading/error states
+  // Render tab content
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">Loading...</p>;
     if (error.dashboard) return <p className="dashboard-error">{error.dashboard}</p>;
@@ -91,6 +91,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <Navbar user={user} />
+
       <div className="dashboard-container">
         <ul className="dashboard-tabs">
           {["chatbot", "chart", "todo"].map(tab => (
@@ -104,6 +105,7 @@ export default function Dashboard() {
             </li>
           ))}
         </ul>
+
         <div className="dashboard-content">{renderContent()}</div>
       </div>
     </div>

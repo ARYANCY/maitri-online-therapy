@@ -31,21 +31,30 @@ export default function Chart({ chartData: propsData = null, chartLabels: propsL
 
   // Prepare chart data whenever props or type change
   useEffect(() => {
-    if (!propsData || !propsLabels.length) return;
+    if (!propsData || !propsLabels.length) {
+      setData({ datasets: [], labels: [] });
+      return;
+    }
 
-    const datasets =
-      metricsType === "emotional"
-        ? [
-            { label: "Stress", data: propsData.stress_level || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-            { label: "Happiness", data: propsData.happiness_level || [], borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-            { label: "Anxiety", data: propsData.anxiety_level || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-            { label: "Overall Mood", data: propsData.overall_mood_level || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-          ]
-        : [
-            { label: "PHQ-9", data: propsData.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-            { label: "GAD-7", data: propsData.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-            { label: "GHQ", data: propsData.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-          ];
+    let datasets = [];
+
+    if (metricsType === "emotional") {
+      datasets = [
+        { label: "Stress", data: propsData.stress_level || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+        { label: "Happiness", data: propsData.happiness_level || [], borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
+        { label: "Anxiety", data: propsData.anxiety_level || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+        { label: "Overall Mood", data: propsData.overall_mood_level || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+      ];
+    } else {
+      datasets = [
+        { label: "PHQ-9", data: propsData.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+        { label: "GAD-7", data: propsData.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+        { label: "GHQ", data: propsData.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+      ];
+    }
+
+    // Filter out empty datasets
+    datasets = datasets.filter(ds => ds.data && ds.data.length > 0);
 
     const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
 
@@ -53,7 +62,7 @@ export default function Chart({ chartData: propsData = null, chartLabels: propsL
   }, [propsData, propsLabels, chartType, metricsType]);
 
   // Handle empty state
-  if (!propsData || propsLabels.length === 0) {
+  if (!propsData || propsLabels.length === 0 || data.datasets.length === 0) {
     return <p className="chart-message chart-no-data">📉 No metrics available yet.</p>;
   }
 
