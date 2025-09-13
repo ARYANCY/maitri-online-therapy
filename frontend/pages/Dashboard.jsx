@@ -19,10 +19,14 @@ export default function Dashboard() {
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
-      setUser(data.user || null);
+      if (!data.user) {
+        window.location.href = "/login"; // redirect if no session
+        return;
+      }
+      setUser(data.user);
     } catch (err) {
       console.error("Session check failed:", err);
-      setError(prev => ({ ...prev, user: err.message }));
+      window.location.href = "/login";
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
@@ -30,6 +34,7 @@ export default function Dashboard() {
 
   // Fetch dashboard data including todos
   const fetchDashboardData = useCallback(async () => {
+    if (!user) return; // only fetch if user exists
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
       const data = await API.dashboard.get();
@@ -39,34 +44,45 @@ export default function Dashboard() {
       setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      setError(prev => ({ ...prev, dashboard: err.message }));
+      if (err.message.includes("401")) {
+        window.location.href = "/login"; // redirect if unauthorized
+      } else {
+        setError(prev => ({ ...prev, dashboard: err.message }));
+      }
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
     }
-  }, []);
+  }, [user]);
 
   // Update todos locally and on server
   const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos); // Optimistic UI
+    const prevTodos = [...todos];
+    setTodos(updatedTodos); // optimistic UI
     setLoading(prev => ({ ...prev, todos: true }));
+
     try {
       await API.dashboard.updateTasks(updatedTodos);
       setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
       console.error("Failed to update tasks:", err);
+      setTodos(prevTodos); // rollback
       setError(prev => ({ ...prev, todos: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, todos: false }));
     }
   };
 
-  // Init
+  // Init: fetch user first
   useEffect(() => {
     fetchUser();
-    fetchDashboardData();
-  }, [fetchUser, fetchDashboardData]);
+  }, [fetchUser]);
 
-  // Make chart update globally available
+  // Fetch dashboard only after user is set
+  useEffect(() => {
+    fetchDashboardData();
+  }, [user, fetchDashboardData]);
+
+  // Expose a global function to refresh chart
   useEffect(() => {
     window.updateDashboardChart = async () => {
       await fetchDashboardData();
