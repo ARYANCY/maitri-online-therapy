@@ -54,38 +54,30 @@ export default function Chart() {
   };
 
   // Robust chart update function
-  const updateAfterChat = (data) => {
-    if (!data) return;
+const updateAfterChat = ({ metrics = {}, screening = {} }) => {
+  if (!metrics && !screening) return;
 
-    // Handle different nesting
-    const metrics = data.metrics || data || {};
-    const screening =
-      data.screening ||
-      (data.metrics && data.metrics.screening) ||
-      {};
+  setChartData((prevData) => {
+    const updatedData = {
+      stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
+      happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
+      anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
+      overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
+      phq9_score: [...(prevData?.phq9_score || []), screening.phq9_score ?? 0],
+      gad7_score: [...(prevData?.gad7_score || []), screening.gad7_score ?? 0],
+      ghq_score: [...(prevData?.ghq_score || []), screening.ghq_score ?? 0],
+    };
 
-    setChartData((prevData) => {
-      const updatedData = {
-        stress_level: [...(prevData?.stress_level || []), metrics.stress_level ?? 0],
-        happiness_level: [...(prevData?.happiness_level || []), metrics.happiness_level ?? 0],
-        anxiety_level: [...(prevData?.anxiety_level || []), metrics.anxiety_level ?? 0],
-        overall_mood_level: [...(prevData?.overall_mood_level || []), metrics.overall_mood_level ?? 0],
-        screening: {
-          phq9_score: [...(prevData?.screening?.phq9_score || []), screening.phq9_score ?? 0],
-          gad7_score: [...(prevData?.screening?.gad7_score || []), screening.gad7_score ?? 0],
-          ghq_score: [...(prevData?.screening?.ghq_score || []), screening.ghq_score ?? 0],
-        },
-      };
-
-      setChartLabels((prevLabels) => {
-        const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
-        saveToCache(newLabels, updatedData);
-        return newLabels;
-      });
-
-      return updatedData;
+    setChartLabels((prevLabels) => {
+      const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
+      saveToCache(newLabels, updatedData);
+      return newLabels;
     });
-  };
+
+    return updatedData;
+  });
+};
+
 
   // Expose globally for chatbot
   useEffect(() => {
@@ -96,19 +88,19 @@ export default function Chart() {
   if (!chartData || chartLabels.length === 0)
     return <p className="chart-message chart-no-data">📉 No metrics yet</p>;
 
-  const datasets =
-    metricsType === "emotional"
-      ? [
-          { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-          { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-          { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-        ]
-      : [
-          { label: "PHQ-9", data: chartData.screening?.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-          { label: "GAD-7", data: chartData.screening?.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-          { label: "GHQ", data: chartData.screening?.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-        ];
+const datasets =
+  metricsType === "emotional"
+    ? [
+        { label: "Stress", data: chartData.stress_level, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+        { label: "Happiness", data: chartData.happiness_level, borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
+        { label: "Anxiety", data: chartData.anxiety_level, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+        { label: "Overall Mood", data: chartData.overall_mood_level, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+      ]
+    : [
+        { label: "PHQ-9", data: chartData.phq9_score, borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
+        { label: "GAD-7", data: chartData.gad7_score, borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+        { label: "GHQ", data: chartData.ghq_score, borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+      ];
 
   const preparedDatasets = datasets.map((ds) => ({
     ...ds,
