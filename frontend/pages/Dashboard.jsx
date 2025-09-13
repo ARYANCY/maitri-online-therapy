@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Chatbot from "../components/Chatbot";
 import Chart from "../components/Chart";
 import Todo from "../components/Todo";
@@ -11,41 +11,90 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [chartData, setChartData] = useState(null);
   const [todos, setTodos] = useState([]);
-  const [loadingTodos, setLoadingTodos] = useState(true);
+  const [loading, setLoading] = useState({ dashboard: true, todos: true, user: true });
+  const [error, setError] = useState({ dashboard: null, todos: null, user: null });
 
+  // Fetch user session
   useEffect(() => {
-    const checkSession = async () => {
+    const fetchUser = async () => {
       try {
         const res = await API.get("/api/session-check");
         if (res.data.user) setUser(res.data.user);
       } catch (err) {
         console.error("Session check failed:", err);
+        setError(prev => ({ ...prev, user: "Failed to fetch user." }));
+      } finally {
+        setLoading(prev => ({ ...prev, user: false }));
       }
     };
-    checkSession();
+    fetchUser();
+  }, []);
+
+  // Fetch dashboard data (chart + todos)
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(prev => ({ ...prev, dashboard: true }));
+      const res = await API.get("/api/dashboard");
+      setChartData(res.data.chartData || null);
+      setTodos(res.data.todos || []);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+      setError(prev => ({ ...prev, dashboard: "Failed to load dashboard data." }));
+    } finally {
+      setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
+    }
   }, []);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  // Handle todo updates
+  const handleTodosUpdate = async (updatedTodos) => {
+    setTodos(updatedTodos); // optimistic update
+    try {
+      await API.put("/api/dashboard/tasks", { tasks: updatedTodos });
+    } catch (err) {
+      console.error("Failed to update tasks:", err);
+      setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
+    }
+  };
+
+  // Handle chart update after chatbot message
+  useEffect(() => {
+    // Expose global update function to Chatbot component
+    window.updateDashboardChart = async () => {
       try {
         const res = await API.get("/api/dashboard");
         setChartData(res.data.chartData || null);
         setTodos(res.data.todos || []);
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
-      } finally {
-        setLoadingTodos(false);
+        console.error("Failed to update chart after chat:", err);
       }
     };
-    fetchDashboard();
+    return () => {
+      window.updateDashboardChart = null; // cleanup
+    };
   }, []);
 
-  const handleTodosUpdate = async (updatedTodos) => {
-    setTodos(updatedTodos);
-    try {
-      await API.put("/api/dashboard/tasks", { tasks: updatedTodos });
-    } catch (err) {
-      console.error("Failed to update tasks:", err);
+  // Loading or error display helper
+  const renderContent = () => {
+    if (loading.dashboard || loading.user) {
+      return <p className="dashboard-loading">Loading...</p>;
+    }
+    if (error.dashboard) {
+      return <p className="dashboard-error">{error.dashboard}</p>;
+    }
+
+    switch (activeTab) {
+      case "chatbot":
+        return <Chatbot onTodosUpdate={handleTodosUpdate} />;
+      case "chart":
+        return <Chart chartData={chartData} />;
+      case "todo":
+        return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
+      default:
+        return null;
     }
   };
 
@@ -67,17 +116,7 @@ export default function Dashboard() {
           ))}
         </ul>
 
-        <div className="dashboard-content">
-          {activeTab === "chatbot" && <Chatbot onTodosUpdate={handleTodosUpdate} />}
-          {activeTab === "chart" && <Chart chartData={chartData} />}
-          {activeTab === "todo" && (
-            <Todo
-              tasks={todos}
-              onUpdate={handleTodosUpdate}
-              loading={loadingTodos}
-            />
-          )}
-        </div>
+        <div className="dashboard-content">{renderContent()}</div>
       </div>
     </div>
   );
