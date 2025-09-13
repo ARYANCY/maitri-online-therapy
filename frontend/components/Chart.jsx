@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import "../css/Chart.css";
 import {
@@ -24,70 +24,79 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart({ chartData: propsData = null, chartLabels: propsLabels = [] }) {
+export default function Chart({ chartData = null, chartLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
-  const [data, setData] = useState({ datasets: [], labels: [] });
 
-  // Prepare chart data whenever props or type change
-  useEffect(() => {
-    if (!propsData || !propsLabels.length) {
-      setData({ datasets: [], labels: [] });
-      return;
-    }
+  // Memoized chart datasets
+  const data = useMemo(() => {
+    if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
 
     let datasets = [];
 
     if (metricsType === "emotional") {
       datasets = [
-        { label: "Stress", data: propsData.stress_level || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-        { label: "Happiness", data: propsData.happiness_level || [], borderColor: "rgba(75,192,192,1)", backgroundColor: "rgba(75,192,192,0.6)" },
-        { label: "Anxiety", data: propsData.anxiety_level || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
-        { label: "Overall Mood", data: propsData.overall_mood_level || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
+        { label: "Stress", data: chartData.stress_level || [], color: "255,99,132" },
+        { label: "Happiness", data: chartData.happiness_level || [], color: "75,192,192" },
+        { label: "Anxiety", data: chartData.anxiety_level || [], color: "255,206,86" },
+        { label: "Overall Mood", data: chartData.overall_mood_level || [], color: "54,162,235" },
       ];
     } else {
       datasets = [
-        { label: "PHQ-9", data: propsData.phq9_score || [], borderColor: "rgba(255,99,132,1)", backgroundColor: "rgba(255,99,132,0.6)" },
-        { label: "GAD-7", data: propsData.gad7_score || [], borderColor: "rgba(54,162,235,1)", backgroundColor: "rgba(54,162,235,0.6)" },
-        { label: "GHQ", data: propsData.ghq_score || [], borderColor: "rgba(255,206,86,1)", backgroundColor: "rgba(255,206,86,0.6)" },
+        { label: "PHQ-9", data: chartData.phq9_score || [], color: "255,99,132" },
+        { label: "GAD-7", data: chartData.gad7_score || [], color: "54,162,235" },
+        { label: "GHQ", data: chartData.ghq_score || [], color: "255,206,86" },
       ];
     }
 
-    // Filter out empty datasets
-    datasets = datasets.filter(ds => ds.data && ds.data.length > 0);
+    datasets = datasets.filter(ds => ds.data.length > 0)
+      .map(ds => ({
+        label: ds.label,
+        data: ds.data,
+        borderColor: `rgba(${ds.color},1)`,
+        backgroundColor: `rgba(${ds.color},0.6)`,
+        fill: chartType === "line",
+        spanGaps: true,
+      }));
 
-    const preparedDatasets = datasets.map(ds => ({ ...ds, fill: chartType === "line", spanGaps: true }));
+    return { labels: chartLabels, datasets };
+  }, [chartData, chartLabels, chartType, metricsType]);
 
-    setData({ labels: propsLabels, datasets: preparedDatasets });
-  }, [propsData, propsLabels, chartType, metricsType]);
-
-  // Handle empty state
-  if (!propsData || propsLabels.length === 0 || data.datasets.length === 0) {
-    return <p className="chart-message chart-no-data">📉 No metrics available yet.</p>;
-  }
-
+  // Chart options
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: `User Metrics Chart (${metricsType})` },
+      title: { display: true, text: `User Metrics (${metricsType})` },
     },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: { beginAtZero: true, max: metricsType === "emotional" ? 50 : 36 },
+      y: { beginAtZero: true, suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10) },
     },
   };
+
+  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 No metrics available yet.</p>;
 
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="chart-select">
+        <select
+          value={chartType}
+          onChange={e => setChartType(e.target.value)}
+          className="chart-select"
+          disabled={!data.datasets.length}
+        >
           <option value="bar">Bar Chart</option>
           <option value="line">Line Chart</option>
         </select>
-        <select value={metricsType} onChange={(e) => setMetricsType(e.target.value)} className="chart-select">
+        <select
+          value={metricsType}
+          onChange={e => setMetricsType(e.target.value)}
+          className="chart-select"
+          disabled={!data.datasets.length}
+        >
           <option value="emotional">Emotional Metrics</option>
           <option value="screening">Screening Metrics</option>
         </select>
