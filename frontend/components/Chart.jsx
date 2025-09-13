@@ -66,6 +66,7 @@ export default function Chart() {
     localStorage.setItem("chartData", JSON.stringify(data));
   };
 
+  // Update chart after a chatbot message
   const updateAfterChat = ({ metrics = {}, screening = {} }) => {
     setChartData((prevData) => {
       const updatedData = {
@@ -79,7 +80,11 @@ export default function Chart() {
       };
 
       setChartLabels((prevLabels) => {
-        const newLabels = [...prevLabels, `Chat ${prevLabels.length + 1}`];
+        // Dynamic label: use date if available or fallback to "Chat X"
+        const newLabel = metrics.createdAt
+          ? new Date(metrics.createdAt).toLocaleDateString()
+          : `Chat ${prevLabels.length + 1}`;
+        const newLabels = [...prevLabels, newLabel];
         saveToCache(newLabels, updatedData);
         return newLabels;
       });
@@ -88,7 +93,7 @@ export default function Chart() {
     });
   };
 
-  // Make updateAfterChat available globally
+  // Expose global function
   useEffect(() => {
     window.updateAfterChat = updateAfterChat;
   }, []);

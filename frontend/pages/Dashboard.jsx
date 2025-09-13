@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("chatbot");
   const [user, setUser] = useState(null);
   const [chartData, setChartData] = useState(null);
+  const [chartLabels, setChartLabels] = useState([]);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState({ dashboard: true, todos: true, user: true });
   const [error, setError] = useState({ dashboard: null, todos: null, user: null });
@@ -34,8 +35,9 @@ export default function Dashboard() {
   const fetchDashboard = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
-      const res = await API.get("/api/dashboard");
+      const res = await API.dashboard.get(); // Use helper method
       setChartData(res.data.chartData || null);
+      setChartLabels(res.data.chartLabels || []);
       setTodos(res.data.todos || []);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -53,7 +55,7 @@ export default function Dashboard() {
   const handleTodosUpdate = async (updatedTodos) => {
     setTodos(updatedTodos); // optimistic update
     try {
-      await API.put("/api/dashboard/tasks", { tasks: updatedTodos });
+      await API.dashboard.updateTasks(updatedTodos);
     } catch (err) {
       console.error("Failed to update tasks:", err);
       setError(prev => ({ ...prev, todos: "Failed to update tasks." }));
@@ -62,11 +64,11 @@ export default function Dashboard() {
 
   // Handle chart update after chatbot message
   useEffect(() => {
-    // Expose global update function to Chatbot component
     window.updateDashboardChart = async () => {
       try {
-        const res = await API.get("/api/dashboard");
+        const res = await API.dashboard.get();
         setChartData(res.data.chartData || null);
+        setChartLabels(res.data.chartLabels || []);
         setTodos(res.data.todos || []);
       } catch (err) {
         console.error("Failed to update chart after chat:", err);
@@ -90,7 +92,7 @@ export default function Dashboard() {
       case "chatbot":
         return <Chatbot onTodosUpdate={handleTodosUpdate} />;
       case "chart":
-        return <Chart chartData={chartData} />;
+        return <Chart chartData={chartData} chartLabels={chartLabels} />;
       case "todo":
         return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
       default:

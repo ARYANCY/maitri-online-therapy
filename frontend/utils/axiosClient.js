@@ -15,7 +15,7 @@ API.auth = {
 
 // Optional: helper for dashboard endpoints
 API.dashboard = {
-  get: () => API.get("/dashboard"),
+  get: (type = "entries") => API.get(`/dashboard?type=${type}`),
   getTasks: () => API.get("/dashboard/tasks"),
   updateTasks: (tasks) => API.put("/dashboard/tasks", { tasks }),
 };

@@ -36,7 +36,11 @@ async function safeGenerate(prompt) {
 let userSessions = {};
 function cleanJsonString(str) {
   if (!str) return "{}";
-  return str.trim().replace(/^```json\s*/, "").replace(/```$/, "").trim();
+  try {
+    return str.trim().replace(/^```json\s*/, "").replace(/```$/, "").trim();
+  } catch {
+    return "{}";
+  }
 }
 
 // GET Chatbot Session
@@ -75,7 +79,7 @@ exports.postChatbot = async (req, res) => {
     const session = userSessions[userId];
 
     const { message } = req.body;
-    if (!message || !message.trim()) return res.status(400).json({ error: "Message cannot be empty" });
+    if (!message?.trim()) return res.status(400).json({ error: "Message cannot be empty" });
 
     session.messages.push({ sender: "user", text: message, timestamp: new Date().toISOString() });
     const history = session.messages.map(m => `${m.sender}: ${m.text}`).join("\n");
@@ -104,30 +108,10 @@ Respond empathetically and naturally.`;
     // 2️⃣ Metrics + Screening
     try {
       const metricsPrompt = `Analyze the user's emotional state and screening results.
-Return BOTH:
+Respond ONLY in strict JSON format with keys "metrics" and "screening". Include:
 
-1. Emotional metrics (0–50 scale):
-   stress_level, happiness_level, anxiety_level, focus_level,
-   energy_level, confidence_level, motivation_level, calmness_level,
-   sadness_level, loneliness_level, gratitude_level, overall_mood_level
-
-2. Screening results:
-   - phq9_score (0–27)
-   - gad7_score (0–21)
-   - ghq_score (0–36)
-   - risk_level: "low", "moderate", or "high"
-
-Respond ONLY in strict JSON format like this:
-{
-  "metrics": { ... },
-  "screening": {
-    "phq9_score": 12,
-    "gad7_score": 8,
-    "ghq_score": 20,
-    "risk_level": "moderate"
-  }
-}
-
+Metrics (0-50): stress_level, happiness_level, anxiety_level, overall_mood_level
+Screening: phq9_score (0-27), gad7_score (0-21), ghq_score (0-36), risk_level ("low","moderate","high")
 User message: "${message}"`;
 
       const metricsResultText = await safeGenerate(metricsPrompt);
@@ -136,15 +120,20 @@ User message: "${message}"`;
       metricsData = parsed.metrics || {};
       screeningData = parsed.screening || {};
 
-      // Save Metrics separately
+      // Save Metrics
       await Metrics.create({
         userId: user._id,
         message,
-        ...metricsData,
+        metrics: {
+          stress_level: Number(metricsData.stress_level) || 0,
+          happiness_level: Number(metricsData.happiness_level) || 0,
+          anxiety_level: Number(metricsData.anxiety_level) || 0,
+          overall_mood_level: Number(metricsData.overall_mood_level) || 0,
+        },
         createdAt: new Date(),
       });
 
-      // Save Screening separately
+      // Save Screening
       await Screening.create({
         userId: user._id,
         message,
@@ -156,38 +145,19 @@ User message: "${message}"`;
       });
 
     } catch (err) {
-      console.error("Metrics/Screening generation or saving error:", err);
-
+      console.error("Metrics/Screening error:", err);
       metricsData = {
-        stress_level: 0, happiness_level: 0, anxiety_level: 0,
-        focus_level: 0, energy_level: 0, confidence_level: 0,
-        motivation_level: 0, calmness_level: 0, sadness_level: 0,
-        loneliness_level: 0, gratitude_level: 0, overall_mood_level: 0,
+        stress_level: 0, happiness_level: 0, anxiety_level: 0, overall_mood_level: 0
       };
       screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
     }
 
     // 3️⃣ Todo Suggestions
     try {
-      const todoPrompt = `You are a wellness assistant. Based on the user's conversation and metrics below, 
-suggest 5 actionable, practical, and empathetic tasks to improve their well-being.
-
-Conversation history:
-${history}
-
-Metrics:
-${JSON.stringify(metricsData, null, 2)}
-
-Screening:
-${JSON.stringify(screeningData, null, 2)}
-
-Respond ONLY in strict JSON format like:
-{
-  "todos": [
-    { "title": "...", "completed": false },
-    ...
-  ]
-}`;
+      const todoPrompt = `You are a wellness assistant. Based on the conversation and metrics, suggest 5 actionable tasks.
+Metrics: ${JSON.stringify(metricsData)}
+Screening: ${JSON.stringify(screeningData)}
+Respond ONLY in strict JSON: { "todos": [ { "title": "...", "completed": false }, ... ] }`;
 
       const todoResultText = await safeGenerate(todoPrompt);
       todosData = JSON.parse(cleanJsonString(todoResultText)).todos || [];
@@ -198,11 +168,10 @@ Respond ONLY in strict JSON format like:
         { upsert: true, new: true }
       );
     } catch (err) {
-      console.error("Todos generation or saving error:", err);
+      console.error("Todos generation error:", err);
       todosData = [];
     }
 
-    // ✅ Final Response
     res.json({
       messages: session.messages,
       botResponse,
