@@ -6,67 +6,65 @@ import "../css/Todo.css";
 
 export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   const { t } = useTranslation();
+
   const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Load tasks from localStorage or props
+  // Load tasks from localStorage or initialTasks
   useEffect(() => {
     const stored = localStorage.getItem("tasks");
-    if (stored) {
-      setTasks(JSON.parse(stored));
-    } else {
-      setTasks(initialTasks);
-    }
+    if (stored) setTasks(JSON.parse(stored));
+    else setTasks(initialTasks);
   }, [initialTasks]);
 
-  // Persist tasks to localStorage + update allCompleted
+  // Save tasks to localStorage and update allCompleted
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
+    if (tasks.length > 0) localStorage.setItem("tasks", JSON.stringify(tasks));
+    else localStorage.removeItem("tasks");
+
     setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
   }, [tasks]);
 
-  // Optimistic update + server sync
+  // Sync with server if onUpdate provided
   const updateTasks = async (updatedTasks) => {
-    setTasks(updatedTasks); // Optimistic update
+    setTasks(updatedTasks); // optimistic update
     try {
       if (onUpdate) await onUpdate(updatedTasks);
       setError("");
     } catch (err) {
       console.error("Failed to sync tasks:", err);
-      setTasks(tasks); // rollback on failure
       setError(t("todo.updateError", "Failed to update tasks on server."));
     }
   };
 
-  // Add task
+  // Add new task
   const handleAdd = () => {
     const trimmed = input.trim();
-    if (!trimmed) return setError("");
+    if (!trimmed) return;
+
     if (tasks.length >= 10) {
       setError(t("todo.maxTasks", "Maximum 10 tasks allowed!"));
       return;
     }
-    if (tasks.some(t => t.title.toLowerCase() === trimmed.toLowerCase())) {
-      setError(t("todo.duplicateTask", "Task already exists!"));
-      return;
-    }
+
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
     updateTasks([...tasks, newTask]);
     setInput("");
-    setError("");
   };
 
-  // Toggle completion
+  // Toggle completion of a task
   const toggleDone = (id) => {
-    const updatedTasks = tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t);
-    updateTasks(updatedTasks);
+    updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
   };
 
-  // Delete task
-  const handleDelete = (id) => updateTasks(tasks.filter(t => t._id !== id));
+  // Delete a task
+  const handleDelete = (id) => {
+    updateTasks(tasks.filter(t => t._id !== id));
+  };
 
+  // Handle Enter key
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
   if (loading) return <p className="todo-loading">{t("todo.loading", "Loading tasks...")}</p>;
@@ -109,13 +107,21 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
                     checked={task.completed}
                     onChange={() => toggleDone(task._id)}
                     className="todo-checkbox"
+                    onClick={(e) => e.stopPropagation()} // prevent accidental parent clicks
                   />
-                  <span onClick={() => toggleDone(task._id)} className="todo-text">
+                  <span
+                    className="todo-text"
+                    onClick={() => toggleDone(task._id)}
+                  >
                     {task.title}
                   </span>
                 </div>
+
                 <button
-                  onClick={() => handleDelete(task._id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(task._id);
+                  }}
                   className="todo-delete"
                   aria-label={t("todo.deleteTask", { title: task.title })}
                 >
