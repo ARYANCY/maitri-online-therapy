@@ -41,17 +41,27 @@ export default function Dashboard() {
       setLoading(prev => ({ ...prev, dashboard: true }));
       const data = await API.dashboard.get();
 
-      // Transform backend metrics into chart-friendly format
-      const rawMetrics = data.metricsHistory || []; // expect array of metrics docs
-      const labels = rawMetrics.map(m => new Date(m.createdAt).toLocaleString());
-      const chartObj = {};
+      // Ensure metricsHistory is always an array
+      const rawMetrics = Array.isArray(data.metricsHistory)
+        ? data.metricsHistory
+        : data.metricsHistory
+        ? [data.metricsHistory]
+        : [];
 
+      // Build chart labels
+      const labels = rawMetrics.map(m => new Date(m.createdAt).toLocaleString());
+
+      // Convert metrics into chart-friendly arrays
+      const chartObj = {};
       if (rawMetrics.length > 0) {
         Object.keys(rawMetrics[0]).forEach(key => {
           if (["_id", "userId", "message", "createdAt", "__v"].includes(key)) return;
-          chartObj[key] = rawMetrics.map(item => item[key] || 0);
+          chartObj[key] = rawMetrics.map(item => Number(item[key]) || 0);
         });
       }
+
+      console.log("Chart Data:", chartObj);
+      console.log("Chart Labels:", labels);
 
       setChartData(chartObj);
       setChartLabels(labels);
