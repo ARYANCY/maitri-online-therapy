@@ -7,27 +7,24 @@ import "../css/Todo.css";
 export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   const { t } = useTranslation();
 
-  const [tasks, setTasks] = useState([]);
+  // Initialize tasks only once
+  const [tasks, setTasks] = useState(() => {
+    const stored = localStorage.getItem("tasks");
+    return stored ? JSON.parse(stored) : initialTasks;
+  });
+
   const [input, setInput] = useState("");
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Load tasks from localStorage or initialTasks
-  useEffect(() => {
-    const stored = localStorage.getItem("tasks");
-    if (stored) setTasks(JSON.parse(stored));
-    else setTasks(initialTasks);
-  }, [initialTasks]);
-
-  // Save tasks to localStorage and update allCompleted
+  // Save tasks to localStorage & update allCompleted
   useEffect(() => {
     if (tasks.length > 0) localStorage.setItem("tasks", JSON.stringify(tasks));
     else localStorage.removeItem("tasks");
-
     setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
   }, [tasks]);
 
-  // Sync with server if onUpdate provided
+  // Sync with server if provided
   const updateTasks = async (updatedTasks) => {
     setTasks(updatedTasks); // optimistic update
     try {
@@ -39,32 +36,20 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
     }
   };
 
-  // Add new task
   const handleAdd = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
-
     if (tasks.length >= 10) {
       setError(t("todo.maxTasks", "Maximum 10 tasks allowed!"));
       return;
     }
-
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
     updateTasks([...tasks, newTask]);
     setInput("");
   };
 
-  // Toggle completion of a task
-  const toggleDone = (id) => {
-    updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
-  };
-
-  // Delete a task
-  const handleDelete = (id) => {
-    updateTasks(tasks.filter(t => t._id !== id));
-  };
-
-  // Handle Enter key
+  const toggleDone = (id) => updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
+  const handleDelete = (id) => updateTasks(tasks.filter(t => t._id !== id));
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
   if (loading) return <p className="todo-loading">{t("todo.loading", "Loading tasks...")}</p>;
@@ -107,7 +92,7 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
                     checked={task.completed}
                     onChange={() => toggleDone(task._id)}
                     className="todo-checkbox"
-                    onClick={(e) => e.stopPropagation()} // prevent accidental parent clicks
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <span
                     className="todo-text"
