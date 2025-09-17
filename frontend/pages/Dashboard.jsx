@@ -9,10 +9,9 @@ import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const { t } = useTranslation();
-
   const [activeTab, setActiveTab] = useState("chatbot");
   const [user, setUser] = useState(null);
-  const [chartData, setChartData] = useState({});
+  const [chartData, setChartData] = useState(null);
   const [chartLabels, setChartLabels] = useState([]);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
@@ -40,47 +39,11 @@ export default function Dashboard() {
     if (!user) return;
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
-
       const data = await API.dashboard.get();
-
-      // ----- Hybrid handling of metrics -----
-      const rawMetrics = Array.isArray(data.metricsHistory)
-        ? data.metricsHistory
-        : data.metricsHistory
-        ? [data.metricsHistory]
-        : [];
-
-      const labels = rawMetrics.length > 0
-        ? rawMetrics.map(m => new Date(m.createdAt).toLocaleString())
-        : ["No Data"];
-
-      const chartObj = {};
-      if (rawMetrics.length > 0) {
-        Object.keys(rawMetrics[0]).forEach(key => {
-          if (["_id", "userId", "message", "createdAt", "__v"].includes(key)) return;
-          chartObj[key] = rawMetrics.map(item => Number(item[key]) || 0);
-        });
-      }
-
-      // ----- Fallback if no metrics -----
-      const EMOTIONAL_KEYS = [
-        "stress_level", "happiness_level", "anxiety_level", "focus_level",
-        "energy_level", "confidence_level", "motivation_level", "calmness_level",
-        "sadness_level", "loneliness_level", "gratitude_level", "overall_mood_level"
-      ];
-
-      if (Object.keys(chartObj).length === 0) {
-        EMOTIONAL_KEYS.forEach(key => chartObj[key] = [0]);
-      }
-
-      setChartData(chartObj);
-      setChartLabels(labels);
+      setChartData(data.chartData || null);
+      setChartLabels(data.chartLabels || []);
       setTodos(data.todos || []);
       setError(prev => ({ ...prev, dashboard: null }));
-
-      console.log("Chart Data:", chartObj);
-      console.log("Chart Labels:", labels);
-
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       if (err.message.includes("401")) {
@@ -125,10 +88,8 @@ export default function Dashboard() {
 
   // ----- Render content -----
   const renderContent = () => {
-    if (loading.user || loading.dashboard) 
-      return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
-    if (error.dashboard) 
-      return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
+    if (loading.user || loading.dashboard) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+    if (error.dashboard) return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
 
     switch (activeTab) {
       case "chatbot":

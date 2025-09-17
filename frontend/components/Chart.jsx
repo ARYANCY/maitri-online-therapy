@@ -25,78 +25,62 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart({ chartData = {}, chartLabels = [] }) {
+export default function Chart({ chartData = null, chartLabels = [] }) {
   const { t } = useTranslation();
 
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  const EMOTIONAL_KEYS = [
-    "stress_level", "happiness_level", "anxiety_level", "focus_level",
-    "energy_level", "confidence_level", "motivation_level", "calmness_level",
-    "sadness_level", "loneliness_level", "gratitude_level", "overall_mood_level"
-  ];
-
-  const SCREENING_KEYS = ["phq9_score", "gad7_score", "ghq_score"];
-
-  const COLORS = [
-    "255,99,132", "75,192,192", "255,206,86", "54,162,235",
-    "153,102,255", "255,159,64", "199,199,199", "83,102,255",
-    "255,102,178", "102,255,178", "255,153,51", "51,204,204"
-  ];
-
+  // Memoized chart datasets
   const data = useMemo(() => {
-    if (!chartLabels.length && Object.keys(chartData).length === 0) return { datasets: [], labels: [] };
+    if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
 
-    let keys = metricsType === "emotional" ? EMOTIONAL_KEYS : SCREENING_KEYS;
+    let datasets = [];
 
-    const datasets = keys.map((key, index) => {
-      if (!(key in chartData)) return null;
+    if (metricsType === "emotional") {
+      datasets = [
+        { label: t("chart.stress", "Stress"), data: chartData.stress_level || [], color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: chartData.happiness_level || [], color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: chartData.anxiety_level || [], color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: chartData.overall_mood_level || [], color: "54,162,235" },
+      ];
+    } else {
+      datasets = [
+        { label: t("chart.phq9", "PHQ-9"), data: chartData.phq9_score || [], color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: chartData.gad7_score || [], color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: chartData.ghq_score || [], color: "255,206,86" },
+      ];
+    }
 
-      let metricData = chartData[key];
-
-      // HYBRID: wrap single number into array if needed
-      if (!Array.isArray(metricData)) metricData = [metricData];
-
-      if (!metricData.length) return null;
-
-      return {
-        label: t(`chart.${key}`, key.replace("_", " ").toUpperCase()),
-        data: metricData,
-        borderColor: `rgba(${COLORS[index % COLORS.length]},1)`,
-        backgroundColor: `rgba(${COLORS[index % COLORS.length]},0.6)`,
+    datasets = datasets.filter(ds => ds.data.length > 0)
+      .map(ds => ({
+        label: ds.label,
+        data: ds.data,
+        borderColor: `rgba(${ds.color},1)`,
+        backgroundColor: `rgba(${ds.color},0.6)`,
         fill: chartType === "line",
         spanGaps: true,
-      };
-    }).filter(Boolean);
+      }));
 
-    // fallback for labels if empty and metricData exists
-    const labels = chartLabels.length
-      ? chartLabels
-      : (datasets[0]?.data.map((_, i) => `Point ${i + 1}`) || []);
-
-    return { labels, datasets };
+    return { labels: chartLabels, datasets };
   }, [chartData, chartLabels, chartType, metricsType, t]);
 
-  const options = useMemo(() => ({
+  // Chart options
+  const options = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: {
-        display: true,
-        text: t("chart.title", "User Metrics") + ` (${metricsType})`,
-      },
+      title: { display: true, text: t("chart.title", "User Metrics") + ` (${metricsType})` },
     },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
       y: { beginAtZero: true, suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10) },
     },
-  }), [data, metricsType, t]);
+  };
 
-  if (!data.datasets.length)
-    return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
+  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
 
   return (
     <div className="chart-card">
@@ -110,7 +94,6 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
           <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
           <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
-
         <select
           value={metricsType}
           onChange={e => setMetricsType(e.target.value)}
