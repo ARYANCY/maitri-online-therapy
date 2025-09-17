@@ -10,7 +10,7 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend,//
+  Legend,
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
@@ -25,94 +25,86 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart({ metricsRecords = [], metricsType = "emotional" }) {
+export default function Chart({ chartData = {}, chartLabels = [] }) {
   const { t } = useTranslation();
+
   const [chartType, setChartType] = useState("bar");
+  const [metricsType, setMetricsType] = useState("emotional");
 
-  // ✅ Define metrics
-  const emotionalMetrics = [
-    { key: "stress_level", label: t("chart.stress", "Stress"), color: "255,99,132" },
-    { key: "happiness_level", label: t("chart.happiness", "Happiness"), color: "75,192,192" },
-    { key: "anxiety_level", label: t("chart.anxiety", "Anxiety"), color: "255,206,86" },
-    { key: "overall_mood_level", label: t("chart.overallMood", "Overall Mood"), color: "54,162,235" },
+  const EMOTIONAL_KEYS = [
+    "stress_level", "happiness_level", "anxiety_level", "focus_level",
+    "energy_level", "confidence_level", "motivation_level", "calmness_level",
+    "sadness_level", "loneliness_level", "gratitude_level", "overall_mood_level"
   ];
 
-  const screeningMetrics = [
-    { key: "phq9_score", label: t("chart.phq9", "PHQ-9"), color: "255,99,132" },
-    { key: "gad7_score", label: t("chart.gad7", "GAD-7"), color: "54,162,235" },
-    { key: "ghq_score", label: t("chart.ghq", "GHQ"), color: "255,206,86" },
+  const SCREENING_KEYS = ["phq9_score", "gad7_score", "ghq_score"];
+
+  const COLORS = [
+    "255,99,132", "75,192,192", "255,206,86", "54,162,235",
+    "153,102,255", "255,159,64", "199,199,199", "83,102,255",
+    "255,102,178", "102,255,178", "255,153,51", "51,204,204"
   ];
-
-  const chartLabels = useMemo(() => {
-    return metricsRecords.map(record => {
-      const date = new Date(record.createdAt);
-      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    });
-  }, [metricsRecords]);
-
-  const selectedMetrics = metricsType === "emotional" ? emotionalMetrics : screeningMetrics;
 
   const data = useMemo(() => {
-    const datasets = selectedMetrics.map(m => {
-      const values = metricsRecords.map(record => {
-        const source = metricsType === "emotional" ? record.metrics : record.screening;
-        return source?.[m.key] ?? 0;
-      });
+    if (!chartLabels.length) return { datasets: [], labels: [] };
+
+    let keys = metricsType === "emotional" ? EMOTIONAL_KEYS : SCREENING_KEYS;
+    const datasets = keys.map((key, index) => {
+      const metricData = chartData[key] || [];
+      if (!metricData.length) return null;
 
       return {
-        label: m.label,
-        data: values,
-        borderColor: `rgba(${m.color},1)`,
-        backgroundColor: `rgba(${m.color},0.5)`,
+        label: t(`chart.${key}`, key.replace("_", " ").toUpperCase()),
+        data: metricData,
+        borderColor: `rgba(${COLORS[index % COLORS.length]},1)`,
+        backgroundColor: `rgba(${COLORS[index % COLORS.length]},0.6)`,
         fill: chartType === "line",
-        tension: 0.3,
+        spanGaps: true,
       };
-    });
+    }).filter(Boolean);
 
     return { labels: chartLabels, datasets };
-  }, [metricsRecords, chartLabels, chartType, metricsType]);
+  }, [chartData, chartLabels, chartType, metricsType, t]);
 
-  const allValues = data.datasets.flatMap(ds => ds.data);
-  const maxY = allValues.length ? Math.max(...allValues, 10) : 10;
-
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
+    animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
       title: {
         display: true,
-        text: `${t("chart.title", "User Metrics")} (${metricsType === "emotional"
-          ? t("chart.emotionalMetrics", "Emotional Metrics")
-          : t("chart.screeningMetrics", "Screening Metrics")
-        })`,
+        text: t("chart.title", "User Metrics") + ` (${metricsType})`,
       },
     },
     scales: {
-      x: {
-        title: { display: true, text: t("chart.time", "Date & Time") },
-      },
-      y: {
-        beginAtZero: true,
-        suggestedMax: maxY,
-        title: { display: true, text: t("chart.value", "Value") },
-      },
+      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
+      y: { beginAtZero: true, suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10) },
     },
-  };
+  }), [data, metricsType, t]);
 
-  if (!data.datasets.some(ds => ds.data.some(v => v > 0))) {
+  if (!data.datasets.length)
     return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
-  }
 
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select value={chartType} onChange={e => setChartType(e.target.value)} className="chart-select">
+        <select
+          value={chartType}
+          onChange={e => setChartType(e.target.value)}
+          className="chart-select"
+          disabled={!data.datasets.length}
+        >
           <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
           <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
 
-        <select value={metricsType} onChange={e => setMetricsType(e.target.value)} className="chart-select">
+        <select
+          value={metricsType}
+          onChange={e => setMetricsType(e.target.value)}
+          className="chart-select"
+          disabled={!data.datasets.length}
+        >
           <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
           <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
         </select>

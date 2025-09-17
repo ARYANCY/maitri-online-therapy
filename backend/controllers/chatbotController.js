@@ -81,7 +81,8 @@ exports.postChatbot = async (req, res) => {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: "Message cannot be empty" });
 
-    session.messages.push({ sender: "user", text: message, timestamp: new Date().toISOString() });
+    const timestamp = new Date().toISOString();
+    session.messages.push({ sender: "user", text: message, timestamp });
     const history = session.messages.map(m => `${m.sender}: ${m.text}`).join("\n");
 
     let botResponse = "";
@@ -102,34 +103,46 @@ Respond empathetically and naturally.`;
     } catch (err) {
       console.error("Chatbot generation error:", err);
       botResponse = "Sorry, I couldn't process that message.";
-      session.messages.push({ sender: "bot", text: botResponse });
+      session.messages.push({ sender: "bot", text: botResponse, timestamp });
     }
 
     // 2️⃣ Metrics + Screening
     try {
       const metricsPrompt = `Analyze the user's emotional state and screening results.
-Respond ONLY in strict JSON format with keys "metrics" and "screening". Include:
-
-Metrics (0-50): stress_level, happiness_level, anxiety_level, overall_mood_level
+Respond ONLY in strict JSON format with keys "metrics" and "screening".
+Metrics (0-50): stress_level, happiness_level, anxiety_level, focus_level, energy_level,
+confidence_level, motivation_level, calmness_level, sadness_level, loneliness_level,
+gratitude_level, overall_mood_level
 Screening: phq9_score (0-27), gad7_score (0-21), ghq_score (0-36), risk_level ("low","moderate","high")
 User message: "${message}"`;
 
       const metricsResultText = await safeGenerate(metricsPrompt);
       const parsed = JSON.parse(cleanJsonString(metricsResultText));
 
-      metricsData = parsed.metrics || {};
-      screeningData = parsed.screening || {};
+      // Ensure all emotional metrics are numbers
+      const EMOTIONAL_KEYS = [
+        "stress_level", "happiness_level", "anxiety_level", "focus_level", "energy_level",
+        "confidence_level", "motivation_level", "calmness_level", "sadness_level",
+        "loneliness_level", "gratitude_level", "overall_mood_level"
+      ];
+      metricsData = {};
+      EMOTIONAL_KEYS.forEach(key => {
+        metricsData[key] = Number(parsed.metrics?.[key]) || 0;
+      });
+
+      // Screening metrics
+      screeningData = {
+        phq9_score: Number(parsed.screening?.phq9_score) || 0,
+        gad7_score: Number(parsed.screening?.gad7_score) || 0,
+        ghq_score: Number(parsed.screening?.ghq_score) || 0,
+        risk_level: parsed.screening?.risk_level || "low",
+      };
 
       // Save Metrics
       await Metrics.create({
         userId: user._id,
         message,
-        metrics: {
-          stress_level: Number(metricsData.stress_level) || 0,
-          happiness_level: Number(metricsData.happiness_level) || 0,
-          anxiety_level: Number(metricsData.anxiety_level) || 0,
-          overall_mood_level: Number(metricsData.overall_mood_level) || 0,
-        },
+        ...metricsData,
         createdAt: new Date(),
       });
 
@@ -137,18 +150,14 @@ User message: "${message}"`;
       await Screening.create({
         userId: user._id,
         message,
-        phq9_score: Number(screeningData.phq9_score) || 0,
-        gad7_score: Number(screeningData.gad7_score) || 0,
-        ghq_score: Number(screeningData.ghq_score) || 0,
-        risk_level: screeningData.risk_level || "low",
+        ...screeningData,
         createdAt: new Date(),
       });
 
     } catch (err) {
       console.error("Metrics/Screening error:", err);
-      metricsData = {
-        stress_level: 0, happiness_level: 0, anxiety_level: 0, overall_mood_level: 0
-      };
+      // Default fallback
+      metricsData = EMOTIONAL_KEYS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
       screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
     }
 
