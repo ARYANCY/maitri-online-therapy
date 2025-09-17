@@ -42,7 +42,7 @@
   background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
   color: #f1f1f1;
   transition: all 0.35s ease;
-  backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(2px) saturate(180%);
   letter-spacing: 0.6px;
   position: relative;
   overflow: hidden;
