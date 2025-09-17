@@ -46,11 +46,18 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
   ];
 
   const data = useMemo(() => {
-    if (!chartLabels.length) return { datasets: [], labels: [] };
+    if (!chartLabels.length && Object.keys(chartData).length === 0) return { datasets: [], labels: [] };
 
     let keys = metricsType === "emotional" ? EMOTIONAL_KEYS : SCREENING_KEYS;
+
     const datasets = keys.map((key, index) => {
-      const metricData = chartData[key] || [];
+      if (!(key in chartData)) return null;
+
+      let metricData = chartData[key];
+
+      // HYBRID: wrap single number into array if needed
+      if (!Array.isArray(metricData)) metricData = [metricData];
+
       if (!metricData.length) return null;
 
       return {
@@ -63,7 +70,12 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
       };
     }).filter(Boolean);
 
-    return { labels: chartLabels, datasets };
+    // fallback for labels if empty and metricData exists
+    const labels = chartLabels.length
+      ? chartLabels
+      : (datasets[0]?.data.map((_, i) => `Point ${i + 1}`) || []);
+
+    return { labels, datasets };
   }, [chartData, chartLabels, chartType, metricsType, t]);
 
   const options = useMemo(() => ({
