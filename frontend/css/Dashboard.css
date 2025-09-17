@@ -1,42 +1,23 @@
-.dashboard {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #4a4646, #000000, #424549);
-  background-attachment: fixed;
-  font-family: "Poppins", sans-serif;
-  display: flex;
-  flex-direction: column;
-}
-
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
 .dashboard-tabs {
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
   list-style: none;
   padding: 0;
   justify-content: center;
   position: relative;
   flex-wrap: wrap;
+  border: none;
 }
 
 .dashboard-tab-btn {
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   font-size: 1rem;
-  border-radius: 0.75rem 0.75rem 0 0;
+  border-radius: 0.75rem;
   border: none;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
   transition: all 0.3s ease;
   backdrop-filter: blur(8px);
@@ -62,26 +43,20 @@
 
 .dashboard-tab-btn:hover {
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .dashboard-tab-btn.active {
-  background: #fff;
-  color: #333;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
-  transform: translateY(-3px);
+  background: linear-gradient(135deg, #4a90e2, #6ab8f7);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
 }
 
 .dashboard-tab-btn.active::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 3px;
-  background: linear-gradient(90deg, #4a90e2, #6ab8f7);
-  border-radius: 2px;
+  display: none;
 }
+
 
 .dashboard-content {
   background: rgba(255, 255, 255, 0.75);
