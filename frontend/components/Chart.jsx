@@ -10,7 +10,7 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend,//
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
