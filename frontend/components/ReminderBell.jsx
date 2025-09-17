@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import API from "../utils/axiosClient";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import "../css/ReminderBell.css";
 
 export default function ReminderBell({ onCreated }) {
+  const { t } = useTranslation();
+
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState("1day");
   const [customISO, setCustomISO] = useState("");
-  const [message, setMessage] = useState("Quick reminder from Maitri");
+  const [message, setMessage] = useState(t("reminder.defaultMessage", "Quick reminder from Maitri"));
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState("");
   const [reminders, setReminders] = useState([]);
@@ -19,7 +22,7 @@ export default function ReminderBell({ onCreated }) {
       setReminders(res.data.reminders ?? []);
     } catch (err) {
       console.error("Fetch reminders error:", err);
-      setInfo("Failed to load reminders");
+      setInfo(t("reminder.fetchError", "Failed to load reminders"));
     }
   };
 
@@ -47,7 +50,7 @@ export default function ReminderBell({ onCreated }) {
     e.preventDefault();
     const sendAt = computeSendAt();
     if (!sendAt) {
-      setInfo("Please choose a valid date/time for custom option.");
+      setInfo(t("reminder.invalidDate", "Please choose a valid date/time for custom option."));
       return;
     }
 
@@ -55,13 +58,13 @@ export default function ReminderBell({ onCreated }) {
     setInfo("");
     try {
       const res = await API.post("/api/reminders", { message, sendAt });
-      setInfo("Reminder scheduled!");
+      setInfo(t("reminder.scheduled", "Reminder scheduled!"));
       if (onCreated) onCreated(res.data.reminder);
       await fetchReminders();
       setOpen(false);
     } catch (err) {
       console.error("Error creating reminder:", err);
-      setInfo(err.response?.data?.error || "Failed to schedule reminder");
+      setInfo(err.response?.data?.error || t("reminder.scheduleError", "Failed to schedule reminder"));
     } finally {
       setLoading(false);
     }
@@ -71,10 +74,10 @@ export default function ReminderBell({ onCreated }) {
     try {
       await API.delete(`/api/reminders/${id}`);
       setReminders((prev) => prev.filter((r) => r._id !== id));
-      setInfo("Reminder cancelled");
+      setInfo(t("reminder.cancelled", "Reminder cancelled"));
     } catch (err) {
       console.error("Error cancelling reminder:", err);
-      setInfo(err.response?.data?.error || "Failed to cancel reminder");
+      setInfo(err.response?.data?.error || t("reminder.cancelError", "Failed to cancel reminder"));
     }
   };
 
@@ -96,19 +99,19 @@ export default function ReminderBell({ onCreated }) {
             transition={{ duration: 0.3 }}
           >
             <div className="reminder-header">
-              <h3>Reminders</h3>
+              <h3>{t("reminder.title", "Reminders")}</h3>
               <button className="reminder-close" onClick={() => setOpen(false)}>✕</button>
             </div>
 
             <form className="reminder-form" onSubmit={handleSubmit}>
-              <label>Message</label>
+              <label>{t("reminder.message", "Message")}</label>
               <textarea
                 rows={2}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               />
 
-              <label>When</label>
+              <label>{t("reminder.when", "When")}</label>
               <div className="reminder-options">
                 {["1day", "2day", "3day", "1week", "custom"].map((p) => (
                   <div className="reminder-radio" key={p}>
@@ -119,7 +122,11 @@ export default function ReminderBell({ onCreated }) {
                       checked={preset === p}
                       onChange={() => setPreset(p)}
                     />
-                    <label htmlFor={p}>{p === "custom" ? "Custom date/time" : `In ${p}`}</label>
+                    <label htmlFor={p}>
+                      {p === "custom"
+                        ? t("reminder.customOption", "Custom date/time")
+                        : t(`reminder.${p}`, `In ${p}`)}
+                    </label>
                   </div>
                 ))}
               </div>
@@ -133,7 +140,7 @@ export default function ReminderBell({ onCreated }) {
               )}
 
               <button type="submit" className="reminder-submit" disabled={loading}>
-                {loading ? "Scheduling..." : "Schedule"}
+                {loading ? t("reminder.scheduling", "Scheduling...") : t("reminder.schedule", "Schedule")}
               </button>
             </form>
 
@@ -142,11 +149,13 @@ export default function ReminderBell({ onCreated }) {
             <hr className="reminder-divider" />
 
             <ul className="reminder-list">
-              {reminders.length === 0 && <li className="reminder-empty">No reminders yet.</li>}
+              {reminders.length === 0 && <li className="reminder-empty">{t("reminder.empty", "No reminders yet.")}</li>}
               {reminders.map((r) => (
                 <li className="reminder-item" key={r._id}>
                   <span>{r.message} — <small>{new Date(r.sendAt).toLocaleString()}</small></span>
-                  <button className="reminder-cancel" onClick={() => handleCancel(r._id)}>Cancel</button>
+                  <button className="reminder-cancel" onClick={() => handleCancel(r._id)}>
+                    {t("reminder.cancel", "Cancel")}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -163,7 +172,7 @@ export default function ReminderBell({ onCreated }) {
       <button
         className="reminder-bell-btn"
         onClick={() => setOpen(true)}
-        title="Manage reminders"
+        title={t("reminder.manage", "Manage reminders")}
       >
         🔔
       </button>

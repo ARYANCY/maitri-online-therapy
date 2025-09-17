@@ -1,0 +1,118 @@
+// i18n.js
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+// Translation resources (JS objects)
+const resources = {
+  en: {
+    translation: {
+      "Hello, {{name}}": "Hello, {{name}}",
+      "Feeling down? Make a new friend!": "Feeling down? Make a new friend!",
+      "My Tasks": "My Tasks",
+      "Add a new task...": "Add a new task...",
+      "Maximum 10 tasks allowed!": "Maximum 10 tasks allowed!",
+      "No tasks yet.": "No tasks yet.",
+      "All tasks completed! Amazing!": "All tasks completed! Amazing!",
+      "Type a message...": "Type a message...",
+      "Send": "Send",
+      "Please log in first.": "Please log in first.",
+      "Cannot connect to server.": "Cannot connect to server.",
+      "Sorry, I couldn't process that message.": "Sorry, I couldn't process that message.",
+      "User Metrics (emotional)": "User Metrics (emotional)",
+      "User Metrics (screening)": "User Metrics (screening)",
+      "Bar Chart": "Bar Chart",
+      "Line Chart": "Line Chart",
+      "Emotional Metrics": "Emotional Metrics",
+      "Screening Metrics": "Screening Metrics",
+      "No metrics available yet.": "No metrics available yet.",
+      "Reminders": "Reminders",
+      "Message": "Message",
+      "When": "When",
+      "Custom date/time": "Custom date/time",
+      "Schedule": "Schedule",
+      "Scheduling...": "Scheduling...",
+      "Reminder scheduled!": "Reminder scheduled!",
+      "Reminder cancelled": "Reminder cancelled",
+      "No reminders yet.": "No reminders yet.",
+      "Please choose a valid date/time for custom option.": "Please choose a valid date/time for custom option.",
+    },
+  },
+  hi: {
+    translation: {
+      "Hello, {{name}}": "नमस्ते, {{name}}",
+      "Feeling down? Make a new friend!": "उदास हैं? नया दोस्त बनाइए!",
+      "My Tasks": "मेरे कार्य",
+      "Add a new task...": "नया कार्य जोड़ें...",
+      "Maximum 10 tasks allowed!": "अधिकतम 10 कार्य ही जोड़ सकते हैं!",
+      "No tasks yet.": "अभी तक कोई कार्य नहीं है।",
+      "All tasks completed! Amazing!": "सभी कार्य पूरे! शानदार!",
+      "Type a message...": "संदेश टाइप करें...",
+      "Send": "भेजें",
+      "Please log in first.": "कृपया पहले लॉगिन करें।",
+      "Cannot connect to server.": "सर्वर से कनेक्ट नहीं कर सकते।",
+      "Sorry, I couldn't process that message.": "माफ़ करें, यह संदेश प्रोसेस नहीं हो सका।",
+      "User Metrics (emotional)": "उपयोगकर्ता मेट्रिक्स (भावनात्मक)",
+      "User Metrics (screening)": "उपयोगकर्ता मेट्रिक्स (स्क्रीनिंग)",
+      "Bar Chart": "बार चार्ट",
+      "Line Chart": "लाइन चार्ट",
+      "Emotional Metrics": "भावनात्मक मेट्रिक्स",
+      "Screening Metrics": "स्क्रीनिंग मेट्रिक्स",
+      "No metrics available yet.": "कोई मेट्रिक्स उपलब्ध नहीं।",
+      "Reminders": "अनुस्मारक",
+      "Message": "संदेश",
+      "When": "समय",
+      "Custom date/time": "कस्टम दिनांक/समय",
+      "Schedule": "अनुसूचित करें",
+      "Scheduling...": "अनुसूचित कर रहे हैं...",
+      "Reminder scheduled!": "अनुस्मारक सेट हो गया!",
+      "Reminder cancelled": "अनुस्मारक रद्द किया गया",
+      "No reminders yet.": "अभी तक कोई अनुस्मारक नहीं है।",
+      "Please choose a valid date/time for custom option.": "कृपया कस्टम विकल्प के लिए मान्य दिनांक/समय चुनें।",
+    },
+  },
+  as: {
+    translation: {
+      "Hello, {{name}}": "নমস্কাৰ, {{name}}",
+      "Feeling down? Make a new friend!": "দুখী আছেন? এটা নতুন বন্ধু বনাওক!",
+      "My Tasks": "মোৰ কাম",
+      "Add a new task...": "এখন নতুন কাম যোগ কৰক...",
+      "Maximum 10 tasks allowed!": "সৰ্বাধিক ১০টা কামহে যোগ কৰিব পাৰি!",
+      "No tasks yet.": "এতিয়ালৈকে কোনো কাম নাই।",
+      "All tasks completed! Amazing!": "সকলো কাম সম্পূৰ্ণ! অসাধাৰণ!",
+      "Type a message...": "এখন বাৰ্তা টাইপ কৰক...",
+      "Send": "পঠিয়াওক",
+      "Please log in first.": "অনুগ্ৰহ কৰি প্ৰথমে লগইন কৰক।",
+      "Cannot connect to server.": "চাৰ্ভাৰলৈ সংযোগ কৰিব নোৱাৰি।",
+      "Sorry, I couldn't process that message.": "দুখিত, এই বাৰ্তাটো প্ৰক্ৰিয়াকৰণ কৰিব পৰা নগ'ল।",
+      "User Metrics (emotional)": "ব্যৱহাৰকাৰীৰ মেট্ৰিক্স (আবেগিক)",
+      "User Metrics (screening)": "ব্যৱহাৰকাৰীৰ মেট্ৰিক্স (স্ক্ৰীণিং)",
+      "Bar Chart": "বার চাৰ্ট",
+      "Line Chart": "লাইন চাৰ্ট",
+      "Emotional Metrics": "আবেগিক মেট্ৰিক্স",
+      "Screening Metrics": "স্ক্ৰীণিং মেট্ৰিক্স",
+      "No metrics available yet.": "এতিয়ালৈকে কোনো মেট্ৰিক্স উপলব্ধ নহয়।",
+      "Reminders": "স্মৰণ",
+      "Message": "বাৰ্তা",
+      "When": "সময়",
+      "Custom date/time": "কাষ্টম তাৰিখ/সময়",
+      "Schedule": "নিয়োগ কৰক",
+      "Scheduling...": "নিয়োগ কৰিছো...",
+      "Reminder scheduled!": "স্মৰণ নিৰ্ধাৰণ কৰা হৈছে!",
+      "Reminder cancelled": "স্মৰণ বাতিল কৰা হৈছে",
+      "No reminders yet.": "এতিয়ালৈকে কোনো স্মৰণ নাই।",
+      "Please choose a valid date/time for custom option.": "অনুগ্ৰহ কৰি কাষ্টম বিকল্পৰ বাবে বৈধ তাৰিখ/সময় বাছক।",
+    },
+  },
+};
+
+// Initialize i18next
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: "en", // default language
+    fallbackLng: "en",
+    interpolation: { escapeValue: false },
+  });
+
+export default i18n;

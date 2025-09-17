@@ -60,6 +60,43 @@ html, body {
 .navbar-chat-btn:hover {
   background-color: #357ABD;
 }
+.navbar.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  margin: 10px;
+}
+
+/* Language switcher styles */
+.lang-switcher {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.lang-switcher button {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.lang-switcher button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+/* Optional: adjust navbar text color for better glass look */
+.navbar-title, .navbar-user, .navbar-chat-btn {
+  color: #fff;
+}
 
 .navbar-bottom {
   display: flex;

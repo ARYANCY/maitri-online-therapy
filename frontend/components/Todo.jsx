@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "react-i18next";
 import "../css/Todo.css";
 
 export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
+  const { t } = useTranslation();
+
   const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
   const [allCompleted, setAllCompleted] = useState(false);
@@ -25,7 +28,7 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
       setError("");
     } catch (err) {
       console.error("Failed to sync tasks:", err);
-      setError("Failed to update tasks on server.");
+      setError(t("todo.updateError", "Failed to update tasks on server."));
     }
   };
 
@@ -34,7 +37,7 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
     const trimmed = input.trim();
     if (!trimmed) return;
     if (tasks.length >= 10) {
-      setError("Maximum 10 tasks allowed!");
+      setError(t("todo.maxTasks", "Maximum 10 tasks allowed!"));
       return;
     }
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
@@ -51,11 +54,11 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
 
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
-  if (loading) return <p className="todo-loading">Loading tasks...</p>;
+  if (loading) return <p className="todo-loading">{t("todo.loading", "Loading tasks...")}</p>;
 
   return (
     <div className="todo-container">
-      <h2 className="todo-title">My Tasks</h2>
+      <h2 className="todo-title">{t("todo.title", "My Tasks")}</h2>
 
       <div className="todo-input-area">
         <input
@@ -63,16 +66,16 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="Add a new task..."
+          placeholder={t("todo.placeholder", "Add a new task...")}
           className="todo-input"
         />
-        <button onClick={handleAdd} className="todo-add-btn">Add</button>
+        <button onClick={handleAdd} className="todo-add-btn">{t("todo.add", "Add")}</button>
       </div>
 
       {error && <p className="todo-error">{error}</p>}
 
       {tasks.length === 0 ? (
-        <p className="todo-empty">No tasks yet.</p>
+        <p className="todo-empty">{t("todo.empty", "No tasks yet.")}</p>
       ) : (
         <ul className="todo-list">
           <AnimatePresence>
@@ -99,7 +102,7 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
                 <button
                   onClick={() => handleDelete(task._id)}
                   className="todo-delete"
-                  aria-label={`Delete ${task.title}`}
+                  aria-label={t("todo.deleteTask", { title: task.title })}
                 >
                   ✕
                 </button>
@@ -116,7 +119,7 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
           transition={{ duration: 0.6, type: "spring", stiffness: 250 }}
           className="todo-celebration"
         >
-          🎉 All tasks completed! Amazing! 🎉
+          {t("todo.completedAll", "🎉 All tasks completed! Amazing! 🎉")}
         </motion.div>
       )}
     </div>

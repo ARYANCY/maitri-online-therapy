@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useTranslation } from "react-i18next";
 
 ChartJS.register(
   CategoryScale,
@@ -25,6 +26,8 @@ ChartJS.register(
 );
 
 export default function Chart({ chartData = null, chartLabels = [] }) {
+  const { t } = useTranslation();
+
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
@@ -36,16 +39,16 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
 
     if (metricsType === "emotional") {
       datasets = [
-        { label: "Stress", data: chartData.stress_level || [], color: "255,99,132" },
-        { label: "Happiness", data: chartData.happiness_level || [], color: "75,192,192" },
-        { label: "Anxiety", data: chartData.anxiety_level || [], color: "255,206,86" },
-        { label: "Overall Mood", data: chartData.overall_mood_level || [], color: "54,162,235" },
+        { label: t("chart.stress", "Stress"), data: chartData.stress_level || [], color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: chartData.happiness_level || [], color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: chartData.anxiety_level || [], color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: chartData.overall_mood_level || [], color: "54,162,235" },
       ];
     } else {
       datasets = [
-        { label: "PHQ-9", data: chartData.phq9_score || [], color: "255,99,132" },
-        { label: "GAD-7", data: chartData.gad7_score || [], color: "54,162,235" },
-        { label: "GHQ", data: chartData.ghq_score || [], color: "255,206,86" },
+        { label: t("chart.phq9", "PHQ-9"), data: chartData.phq9_score || [], color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: chartData.gad7_score || [], color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: chartData.ghq_score || [], color: "255,206,86" },
       ];
     }
 
@@ -60,7 +63,7 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
       }));
 
     return { labels: chartLabels, datasets };
-  }, [chartData, chartLabels, chartType, metricsType]);
+  }, [chartData, chartLabels, chartType, metricsType, t]);
 
   // Chart options
   const options = {
@@ -69,7 +72,7 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: `User Metrics (${metricsType})` },
+      title: { display: true, text: t("chart.title", "User Metrics") + ` (${metricsType})` },
     },
     scales: {
       x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
@@ -77,7 +80,7 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
     },
   };
 
-  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 No metrics available yet.</p>;
+  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
 
   return (
     <div className="chart-card">
@@ -88,8 +91,8 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
           className="chart-select"
           disabled={!data.datasets.length}
         >
-          <option value="bar">Bar Chart</option>
-          <option value="line">Line Chart</option>
+          <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
+          <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
         <select
           value={metricsType}
@@ -97,8 +100,8 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
           className="chart-select"
           disabled={!data.datasets.length}
         >
-          <option value="emotional">Emotional Metrics</option>
-          <option value="screening">Screening Metrics</option>
+          <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
+          <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
         </select>
       </div>
 

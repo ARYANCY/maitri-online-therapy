@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import API from "../utils/axiosClient";
 import "../css/Chat.css";
+import { useTranslation } from "react-i18next";
 
 export default function Chatbot({ onTodosUpdate }) {
+  const { t } = useTranslation();
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +20,7 @@ export default function Chatbot({ onTodosUpdate }) {
     try {
       const session = await API.auth.checkSession();
       if (!session.user) {
-        setMessages([{ sender: "bot", text: "Please log in first." }]);
+        setMessages([{ sender: "bot", text: t("chatbot.loginPrompt", "Please log in first.") }]);
         return;
       }
 
@@ -26,7 +29,7 @@ export default function Chatbot({ onTodosUpdate }) {
       if (onTodosUpdate) onTodosUpdate(res.todos || []);
     } catch (err) {
       console.error("Fetch messages error:", err);
-      setMessages([{ sender: "bot", text: "Cannot connect to server." }]);
+      setMessages([{ sender: "bot", text: t("chatbot.connectionError", "Cannot connect to server.") }]);
     }
   };
 
@@ -51,7 +54,7 @@ export default function Chatbot({ onTodosUpdate }) {
       console.error("Send message error:", err);
       setMessages(prev => [
         ...prev,
-        { sender: "bot", text: "Sorry, I couldn't process that message." },
+        { sender: "bot", text: t("chatbot.sendError", "Sorry, I couldn't process that message.") },
       ]);
     } finally {
       setLoading(false);
@@ -77,13 +80,13 @@ export default function Chatbot({ onTodosUpdate }) {
         <input
           type="text"
           value={input}
-          placeholder="Type a message..."
+          placeholder={t("chatbot.inputPlaceholder", "Type a message...")}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           disabled={loading}
         />
         <button onClick={handleSend} disabled={loading}>
-          {loading ? "..." : "Send"}
+          {loading ? "..." : t("chatbot.sendButton", "Send")}
         </button>
       </div>
     </div>
