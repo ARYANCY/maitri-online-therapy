@@ -35,26 +35,37 @@ export default function Dashboard() {
   }, []);
 
   // ----- Fetch dashboard data -----
-  const fetchDashboardData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(prev => ({ ...prev, dashboard: true }));
-      const data = await API.dashboard.get();
-      setChartData(data.chartData || null);
-      setChartLabels(data.chartLabels || []);
-      setTodos(data.todos || []);
-      setError(prev => ({ ...prev, dashboard: null }));
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-      if (err.message.includes("401")) {
-        window.location.href = "/login";
-      } else {
-        setError(prev => ({ ...prev, dashboard: err.message }));
+
+    const fetchDashboardData = useCallback(async () => {
+      if (!user) return;
+      try {
+        setLoading(prev => ({ ...prev, dashboard: true }));
+        const data = await API.dashboard.get();
+
+        // Normalize chartData: convert numbers to single-element arrays
+        const rawChartData = data.chartData || {};
+        const chartDataNormalized = {};
+        Object.keys(rawChartData).forEach(key => {
+          const value = rawChartData[key];
+          chartDataNormalized[key] = Array.isArray(value) ? value : [value];
+        });
+
+        setChartData(chartDataNormalized);
+        setChartLabels(data.chartLabels || []);
+        setTodos(data.todos || []);
+        setError(prev => ({ ...prev, dashboard: null }));
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+        if (err.message.includes("401")) {
+          window.location.href = "/login";
+        } else {
+          setError(prev => ({ ...prev, dashboard: err.message }));
+        }
+      } finally {
+        setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
       }
-    } finally {
-      setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
-    }
-  }, [user]);
+    }, [user]);
+
 
   // ----- Update todos -----
   const handleTodosUpdate = async (updatedTodos) => {
