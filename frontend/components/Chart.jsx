@@ -31,6 +31,9 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
+  // Convert any number to array
+  const toArray = (val) => (Array.isArray(val) ? val : val != null ? [val] : []);
+
   // Memoized chart datasets
   const data = useMemo(() => {
     if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
@@ -39,20 +42,21 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
 
     if (metricsType === "emotional") {
       datasets = [
-        { label: t("chart.stress", "Stress"), data: chartData.stress_level || [], color: "255,99,132" },
-        { label: t("chart.happiness", "Happiness"), data: chartData.happiness_level || [], color: "75,192,192" },
-        { label: t("chart.anxiety", "Anxiety"), data: chartData.anxiety_level || [], color: "255,206,86" },
-        { label: t("chart.overallMood", "Overall Mood"), data: chartData.overall_mood_level || [], color: "54,162,235" },
+        { label: t("chart.stress", "Stress"), data: toArray(chartData.stress_level), color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: toArray(chartData.happiness_level), color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: toArray(chartData.anxiety_level), color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: toArray(chartData.overall_mood_level), color: "54,162,235" },
       ];
     } else {
       datasets = [
-        { label: t("chart.phq9", "PHQ-9"), data: chartData.phq9_score || [], color: "255,99,132" },
-        { label: t("chart.gad7", "GAD-7"), data: chartData.gad7_score || [], color: "54,162,235" },
-        { label: t("chart.ghq", "GHQ"), data: chartData.ghq_score || [], color: "255,206,86" },
+        { label: t("chart.phq9", "PHQ-9"), data: toArray(chartData.phq9_score), color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: toArray(chartData.gad7_score), color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: toArray(chartData.ghq_score), color: "255,206,86" },
       ];
     }
 
-    datasets = datasets.filter(ds => ds.data.length > 0)
+    datasets = datasets
+      .filter(ds => ds.data.length > 0)
       .map(ds => ({
         label: ds.label,
         data: ds.data,
@@ -80,7 +84,8 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
     },
   };
 
-  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
+  if (!data.datasets.length)
+    return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
 
   return (
     <div className="chart-card">

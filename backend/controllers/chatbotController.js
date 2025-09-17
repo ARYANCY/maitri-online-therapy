@@ -121,15 +121,15 @@ User message: "${message}"`;
       screeningData = parsed.screening || {};
 
       // Save Metrics
-       await Metrics.create({
-        userId: user._id,
-        message,
-        stress_level: Number(metricsData.stress_level) || 0,
-        happiness_level: Number(metricsData.happiness_level) || 0,
-        anxiety_level: Number(metricsData.anxiety_level) || 0,
-        overall_mood_level: Number(metricsData.overall_mood_level) || 0,
-        createdAt: new Date(),
-      });
+     await Metrics.create({
+       userId: user._id,
+       message,
+       stress_level: Number(metricsData.stress_level) || 0,
+       happiness_level: Number(metricsData.happiness_level) || 0,
+       anxiety_level: Number(metricsData.anxiety_level) || 0,
+       overall_mood_level: Number(metricsData.overall_mood_level) || 0,
+       createdAt: new Date(),
+     });
 
 
       // Save Screening
