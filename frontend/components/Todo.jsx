@@ -12,11 +12,23 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Initialize tasks from props
-  useEffect(() => setTasks(initialTasks), [initialTasks]);
-
-  // Check if all tasks are completed
+  // Load from localStorage (or fallback to initialTasks from props)
   useEffect(() => {
+    const stored = localStorage.getItem("tasks");
+    if (stored) {
+      setTasks(JSON.parse(stored));
+    } else {
+      setTasks(initialTasks);
+    }
+  }, [initialTasks]);
+
+  // Save to localStorage whenever tasks change
+  useEffect(() => {
+    if (tasks.length > 0) {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    } else {
+      localStorage.removeItem("tasks");
+    }
     setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
   }, [tasks]);
 

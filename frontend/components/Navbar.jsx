@@ -7,20 +7,32 @@ export default function Navbar({ user }) {
   const { i18n, t } = useTranslation();
 
   const changeLang = (lng) => {
-    i18n.changeLanguage(lng);
+    if (i18n.language !== lng) {
+      i18n.changeLanguage(lng);
+      localStorage.setItem("preferredLang", lng); // ✅ persist choice
+    }
   };
 
   return (
     <nav className="navbar glass">
       {/* Top section */}
       <div className="navbar-top">
-        <h1 className="navbar-title">{t("navbar.title") || "Maitri"}</h1>
+        <h1 className="navbar-title">{t("navbar.title")}</h1>
 
         {/* Language switcher */}
         <div className="lang-switcher">
-          <button onClick={() => changeLang("en")}>EN</button>
-          <button onClick={() => changeLang("hi")}>हिं</button>
-          <button onClick={() => changeLang("as")}>অসমীয়া</button>
+          {["en", "hi", "as"].map((lng) => (
+            <button
+              key={lng}
+              onClick={() => changeLang(lng)}
+              className={`lang-btn ${i18n.language === lng ? "active" : ""}`}
+              aria-label={`Switch language to ${lng}`}
+            >
+              {lng === "en" && "EN"}
+              {lng === "hi" && "हिं"}
+              {lng === "as" && "অসমীয়া"}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -34,15 +46,30 @@ export default function Navbar({ user }) {
             rel="noopener noreferrer"
             className="navbar-chat-btn"
           >
-            {t("navbar.feelingDown") || "Feeling down? Make a new friend!"}
+            {t("navbar.feelingDown")}
           </a>
         </div>
 
         <div className="navbar-right">
           <ReminderBell />
-          <span className="navbar-user">
-            {t("navbar.hello", { name: user?.name || "Guest" }) || `Hello, ${user?.name || "Guest"}`}
-          </span>
+
+          {/* User avatar + name */}
+          <div className="navbar-user">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name || "User"}
+                className="navbar-avatar"
+              />
+            ) : (
+              <div className="navbar-avatar placeholder">
+                {user?.name?.charAt(0).toUpperCase() || "G"}
+              </div>
+            )}
+            <span className="navbar-username">
+              {t("navbar.hello", { name: user?.name || t("navbar.guest") })}
+            </span>
+          </div>
         </div>
       </div>
     </nav>

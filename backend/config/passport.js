@@ -13,18 +13,31 @@ passport.use(
       try {
         console.log("Google profile received:", profile);
 
-        const email = profile.emails[0].value.toLowerCase();
+        const email = profile.emails?.[0]?.value?.toLowerCase();
+        const avatar = profile.photos?.[0]?.value || "";
+
+        if (!email) {
+          return done(new Error("Google account does not provide email"), null);
+        }
+
         let user = await User.findOne({ email });
 
         if (!user) {
+          // Create a new user
           user = await User.create({
-            name: profile.displayName,
+            name: profile.displayName || "Unknown User",
             email,
             googleId: profile.id,
-            password: "", // no local password
+            avatar,      // ✅ save Google profile picture
+            password: "", // no local password for Google accounts
           });
           console.log("New user created:", user._id);
         } else {
+          // If user exists but avatar is missing, update it
+          if (!user.avatar && avatar) {
+            user.avatar = avatar;
+            await user.save();
+          }
           console.log("Existing user found:", user._id);
         }
 

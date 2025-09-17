@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -31,82 +32,111 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Memoized chart datasets
+  // 🎯 Define metrics mapping for easy scalability
+  const emotionalMetrics = [
+    { key: "stress_level", label: t("chart.stress", "Stress"), color: "255,99,132" },
+    { key: "happiness_level", label: t("chart.happiness", "Happiness"), color: "75,192,192" },
+    { key: "anxiety_level", label: t("chart.anxiety", "Anxiety"), color: "255,206,86" },
+    { key: "overall_mood_level", label: t("chart.overallMood", "Overall Mood"), color: "54,162,235" },
+    { key: "calmness_level", label: t("chart.calmness", "Calmness"), color: "153,102,255" },
+    { key: "confidence_level", label: t("chart.confidence", "Confidence"), color: "255,159,64" },
+  ];
+
+  const screeningMetrics = [
+    { key: "phq9_score", label: t("chart.phq9", "PHQ-9"), color: "255,99,132" },
+    { key: "gad7_score", label: t("chart.gad7", "GAD-7"), color: "54,162,235" },
+    { key: "ghq_score", label: t("chart.ghq", "GHQ"), color: "255,206,86" },
+  ];
+
+  // 🎯 Memoized datasets
   const data = useMemo(() => {
     if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
 
-    let datasets = [];
+    const selectedMetrics = metricsType === "emotional" ? emotionalMetrics : screeningMetrics;
 
-    if (metricsType === "emotional") {
-      datasets = [
-        { label: t("chart.stress", "Stress"), data: chartData.stress_level || [], color: "255,99,132" },
-        { label: t("chart.happiness", "Happiness"), data: chartData.happiness_level || [], color: "75,192,192" },
-        { label: t("chart.anxiety", "Anxiety"), data: chartData.anxiety_level || [], color: "255,206,86" },
-        { label: t("chart.overallMood", "Overall Mood"), data: chartData.overall_mood_level || [], color: "54,162,235" },
-      ];
-    } else {
-      datasets = [
-        { label: t("chart.phq9", "PHQ-9"), data: chartData.phq9_score || [], color: "255,99,132" },
-        { label: t("chart.gad7", "GAD-7"), data: chartData.gad7_score || [], color: "54,162,235" },
-        { label: t("chart.ghq", "GHQ"), data: chartData.ghq_score || [], color: "255,206,86" },
-      ];
-    }
-
-    datasets = datasets.filter(ds => ds.data.length > 0)
-      .map(ds => ({
-        label: ds.label,
-        data: ds.data,
-        borderColor: `rgba(${ds.color},1)`,
-        backgroundColor: `rgba(${ds.color},0.6)`,
+    const datasets = selectedMetrics
+      .map(m => ({
+        label: m.label,
+        data: chartData[m.key] || [],
+        borderColor: `rgba(${m.color},1)`,
+        backgroundColor: `rgba(${m.color},0.6)`,
         fill: chartType === "line",
         spanGaps: true,
-      }));
+      }))
+      .filter(ds => ds.data.length > 0);
 
     return { labels: chartLabels, datasets };
   }, [chartData, chartLabels, chartType, metricsType, t]);
 
-  // Chart options
+  // 🎯 Safe max Y value
+  const allValues = data.datasets.flatMap(ds => ds.data);
+  const maxY = allValues.length ? Math.max(...allValues, 10) : 10;
+
+  // 🎯 Chart options
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: t("chart.title", "User Metrics") + ` (${metricsType})` },
+      title: {
+        display: true,
+        text: `${t("chart.title", "User Metrics")} (${metricsType === "emotional"
+          ? t("chart.emotionalMetrics", "Emotional Metrics")
+          : t("chart.screeningMetrics", "Screening Metrics")
+        })`,
+      },
     },
     scales: {
-      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: { beginAtZero: true, suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10) },
+      x: {
+        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 },
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMax: maxY,
+      },
     },
   };
 
-  if (!data.datasets.length) return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
+  // 🎯 No data case
+  if (!data.datasets.length) {
+    return (
+      <p className="chart-message chart-no-data">
+        📉 {t("chart.noData", "No metrics available yet.")}
+      </p>
+    );
+  }
 
   return (
     <div className="chart-card">
+      {/* Controls */}
       <div className="chart-controls">
         <select
+          aria-label={t("chart.typeSelect", "Select chart type")}
           value={chartType}
           onChange={e => setChartType(e.target.value)}
           className="chart-select"
-          disabled={!data.datasets.length}
         >
           <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
           <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
+
         <select
+          aria-label={t("chart.metricSelect", "Select metrics type")}
           value={metricsType}
           onChange={e => setMetricsType(e.target.value)}
           className="chart-select"
-          disabled={!data.datasets.length}
         >
           <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
           <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
         </select>
       </div>
 
+      {/* Chart */}
       <div className="chart-wrapper" style={{ height: "400px" }}>
-        {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
+        {chartType === "bar"
+          ? <Bar data={data} options={options} />
+          : <Line data={data} options={options} />}
       </div>
     </div>
   );
