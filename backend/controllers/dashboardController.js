@@ -23,10 +23,10 @@ exports.getDashboard = async (req, res) => {
               month: { $month: "$createdAt" },
               day: { $dayOfMonth: "$createdAt" },
             },
-            stress: { $avg: "$metrics.stress_level" },
-            happiness: { $avg: "$metrics.happiness_level" },
-            anxiety: { $avg: "$metrics.anxiety_level" },
-            mood: { $avg: "$metrics.overall_mood_level" },
+            stress_level: { $avg: "$stress_level" },
+            happiness_level: { $avg: "$happiness_level" },
+            anxiety_level: { $avg: "$anxiety_level" },
+            overall_mood_level: { $avg: "$overall_mood_level" },
           },
         },
         { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
@@ -35,12 +35,10 @@ exports.getDashboard = async (req, res) => {
 
       metricsRecords = metricsRecords.reverse().map(r => ({
         createdAt: new Date(r._id.year, r._id.month - 1, r._id.day),
-        metrics: {
-          stress_level: r.stress,
-          happiness_level: r.happiness,
-          anxiety_level: r.anxiety,
-          overall_mood_level: r.mood,
-        },
+        stress_level: r.stress_level,
+        happiness_level: r.happiness_level,
+        anxiety_level: r.anxiety_level,
+        overall_mood_level: r.overall_mood_level,
       }));
 
       screeningRecords = await Screening.aggregate([
@@ -52,9 +50,9 @@ exports.getDashboard = async (req, res) => {
               month: { $month: "$createdAt" },
               day: { $dayOfMonth: "$createdAt" },
             },
-            phq9: { $avg: "$phq9_score" },
-            gad7: { $avg: "$gad7_score" },
-            ghq: { $avg: "$ghq_score" },
+            phq9_score: { $avg: "$phq9_score" },
+            gad7_score: { $avg: "$gad7_score" },
+            ghq_score: { $avg: "$ghq_score" },
           },
         },
         { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
@@ -63,13 +61,10 @@ exports.getDashboard = async (req, res) => {
 
       screeningRecords = screeningRecords.reverse().map(r => ({
         createdAt: new Date(r._id.year, r._id.month - 1, r._id.day),
-        screening: {
-          phq9_score: r.phq9,
-          gad7_score: r.gad7,
-          ghq_score: r.ghq,
-        },
+        phq9_score: r.phq9_score,
+        gad7_score: r.gad7_score,
+        ghq_score: r.ghq_score,
       }));
-
     } else {
       metricsRecords = await Metrics.find({ userId }).sort({ createdAt: -1 }).limit(7).lean();
       metricsRecords = metricsRecords.reverse();
@@ -92,10 +87,10 @@ exports.getDashboard = async (req, res) => {
         : ["No Data"];
 
     const chartData = {
-      stress_level: metricsRecords.map(m => m?.metrics?.stress_level ?? 0).slice(0, length),
-      happiness_level: metricsRecords.map(m => m?.metrics?.happiness_level ?? 0).slice(0, length),
-      anxiety_level: metricsRecords.map(m => m?.metrics?.anxiety_level ?? 0).slice(0, length),
-      overall_mood_level: metricsRecords.map(m => m?.metrics?.overall_mood_level ?? 0).slice(0, length),
+      stress_level: metricsRecords.map(m => m?.stress_level ?? 0).slice(0, length),
+      happiness_level: metricsRecords.map(m => m?.happiness_level ?? 0).slice(0, length),
+      anxiety_level: metricsRecords.map(m => m?.anxiety_level ?? 0).slice(0, length),
+      overall_mood_level: metricsRecords.map(m => m?.overall_mood_level ?? 0).slice(0, length),
       phq9_score: screeningRecords.map(s => getScreeningValue(s, "phq9_score")).slice(0, length),
       gad7_score: screeningRecords.map(s => getScreeningValue(s, "gad7_score")).slice(0, length),
       ghq_score: screeningRecords.map(s => getScreeningValue(s, "ghq_score")).slice(0, length),
