@@ -6,13 +6,12 @@ import "../css/Todo.css";
 
 export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   const { t } = useTranslation();
-
   const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
   const [allCompleted, setAllCompleted] = useState(false);
   const [error, setError] = useState("");
 
-  // Load from localStorage (or fallback to initialTasks from props)
+  // Load tasks from localStorage or props
   useEffect(() => {
     const stored = localStorage.getItem("tasks");
     if (stored) {
@@ -22,24 +21,21 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
     }
   }, [initialTasks]);
 
-  // Save to localStorage whenever tasks change
+  // Persist tasks to localStorage + update allCompleted
   useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    } else {
-      localStorage.removeItem("tasks");
-    }
+    localStorage.setItem("tasks", JSON.stringify(tasks));
     setAllCompleted(tasks.length > 0 && tasks.every(t => t.completed));
   }, [tasks]);
 
-  // Local + server update
+  // Optimistic update + server sync
   const updateTasks = async (updatedTasks) => {
-    setTasks(updatedTasks); // optimistic update
+    setTasks(updatedTasks); // Optimistic update
     try {
       if (onUpdate) await onUpdate(updatedTasks);
       setError("");
     } catch (err) {
       console.error("Failed to sync tasks:", err);
+      setTasks(tasks); // rollback on failure
       setError(t("todo.updateError", "Failed to update tasks on server."));
     }
   };
@@ -47,19 +43,26 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading }) {
   // Add task
   const handleAdd = () => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed) return setError("");
     if (tasks.length >= 10) {
       setError(t("todo.maxTasks", "Maximum 10 tasks allowed!"));
+      return;
+    }
+    if (tasks.some(t => t.title.toLowerCase() === trimmed.toLowerCase())) {
+      setError(t("todo.duplicateTask", "Task already exists!"));
       return;
     }
     const newTask = { _id: uuidv4(), title: trimmed, completed: false };
     updateTasks([...tasks, newTask]);
     setInput("");
+    setError("");
   };
 
-  // Toggle task completion
-  const toggleDone = (id) =>
-    updateTasks(tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t));
+  // Toggle completion
+  const toggleDone = (id) => {
+    const updatedTasks = tasks.map(t => t._id === id ? { ...t, completed: !t.completed } : t);
+    updateTasks(updatedTasks);
+  };
 
   // Delete task
   const handleDelete = (id) => updateTasks(tasks.filter(t => t._id !== id));
