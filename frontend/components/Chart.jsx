@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
-// Register Chart.js components
+// ✅ Register Chart.js modules
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -26,13 +26,12 @@ ChartJS.register(
   Legend
 );
 
-export default function Chart({ chartData = null, chartLabels = [] }) {
+export default function Chart({ chartData = {}, chartLabels = [] }) {
   const { t } = useTranslation();
-
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // 🎯 Define metrics mapping for easy scalability
+  // ✅ Define metrics
   const emotionalMetrics = [
     { key: "stress_level", label: t("chart.stress", "Stress"), color: "255,99,132" },
     { key: "happiness_level", label: t("chart.happiness", "Happiness"), color: "75,192,192" },
@@ -48,31 +47,41 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
     { key: "ghq_score", label: t("chart.ghq", "GHQ"), color: "255,206,86" },
   ];
 
-  // 🎯 Memoized datasets
+  // ✅ Build datasets safely
   const data = useMemo(() => {
-    if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
+    if (!chartLabels.length) return { labels: [], datasets: [] };
 
     const selectedMetrics = metricsType === "emotional" ? emotionalMetrics : screeningMetrics;
 
-    const datasets = selectedMetrics
-      .map(m => ({
+    const datasets = selectedMetrics.map(m => {
+      let values = chartData[m.key];
+
+      // ✅ Ensure values is always an array of numbers
+      if (!Array.isArray(values)) {
+        if (typeof values === "number") {
+          values = Array(chartLabels.length).fill(values); // repeat single number
+        } else {
+          values = Array(chartLabels.length).fill(0); // fallback zeros
+        }
+      }
+
+      return {
         label: m.label,
-        data: chartData[m.key] || [],
+        data: values,
         borderColor: `rgba(${m.color},1)`,
         backgroundColor: `rgba(${m.color},0.6)`,
         fill: chartType === "line",
         spanGaps: true,
-      }))
-      .filter(ds => ds.data.length > 0);
+      };
+    });
 
     return { labels: chartLabels, datasets };
   }, [chartData, chartLabels, chartType, metricsType, t]);
 
-  // 🎯 Safe max Y value
+  // ✅ Compute max Y
   const allValues = data.datasets.flatMap(ds => ds.data);
   const maxY = allValues.length ? Math.max(...allValues, 10) : 10;
 
-  // 🎯 Chart options
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -98,8 +107,8 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
     },
   };
 
-  // 🎯 No data case
-  if (!data.datasets.length) {
+  // ✅ Handle no data
+  if (!data.datasets.some(ds => ds.data.some(v => v > 0))) {
     return (
       <p className="chart-message chart-no-data">
         📉 {t("chart.noData", "No metrics available yet.")}
