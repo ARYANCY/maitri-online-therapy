@@ -11,6 +11,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler, // Added Filler for `fill` option
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
@@ -23,53 +24,55 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  Filler
 );
 
-export default function Chart({ chartData = null, chartLabels = [] }) {
+export default function Chart({ chartData = {}, chartLabels = [] }) {
   const { t } = useTranslation();
 
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Convert any number to array
-  const toArray = (val) => (Array.isArray(val) ? val : val != null ? [val] : []);
+  // Normalize values: ensures arrays have same length as labels and no null/undefined
+  const normalizeArray = (arr, length) => {
+    if (!arr) return Array(length).fill(0);
+    if (!Array.isArray(arr)) arr = [arr];
+    return Array.from({ length }, (_, i) => (arr[i] != null ? arr[i] : 0));
+  };
 
-  // Memoized chart datasets
   const data = useMemo(() => {
-    if (!chartData || !chartLabels.length) return { datasets: [], labels: [] };
+    if (!chartLabels.length) return { labels: [], datasets: [] };
+    const len = chartLabels.length;
 
     let datasets = [];
-
     if (metricsType === "emotional") {
       datasets = [
-        { label: t("chart.stress", "Stress"), data: toArray(chartData.stress_level), color: "255,99,132" },
-        { label: t("chart.happiness", "Happiness"), data: toArray(chartData.happiness_level), color: "75,192,192" },
-        { label: t("chart.anxiety", "Anxiety"), data: toArray(chartData.anxiety_level), color: "255,206,86" },
-        { label: t("chart.overallMood", "Overall Mood"), data: toArray(chartData.overall_mood_level), color: "54,162,235" },
+        { label: t("chart.stress", "Stress"), data: normalizeArray(chartData.stress_level, len), color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: normalizeArray(chartData.happiness_level, len), color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: normalizeArray(chartData.anxiety_level, len), color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: normalizeArray(chartData.overall_mood_level, len), color: "54,162,235" },
       ];
     } else {
       datasets = [
-        { label: t("chart.phq9", "PHQ-9"), data: toArray(chartData.phq9_score), color: "255,99,132" },
-        { label: t("chart.gad7", "GAD-7"), data: toArray(chartData.gad7_score), color: "54,162,235" },
-        { label: t("chart.ghq", "GHQ"), data: toArray(chartData.ghq_score), color: "255,206,86" },
+        { label: t("chart.phq9", "PHQ-9"), data: normalizeArray(chartData.phq9_score, len), color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: normalizeArray(chartData.gad7_score, len), color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: normalizeArray(chartData.ghq_score, len), color: "255,206,86" },
       ];
     }
 
-    datasets = datasets
-      .filter(ds => ds.data.length > 0)
-      .map(ds => ({
+    return {
+      labels: chartLabels,
+      datasets: datasets.map(ds => ({
         label: ds.label,
         data: ds.data,
         borderColor: `rgba(${ds.color},1)`,
         backgroundColor: `rgba(${ds.color},0.6)`,
         fill: chartType === "line",
         spanGaps: true,
-      }));
+      }))
+    };
+  }, [chartData, chartLabels, metricsType, chartType, t]);
 
-    return { labels: chartLabels, datasets };
-  }, [chartData, chartLabels, chartType, metricsType, t]);
-
-  // Chart options
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -90,21 +93,11 @@ export default function Chart({ chartData = null, chartLabels = [] }) {
   return (
     <div className="chart-card">
       <div className="chart-controls">
-        <select
-          value={chartType}
-          onChange={e => setChartType(e.target.value)}
-          className="chart-select"
-          disabled={!data.datasets.length}
-        >
+        <select value={chartType} onChange={e => setChartType(e.target.value)} className="chart-select">
           <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
           <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
-        <select
-          value={metricsType}
-          onChange={e => setMetricsType(e.target.value)}
-          className="chart-select"
-          disabled={!data.datasets.length}
-        >
+        <select value={metricsType} onChange={e => setMetricsType(e.target.value)} className="chart-select">
           <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
           <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
         </select>
