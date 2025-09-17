@@ -40,8 +40,21 @@ export default function Dashboard() {
     try {
       setLoading(prev => ({ ...prev, dashboard: true }));
       const data = await API.dashboard.get();
-      setChartData(data.chartData || null);
-      setChartLabels(data.chartLabels || []);
+
+      // Transform backend metrics into chart-friendly format
+      const rawMetrics = data.metricsHistory || []; // expect array of metrics docs
+      const labels = rawMetrics.map(m => new Date(m.createdAt).toLocaleString());
+      const chartObj = {};
+
+      if (rawMetrics.length > 0) {
+        Object.keys(rawMetrics[0]).forEach(key => {
+          if (["_id", "userId", "message", "createdAt", "__v"].includes(key)) return;
+          chartObj[key] = rawMetrics.map(item => item[key] || 0);
+        });
+      }
+
+      setChartData(chartObj);
+      setChartLabels(labels);
       setTodos(data.todos || []);
       setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
@@ -88,8 +101,10 @@ export default function Dashboard() {
 
   // ----- Render content -----
   const renderContent = () => {
-    if (loading.user || loading.dashboard) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
-    if (error.dashboard) return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
+    if (loading.user || loading.dashboard) 
+      return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+    if (error.dashboard) 
+      return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
 
     switch (activeTab) {
       case "chatbot":
