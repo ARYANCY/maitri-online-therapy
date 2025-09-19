@@ -21,13 +21,14 @@ mongoose.connect(process.env.MONGO_URI)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+const isProd = process.env.NODE_ENV === "production";
 app.use(
   cors({
     origin: function (origin, callback) {
       const allowedOrigins = [
-        process.env.CLIENT_URL,
-        "http://localhost:3000"
+        process.env.CLIENT_URL, 
+        "http://localhost:5173", 
+        "http://localhost:3000"  
       ];
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
@@ -48,13 +49,14 @@ app.use(
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
-      ttl: 24 * 60 * 60, 
+      ttl: 24 * 60 * 60,
     }),
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000, 
-      httpOnly: true,              
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
+      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: isProd,           
+      sameSite: isProd ? "none" : "lax", 
+      path: "/",
     },
   })
 );
