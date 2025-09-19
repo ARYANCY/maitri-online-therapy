@@ -18,10 +18,14 @@ const userSchema = new mongoose.Schema({
     match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"]
   },
   password: {
-    type: String,
-    minlength: 6,
-    select: false 
+  type: String,
+  minlength: 6,
+    select: false,
+    required: function() {
+      return !this.googleId; // required only if googleId is not present
+    }
   },
+
   googleId: {
     type: String,
     unique: true,
