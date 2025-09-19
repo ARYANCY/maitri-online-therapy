@@ -1,0 +1,119 @@
+.about-maitri-page {
+  padding: 2rem;
+  background: linear-gradient(135deg, #e0f0ff, #ffffff);
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+.about-maitri-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Hero Section */
+.maitri-hero {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.maitri-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.maitri-hero p {
+  font-size: 1.1rem;
+  color: #34495e;
+}
+
+/* Sections */
+.about-maitri-container section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Features & Tips */
+.maitri-features ul,
+.maitri-tips ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  color: #2c3e50;
+}
+
+/* Videos */
+.maitri-videos .video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.maitri-videos iframe {
+  width: 100%;
+  height: 220px;
+  border-radius: 12px;
+  border: none;
+}
+
+/* FAQs */
+.maitri-faqs .faq-item {
+  margin-bottom: 1rem;
+}
+
+.maitri-faqs h3 {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.maitri-faqs p {
+  margin: 0;
+  color: #34495e;
+}
+
+/* Testimonials */
+.maitri-testimonials .testimonial-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(74, 144, 226, 0.15);
+  border-radius: 10px;
+  font-style: italic;
+}
+
+/* Contact / CTA */
+.maitri-contact {
+  text-align: center;
+}
+
+.maitri-start-btn {
+  background: #4A90E2;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+}
+
+.maitri-start-btn:hover {
+  background: #357ABD;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .maitri-hero h1 {
+    font-size: 2rem;
+  }
+}
