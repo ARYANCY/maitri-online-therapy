@@ -50,7 +50,7 @@ export default function Navbar({ user }) {
           <Link to="/dashboard" className="navbar-link">
             {t("navbar.dashboard", "Dashboard")}
           </Link>
-          <Link to="/about" className="navbar-link">
+          <Link to="/about-maitri" className="navbar-link">
             {t("navbar.about", "About Maitri")}
           </Link>
           <Link to="/talk-to-counselor" className="navbar-link">
@@ -65,6 +65,7 @@ export default function Navbar({ user }) {
             {t("navbar.feelingDown")}
           </a>
         </div>
+
 
         <div className="navbar-right">
           <ReminderBell />

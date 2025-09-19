@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import API from "../utils/axiosClient";
-import { useTranslation } from "react-i18next";
 import "../css/AboutMaitri.css";
+import { useTranslation } from "react-i18next";
 
 export default function AboutMaitri() {
   const { t } = useTranslation();
@@ -20,45 +20,46 @@ export default function AboutMaitri() {
       }
       setUser(data.user);
     } catch (err) {
-      console.error("Session check failed:", err);
-      setError("Session check failed: " + err.message);
+      console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
+      setError(t("dashboard.error.sessionCheckFailed", "Session check failed:") + " " + err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
-  if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
-  if (error) return <p className="dashboard-error">{error}</p>;
-
   // Helper to safely get arrays from i18n
   const getArray = (key) => t(key, [], { returnObjects: true }) || [];
+
+  if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+  if (error) return <p className="dashboard-error">{error}</p>;
 
   return (
     <div className="about-maitri-page">
       <Navbar user={user} />
 
       <div className="about-maitri-container">
-        {/* Hero */}
+        {/* Hero Section */}
         <section className="maitri-hero">
-          <h1>{t("aboutMaitri.heroTitle")}</h1>
-          <p>{t("aboutMaitri.heroDescription")}</p>
+          <h1>{t("aboutMaitri.heroTitle", "About Maitri")}</h1>
+          <p>{t("aboutMaitri.heroDescription", "Maitri is dedicated to promoting mental health awareness and support.")}</p>
         </section>
 
         {/* Mission & Vision */}
         <section className="maitri-mission">
-          <h2>{t("aboutMaitri.missionTitle")}</h2>
-          <p>{t("aboutMaitri.missionDescription")}</p>
-          <h2>{t("aboutMaitri.visionTitle")}</h2>
-          <p>{t("aboutMaitri.visionDescription")}</p>
+          <h2>{t("aboutMaitri.missionTitle", "Our Mission")}</h2>
+          <p>{t("aboutMaitri.missionDescription", "To empower individuals to take charge of their mental health.")}</p>
+
+          <h2>{t("aboutMaitri.visionTitle", "Our Vision")}</h2>
+          <p>{t("aboutMaitri.visionDescription", "A world where mental health is valued and supported equally.")}</p>
         </section>
 
         {/* Features */}
         <section className="maitri-features">
-          <h2>{t("aboutMaitri.featuresTitle")}</h2>
+          <h2>{t("aboutMaitri.featuresTitle", "What We Offer")}</h2>
           <ul>
             {getArray("aboutMaitri.features").map((feature, idx) => (
               <li key={idx}>{feature}</li>
@@ -68,7 +69,7 @@ export default function AboutMaitri() {
 
         {/* Videos */}
         <section className="maitri-videos">
-          <h2>{t("aboutMaitri.videosTitle")}</h2>
+          <h2>{t("aboutMaitri.videosTitle", "Helpful Videos")}</h2>
           <div className="video-grid">
             <iframe
               src="https://www.youtube.com/embed/92iQ5Yk0oc8"
@@ -81,6 +82,7 @@ export default function AboutMaitri() {
               src="https://www.youtube.com/embed/inpok4MKVLM"
               title="Stress Relief Techniques"
               frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
             <iframe
@@ -92,9 +94,9 @@ export default function AboutMaitri() {
           </div>
         </section>
 
-        {/* Tips */}
+        {/* Mental Health Tips */}
         <section className="maitri-tips">
-          <h2>{t("aboutMaitri.tipsTitle")}</h2>
+          <h2>{t("aboutMaitri.tipsTitle", "Mental Health Tips")}</h2>
           <ul>
             {getArray("aboutMaitri.tips").map((tip, idx) => (
               <li key={idx}>{tip}</li>
@@ -104,18 +106,18 @@ export default function AboutMaitri() {
 
         {/* FAQs */}
         <section className="maitri-faqs">
-          <h2>{t("aboutMaitri.faqsTitle")}</h2>
+          <h2>{t("aboutMaitri.faqsTitle", "Frequently Asked Questions")}</h2>
           {[1, 2, 3, 4].map((num) => (
             <div key={num} className="faq-item">
-              <h3>{t(`aboutMaitri.faq${num}.question`)}</h3>
-              <p>{t(`aboutMaitri.faq${num}.answer`)}</p>
+              <h3>{t(`aboutMaitri.faq${num}.question`, `FAQ ${num} Question`)}</h3>
+              <p>{t(`aboutMaitri.faq${num}.answer`, `FAQ ${num} Answer`)}</p>
             </div>
           ))}
         </section>
 
         {/* Testimonials */}
         <section className="maitri-testimonials">
-          <h2>{t("aboutMaitri.testimonialsTitle")}</h2>
+          <h2>{t("aboutMaitri.testimonialsTitle", "What Our Users Say")}</h2>
           {getArray("aboutMaitri.testimonials").map((item, idx) => (
             <div key={idx} className="testimonial-card">
               <p>{item}</p>
@@ -123,11 +125,11 @@ export default function AboutMaitri() {
           ))}
         </section>
 
-        {/* Contact / CTA */}
+        {/* Contact / Call to Action */}
         <section className="maitri-contact">
-          <h2>{t("aboutMaitri.contactTitle")}</h2>
-          <p>{t("aboutMaitri.contactDescription")}</p>
-          <button className="maitri-start-btn">{t("aboutMaitri.startButton")}</button>
+          <h2>{t("aboutMaitri.contactTitle", "Get Started with Maitri")}</h2>
+          <p>{t("aboutMaitri.contactDescription", "Start your journey toward better mental health today. Explore our journaling and support features now!")}</p>
+          <button className="maitri-start-btn">{t("aboutMaitri.startButton", "Start Journaling")}</button>
         </section>
       </div>
     </div>
