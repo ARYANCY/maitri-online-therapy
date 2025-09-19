@@ -1,6 +1,7 @@
 import React from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom"; // ✅ Import Link
 import "../css/Navbar.css";
 
 export default function Navbar({ user }) {
@@ -36,6 +37,16 @@ export default function Navbar({ user }) {
 
       <div className="navbar-bottom">
         <div className="navbar-left">
+          <Link to="/" className="navbar-link">
+            {t("navbar.home", "Home")}
+          </Link>
+          <Link to="/dashboard" className="navbar-link">
+            {t("navbar.dashboard", "Dashboard")}
+          </Link>
+          <Link to="/about" className="navbar-link">
+            {t("navbar.about", "About Maitri")}
+          </Link>
+
           <a
             href="https://chat-app-ashen-phi.vercel.app/"
             target="_blank"
