@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import "../css/TalkToCounselor.css";
-import dhriti from "../src/images/dhriti.jpg"; 
+import dhriti from "../src/images/dd.jpeg"; 
 
 export default function TalkToCounselor({ user }) {
   const [formData, setFormData] = useState({
