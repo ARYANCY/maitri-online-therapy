@@ -10,7 +10,6 @@ export default function AboutMaitri() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch user session
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -33,7 +32,6 @@ export default function AboutMaitri() {
     fetchUser();
   }, [fetchUser]);
 
-  // Safe function to get array from i18n
   const getArray = (key) => {
     const value = t(key, [], { returnObjects: true });
     return Array.isArray(value) ? value : [];
@@ -47,7 +45,7 @@ export default function AboutMaitri() {
       <Navbar user={user} />
 
       <div className="about-maitri-container">
-        {/* Hero Section */}
+
         <section className="maitri-hero">
           <h1>{t("aboutMaitri.heroTitle", "About Maitri")}</h1>
           <p>
@@ -58,7 +56,6 @@ export default function AboutMaitri() {
           </p>
         </section>
 
-        {/* Mission & Vision */}
         <section className="maitri-mission">
           <h2>{t("aboutMaitri.missionTitle", "Our Mission")}</h2>
           <p>
@@ -77,7 +74,6 @@ export default function AboutMaitri() {
           </p>
         </section>
 
-        {/* Features */}
         <section className="maitri-features">
           <h2>{t("aboutMaitri.featuresTitle", "What We Offer")}</h2>
           <ul>
@@ -87,34 +83,33 @@ export default function AboutMaitri() {
           </ul>
         </section>
 
-        {/* Videos */}
         <section className="maitri-videos">
           <h2>{t("aboutMaitri.videosTitle", "Helpful Videos")}</h2>
           <div className="video-grid">
+
             <iframe
-              src="https://www.youtube.com/embed/92iQ5Yk0oc8"
-              title="Mindfulness Meditation"
+              src="https://www.youtube.com/embed/v7AYKMP6rOE"
+              title="Yoga for Mental Health"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
             <iframe
-              src="https://www.youtube.com/embed/inpok4MKVLM"
-              title="Stress Relief Techniques"
+              src="https://www.youtube.com/embed/6p_yaNFSYao"
+              title="Guided Meditation for Stress Relief"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
             <iframe
-              src="https://www.youtube.com/embed/oHg5SJYRHA0"
-              title="Positive Thinking Techniques"
+              src="https://www.youtube.com/embed/tEmt1Znux58"
+              title="Breathing Exercises for Anxiety"
               frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
           </div>
         </section>
-
-        {/* Mental Health Tips */}
         <section className="maitri-tips">
           <h2>{t("aboutMaitri.tipsTitle", "Mental Health Tips")}</h2>
           <ul>
@@ -124,7 +119,6 @@ export default function AboutMaitri() {
           </ul>
         </section>
 
-        {/* FAQs */}
         <section className="maitri-faqs">
           <h2>{t("aboutMaitri.faqsTitle", "Frequently Asked Questions")}</h2>
           {[1, 2, 3, 4].map((num) => (
@@ -135,7 +129,6 @@ export default function AboutMaitri() {
           ))}
         </section>
 
-        {/* Testimonials */}
         <section className="maitri-testimonials">
           <h2>{t("aboutMaitri.testimonialsTitle", "What Our Users Say")}</h2>
           {getArray("aboutMaitri.testimonials").map((item, idx) => (
@@ -145,7 +138,6 @@ export default function AboutMaitri() {
           ))}
         </section>
 
-        {/* Contact / Call to Action */}
         <section className="maitri-contact">
           <h2>{t("aboutMaitri.contactTitle", "Get Started with Maitri")}</h2>
           <p>
