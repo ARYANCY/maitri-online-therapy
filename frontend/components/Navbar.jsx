@@ -1,7 +1,7 @@
 import React from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom"; // ✅ Import Link
+import { Link } from "react-router-dom";
 import "../css/Navbar.css";
 
 export default function Navbar({ user }) {
@@ -10,7 +10,7 @@ export default function Navbar({ user }) {
   const changeLang = (lng) => {
     if (i18n.language !== lng) {
       i18n.changeLanguage(lng);
-      localStorage.setItem("preferredLang", lng); // ✅ persist choice
+      localStorage.setItem("preferredLang", lng);
     }
   };
 
@@ -46,7 +46,9 @@ export default function Navbar({ user }) {
           <Link to="/about" className="navbar-link">
             {t("navbar.about", "About Maitri")}
           </Link>
-
+          <Link to="/talk-to-counselor" className="navbar-link">
+            {t("navbar.talkToCounselor", "Talk to Counselor")}
+          </Link>
           <a
             href="https://chat-app-ashen-phi.vercel.app/"
             target="_blank"

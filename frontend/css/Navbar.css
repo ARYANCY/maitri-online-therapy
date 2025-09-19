@@ -17,7 +17,7 @@ html, body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   border-radius: 0 0 20px 20px;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -40,7 +40,6 @@ html, body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  -webkit-text-fill-color: transparent;
   cursor: pointer;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
@@ -70,22 +69,26 @@ html, body {
   border-bottom: 2px solid #6C63FF;
 }
 
-.navbar-chat-btn {
+.navbar-chat-btn,
+.reminder-btn {
   background: linear-gradient(135deg, #4A90E2, #357ABD);
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
+  text-decoration: none;
   margin-left: 1rem;
   transition: all 0.3s ease;
-  border: none;
+  border: 1px solid #357ABD;
+  cursor: pointer;
 }
 
-.navbar-chat-btn:hover {
+.navbar-chat-btn:hover,
+.reminder-btn:hover {
   background: linear-gradient(135deg, #5aa0f5, #468ee0);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .lang-switcher {
@@ -182,13 +185,15 @@ html, body {
   transform: translateY(-1px);
 }
 
-.about-maitri-page {
+.about-maitri-page,
+.talk-counselor-page {
   padding: 2rem;
   background: linear-gradient(135deg, #e0f0ff, #ffffff);
   min-height: 100vh;
 }
 
-.about-maitri-container {
+.about-maitri-container,
+.talk-counselor-container {
   max-width: 1000px;
   margin: 0 auto;
   display: flex;
@@ -196,7 +201,8 @@ html, body {
   gap: 2rem;
 }
 
-.about-maitri-container section {
+.about-maitri-container section,
+.talk-counselor-container section {
   padding: 1.5rem;
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(12px);
@@ -204,12 +210,25 @@ html, body {
   box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
+.reminder-btn {
+  border: 1px solid #357ABD;
+  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.reminder-btn:hover {
+  background: rgba(74,144,226,0.2);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 1024px) {
   .navbar-top, .navbar-bottom {
     padding: 0.7rem 1.5rem;
   }
   .navbar-title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
 }
 

@@ -1,0 +1,188 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  background: #f5f7fa;
+}
+
+.talk-counselor-page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e0f0ff, #ffffff);
+}
+
+.talk-counselor-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.hero {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.hero p {
+  font-size: 1.1rem;
+  color: #34495e;
+}
+
+.counselor-profile {
+  display: flex;
+  gap: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.counselor-img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #4A90E2;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.counselor-details {
+  flex: 1;
+  min-width: 250px;
+}
+
+.counselor-details h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.counselor-details p {
+  margin: 0.3rem 0;
+  color: #34495e;
+  font-size: 0.95rem;
+}
+
+.call-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.7rem 1.5rem;
+  background: #4A90E2;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.call-btn:hover {
+  background: #357ABD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.counselor-form-section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.counselor-form-section h2 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.counselor-form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  color: #34495e;
+  font-weight: 500;
+}
+
+.counselor-form input,
+.counselor-form textarea {
+  margin-top: 0.3rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.counselor-form input:focus,
+.counselor-form textarea:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 5px rgba(74,144,226,0.5);
+}
+
+.submit-btn {
+  padding: 0.8rem 1.8rem;
+  background: #4A90E2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+  background: #357ABD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+@media (max-width: 768px) {
+  .counselor-profile {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .counselor-img {
+    width: 180px;
+    height: 180px;
+  }
+
+  .counselor-details h2 {
+    font-size: 1.6rem;
+  }
+
+  .call-btn {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .counselor-details h2 {
+    font-size: 1.4rem;
+  }
+
+  .counselor-form-section h2 {
+    font-size: 1.5rem;
+  }
+}
