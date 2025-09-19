@@ -106,19 +106,24 @@ const resources = {
         languagesDetails: "English, Hindi, Assamese",
         availability: "Availability:",
         availabilityDetails: "Mon-Fri, 10:00 AM - 6:00 PM",
-        callButton: "Call 88229 25245",
-        form: { submit: "Submit Request" },
+        callButton: "Call 9999999999",
+        form: {
+          submit: "Submit Request",
+          name: "Name",
+          namePlaceholder: "Your Name",
+          email: "Email",
+          emailPlaceholder: "Your Email",
+          message: "Message",
+          messagePlaceholder: "Write your concerns here..."
+        }
       },
       aboutMaitri: {
         heroTitle: "About Maitri",
-        heroDescription:
-          "Maitri is dedicated to promoting mental health awareness and providing tools for emotional well-being. Our goal is to create a safe, supportive, and accessible space for everyone.",
+        heroDescription: "Maitri is dedicated to promoting mental health awareness and providing tools for emotional well-being. Our goal is to create a safe, supportive, and accessible space for everyone.",
         missionTitle: "Our Mission",
-        missionDescription:
-          "To empower individuals to take charge of their mental health through journaling, guided resources, and community support. We aim to break stigma and encourage open conversations about mental wellness.",
+        missionDescription: "To empower individuals to take charge of their mental health through journaling, guided resources, and community support. We aim to break stigma and encourage open conversations about mental wellness.",
         visionTitle: "Our Vision",
-        visionDescription:
-          "A world where mental health is valued equally to physical health, and support is accessible to all.",
+        visionDescription: "A world where mental health is valued equally to physical health, and support is accessible to all.",
         featuresTitle: "What We Offer",
         features: [
           "Guided journaling to track mood and emotions.",
@@ -138,10 +143,21 @@ const resources = {
           "Practice deep breathing or meditation daily.",
         ],
         faqsTitle: "Frequently Asked Questions",
+        faq1: { question: "What is Maitri?", answer: "Maitri is a platform dedicated to mental well-being, providing tools, guidance, and community support." },
+        faq2: { question: "Is it free to use?", answer: "Yes! Maitri is completely free for everyone." },
+        faq3: { question: "Can I track my progress?", answer: "Yes, you can track your emotional and mental wellness through guided journaling and metrics." },
+        faq4: { question: "Is my data private?", answer: "Absolutely. We take user privacy seriously and all data is securely stored." },
         testimonialsTitle: "What Our Users Say",
+        testimonials: [
+          "Maitri has really helped me manage my anxiety.",
+          "I love the journaling feature, it keeps me aware of my emotions.",
+          "The counselor support is professional and empathetic.",
+        ],
         contactTitle: "Get Started with Maitri",
+        contactDescription: "Start your journey toward better mental health today. Explore our journaling and support features now!",
         startButton: "Start Journaling",
       },
+
     },
   },
   hi: {
@@ -226,7 +242,8 @@ const resources = {
       },
       counselor: {
         title: "काउंसलर से बात करें",
-        description: "राहत या मार्गदर्शन चाहिए? हमारे पेशेवर काउंसलर से गोपनीय और सहानुभूतिपूर्ण बातचीत करें।",
+        description:
+          "राहत या मार्गदर्शन चाहिए? हमारे पेशेवर काउंसलर से गोपनीय और सहानुभूतिपूर्ण बातचीत करें।",
         name: "नाम",
         namePlaceholder: "आपका नाम",
         email: "ईमेल",
@@ -234,51 +251,71 @@ const resources = {
         message: "संदेश",
         messagePlaceholder: "अपनी समस्या यहाँ लिखें...",
         requestSession: "सत्र के लिए अनुरोध करें",
-        requestSubmitted: "आपका अनुरोध भेज दिया गया है। हमारा काउंसलर जल्द ही आपसे संपर्क करेगा।",
+        requestSubmitted:
+          "आपका अनुरोध भेज दिया गया है। हमारा काउंसलर जल्द ही आपसे संपर्क करेगा!",
         qualifications: "योग्यता:",
-        qualificationsDetails: "क्लिनिकल साइकोलॉजी में M.A., प्रमाणित CBT प्रैक्टिशनर",
+        qualificationsDetails:
+          "क्लिनिकल साइकोलॉजी में M.A., प्रमाणित CBT प्रैक्टिशनर",
         experience: "अनुभव:",
-        experienceDetails: "7 साल का मानसिक स्वास्थ्य काउंसलिंग अनुभव, चिंता, अवसाद और तनाव प्रबंधन में विशेषज्ञता",
+        experienceDetails:
+          "7 साल का मानसिक स्वास्थ्य काउंसलिंग अनुभव, चिंता, अवसाद और तनाव प्रबंधन में विशेषज्ञता",
         languages: "भाषाएँ:",
         languagesDetails: "अंग्रेज़ी, हिंदी, असमिया",
         availability: "उपलब्धता:",
         availabilityDetails: "सोम-शुक्र, सुबह 10 बजे - शाम 6 बजे",
         callButton: "कॉल करें 88229 25245",
-        form: { submit: "अनुरोध भेजें" },
+        form: {
+          submit: "अनुरोध भेजें",
+          name: "नाम",
+          namePlaceholder: "आपका नाम",
+          email: "ईमेल",
+          emailPlaceholder: "आपका ईमेल",
+          message: "संदेश",
+          messagePlaceholder: "अपनी समस्या यहाँ लिखें..."
+        }
       },
-      aboutMaitri: {
-        heroTitle: "मैत्री के बारे में",
-        heroDescription:
-          "मैत्री मानसिक स्वास्थ्य जागरूकता बढ़ाने और भावनात्मक स्वास्थ्य के लिए टूल प्रदान करने के लिए समर्पित है। हमारा लक्ष्य सभी के लिए सुरक्षित और सहायक जगह बनाना है।",
-        missionTitle: "हमारा मिशन",
-        missionDescription:
-          "व्यक्तियों को उनके मानसिक स्वास्थ्य को समझने और नियंत्रित करने के लिए सशक्त बनाना। इसमें जर्नलिंग, मार्गदर्शित संसाधन और समुदाय समर्थन शामिल है। हम मानसिक स्वास्थ्य पर खुली बातचीत को बढ़ावा देते हैं।",
-        visionTitle: "हमारी दृष्टि",
-        visionDescription:
-          "एक दुनिया जहां मानसिक स्वास्थ्य को शारीरिक स्वास्थ्य के बराबर महत्व दिया जाता है और समर्थन सभी के लिए सुलभ हो।",
-        featuresTitle: "हम क्या प्रदान करते हैं",
-        features: [
-          "मूड और भावनाओं को ट्रैक करने के लिए मार्गदर्शित जर्नलिंग।",
-          "मानसिक स्वास्थ्य सहायता के लिए इंटरैक्टिव चैटबॉट।",
-          "भावनात्मक और स्क्रीनिंग मेट्रिक्स से मानसिक स्थिति को समझना।",
-          "मानसिक स्वास्थ्य पर शैक्षिक संसाधन और वीडियो।",
-          "समुदाय समर्थन और विशेषज्ञ सलाह।",
-        ],
-        videosTitle: "सहायक वीडियो",
-        tipsTitle: "मानसिक स्वास्थ्य सुझाव",
-        tips: [
-          "दैनिक आभार जर्नलिंग का अभ्यास करें।",
-          "मूड बढ़ाने और तनाव कम करने के लिए नियमित व्यायाम करें।",
-          "दोस्तों और प्रियजनों के साथ जुड़े रहें।",
-          "वास्तविक लक्ष्यों को निर्धारित करें और उन्हें छोटे कार्यों में विभाजित करें।",
-          "उत्तेजना कम करने के लिए सोशल मीडिया से ब्रेक लें।",
-          "दैनिक रूप से गहरी साँस या ध्यान का अभ्यास करें।",
-        ],
-        faqsTitle: "अक्सर पूछे जाने वाले प्रश्न",
-        testimonialsTitle: "हमारे उपयोगकर्ता क्या कहते हैं",
-        contactTitle: "मैत्री के साथ शुरुआत करें",
-        startButton: "जर्नलिंग शुरू करें",
-      },
+
+   aboutMaitri: {
+      heroTitle: "मैत्री के बारे में",
+      heroDescription: "मैत्री मानसिक स्वास्थ्य जागरूकता बढ़ाने और भावनात्मक स्वास्थ्य के लिए टूल प्रदान करने के लिए समर्पित है। हमारा लक्ष्य सभी के लिए सुरक्षित और सहायक जगह बनाना है।",
+      missionTitle: "हमारा मिशन",
+      missionDescription: "व्यक्तियों को उनके मानसिक स्वास्थ्य को समझने और नियंत्रित करने के लिए सशक्त बनाना। इसमें जर्नलिंग, मार्गदर्शित संसाधन और समुदाय समर्थन शामिल है। हम मानसिक स्वास्थ्य पर खुली बातचीत को बढ़ावा देते हैं।",
+      visionTitle: "हमारी दृष्टि",
+      visionDescription: "एक दुनिया जहां मानसिक स्वास्थ्य को शारीरिक स्वास्थ्य के बराबर महत्व दिया जाता है और समर्थन सभी के लिए सुलभ हो।",
+      featuresTitle: "हम क्या प्रदान करते हैं",
+      features: [
+        "मूड और भावनाओं को ट्रैक करने के लिए मार्गदर्शित जर्नलिंग।",
+        "मानसिक स्वास्थ्य सहायता के लिए इंटरैक्टिव चैटबॉट।",
+        "भावनात्मक और स्क्रीनिंग मेट्रिक्स से मानसिक स्थिति को समझना।",
+        "मानसिक स्वास्थ्य पर शैक्षिक संसाधन और वीडियो।",
+        "समुदाय समर्थन और विशेषज्ञ सलाह।",
+      ],
+      videosTitle: "सहायक वीडियो",
+      tipsTitle: "मानसिक स्वास्थ्य सुझाव",
+      tips: [
+        "दैनिक आभार जर्नलिंग का अभ्यास करें।",
+        "मूड बढ़ाने और तनाव कम करने के लिए नियमित व्यायाम करें।",
+        "दोस्तों और प्रियजनों के साथ जुड़े रहें।",
+        "वास्तविक लक्ष्यों को निर्धारित करें और उन्हें छोटे कार्यों में विभाजित करें।",
+        "उत्तेजना कम करने के लिए सोशल मीडिया से ब्रेक लें।",
+        "दैनिक रूप से गहरी साँस या ध्यान का अभ्यास करें।",
+      ],
+      faqsTitle: "अक्सर पूछे जाने वाले प्रश्न",
+      faq1: { question: "मैत्री क्या है?", answer: "मैत्री एक प्लेटफ़ॉर्म है जो मानसिक स्वास्थ्य के लिए टूल, मार्गदर्शन और समुदाय समर्थन प्रदान करता है।" },
+      faq2: { question: "क्या इसका उपयोग मुफ्त है?", answer: "हाँ! मैत्री सभी के लिए पूरी तरह से मुफ्त है।" },
+      faq3: { question: "क्या मैं अपनी प्रगति ट्रैक कर सकता हूँ?", answer: "हाँ, आप जर्नलिंग और मेट्रिक्स के माध्यम से अपनी भावनात्मक और मानसिक स्थिति ट्रैक कर सकते हैं।" },
+      faq4: { question: "क्या मेरा डेटा सुरक्षित है?", answer: "बिलकुल। हम उपयोगकर्ता की गोपनीयता का गंभीरता से पालन करते हैं और सभी डेटा सुरक्षित रूप से संग्रहित हैं।" },
+      testimonialsTitle: "हमारे उपयोगकर्ता क्या कहते हैं",
+      testimonials: [
+        "मैत्री ने मेरी चिंता को नियंत्रित करने में बहुत मदद की।",
+        "मुझे जर्नलिंग फीचर बहुत पसंद है, यह मेरी भावनाओं का ध्यान रखता है।",
+        "काउंसलर सहायता पेशेवर और सहानुभूतिपूर्ण है।",
+      ],
+      contactTitle: "मैत्री के साथ शुरुआत करें",
+      contactDescription: "आज ही बेहतर मानसिक स्वास्थ्य की दिशा में अपनी यात्रा शुरू करें। हमारी जर्नलिंग और सपोर्ट फीचर्स का अन्वेषण करें!",
+      startButton: "जर्नलिंग शुरू करें",
+    }
+
     },
   },
   as: {
@@ -363,7 +400,8 @@ const resources = {
       },
       counselor: {
         title: "পরামৰ্শদাতাৰ সৈতে কথা পাতক",
-        description: "মনত্বস্থিৰতা বা পথপ্ৰদৰ্শনৰ প্ৰয়োজন? আমাৰ পেচাদাৰী পৰামৰ্শদাতাৰ সৈতে গোপনীয় আৰু সহানুভূতিপূৰ্ণ আলাপ কৰক।",
+        description:
+          "মনত্বস্থিৰতা বা পথপ্ৰদৰ্শনৰ প্ৰয়োজন? আমাৰ পেচাদাৰী পৰামৰ্শদাতাৰ সৈতে গোপনীয় আৰু সহানুভূতিপূৰ্ণ আলাপ কৰক।",
         name: "নাম",
         namePlaceholder: "আপোনাৰ নাম",
         email: "ইমেইল",
@@ -371,28 +409,37 @@ const resources = {
         message: "বার্তা",
         messagePlaceholder: "আপোনাৰ সমস্যা ইয়াত লিখক...",
         requestSession: "সেশ্যন অনুৰোধ কৰক",
-        requestSubmitted: "আপোনাৰ অনুৰোধ পঠিওৱা হৈছে। আমাৰ পৰামৰ্শদাতাই শীঘ্ৰে আপোনাৰ সৈতে যোগাযোগ কৰিব।",
+        requestSubmitted:
+          "আপোনাৰ অনুৰোধ পঠিওৱা হৈছে। আমাৰ পৰামৰ্শদাতাই শীঘ্ৰে আপোনাৰ সৈতে যোগাযোগ কৰিব।",
         qualifications: "যোগ্যতা:",
-        qualificationsDetails: "ক্লিনিকেল চাইক’লজি ত M.A., প্ৰমাণিত CBT প্ৰশিক্ষক",
+        qualificationsDetails:
+          "ক্লিনিকেল চাইক’লজি ত M.A., প্ৰমাণিত CBT প্ৰশিক্ষক",
         experience: "অভিজ্ঞতা:",
-        experienceDetails: "7 বছৰৰ মানসিক স্বাস্থ্য পৰামৰ্শ অভিজ্ঞতা, উৎকণ্ঠা, বিষাদ আৰু মানসিক চাপ পৰিচালনাত বিশেষজ্ঞতা",
+        experienceDetails:
+          "7 বছৰৰ মানসিক স্বাস্থ্য পৰামৰ্শ অভিজ্ঞতা, উৎকণ্ঠা, বিষাদ আৰু মানসিক চাপ পৰিচালনাত বিশেষজ্ঞতা",
         languages: "ভাষাসমূহ:",
         languagesDetails: "ইংৰাজী, হিন্দী, অসমীয়া",
         availability: "উপলব্ধতা:",
         availabilityDetails: "সোম-বৃহস্পতি, পুৱা 10 বজা - সন্ধিয়া 6 বজা",
         callButton: "কল কৰক 88229 25245",
-        form: { submit: "অনুৰোধ পঠিয়াওক" },
+        form: {
+          submit: "অনুৰোধ পঠিয়াওক",
+          name: "নাম",
+          namePlaceholder: "আপোনাৰ নাম",
+          email: "ইমেইল",
+          emailPlaceholder: "আপোনাৰ ইমেইল",
+          message: "বার্তা",
+          messagePlaceholder: "আপোনাৰ সমস্যা ইয়াত লিখক..."
+        }
       },
+
       aboutMaitri: {
         heroTitle: "মৈত্ৰী সম্বন্ধে",
-        heroDescription:
-          "মৈত্ৰী মানসিক স্বাস্থ্য সচেতনতা বঢ়োৱা আৰু আবেগিক সু-স্বাস্থ্যৰ বাবে টুল প্ৰদান কৰাত উৎসৰ্গিত। আমাৰ লক্ষ্য সকলোৰে বাবে নিৰাপদ আৰু সহায়ক পৰিবেশ নিৰ্মাণ কৰা।",
+        heroDescription: "মৈত্ৰী মানসিক স্বাস্থ্য সচেতনতা বঢ়োৱা আৰু আবেগিক সু-স্বাস্থ্যৰ বাবে টুল প্ৰদান কৰাত উৎসৰ্গিত। আমাৰ লক্ষ্য সকলোৰে বাবে নিৰাপদ আৰু সহায়ক পৰিবেশ নিৰ্মাণ কৰা।",
         missionTitle: "আমাৰ লক্ষ্য",
-        missionDescription:
-          "ব্যক্তিসকলক তেওঁলোকৰ মানসিক স্বাস্থ্যৰ ওপৰত নিয়ন্ত্ৰণ ৰাখিবলৈ ক্ষমতাশালী কৰা। ইয়াত জাৰ্নেলিং, পৰিচালিত সম্পদ আৰু কমিউনিটি সমৰ্থন অন্তৰ্ভুক্ত। আমরা মানসিক স্বাস্থ্যৰ ওপৰত খোলা আলোচনা উৎসাহিত কৰো।",
+        missionDescription: "ব্যক্তিসকলক তেওঁলোকৰ মানসিক স্বাস্থ্যৰ ওপৰত নিয়ন্ত্ৰণ ৰাখিবলৈ ক্ষমতাশালী কৰা। ইয়াত জাৰ্নেলিং, পৰিচালিত সম্পদ আৰু কমিউনিটি সমৰ্থন অন্তৰ্ভুক্ত। আমরা মানসিক স্বাস্থ্যৰ ওপৰত খোলা আলোচনা উৎসাহিত কৰো।",
         visionTitle: "আমাৰ দৃষ্টি",
-        visionDescription:
-          "এখন বিশ্ব য'ত মানসিক স্বাস্থ্যক শাৰীৰিক স্বাস্থ্যৰ সমান গুৰুত্ব দিয়া হয় আৰু সমৰ্থন সকলোৰে বাবে উপলব্ধ।",
+        visionDescription: "এখন বিশ্ব য'ত মানসিক স্বাস্থ্যক শাৰীৰিক স্বাস্থ্যৰ সমান গুৰুত্ব দিয়া হয় আৰু সমৰ্থন সকলোৰে বাবে উপলব্ধ।",
         featuresTitle: "আমাৰ অফাৰসমূহ",
         features: [
           "মুড আৰু অনুভূতিসমূহ ট্রেক কৰিবলৈ পৰিচালিত জাৰ্নেলিং।",
@@ -412,10 +459,21 @@ const resources = {
           "প্ৰতিদিন ডীপ ব্ৰিদিং বা মেডিটেচন অনুশীলন কৰক।",
         ],
         faqsTitle: "সঘনাই সুধা প্ৰশ্নসমূহ",
+        faq1: { question: "মৈত্ৰী কি?", answer: "মৈত্ৰী এটা প্লেটফৰ্ম, যি মানসিক স্বাস্থ্যৰ বাবে টুল, পৰামৰ্শ আৰু কমিউনিটি সমৰ্থন প্ৰদান কৰে।" },
+        faq2: { question: "ই ব্যৱহাৰ কৰিবলৈ বিনামূলীয়া নেকি?", answer: "হয়! মৈত্ৰী সকলোৰে বাবে সম্পূৰ্ণ বিনামূলীয়া।" },
+        faq3: { question: "মই মোৰ অগ্ৰগতি পৰ্যবেক্ষণ কৰিব পাৰিম নেকি?", answer: "হয়, আপুনি জাৰ্নেলিং আৰু মেট্ৰিক্সৰ জৰিয়তে আপোনাৰ আবেগিক আৰু মানসিক অৱস্থা পৰ্যবেক্ষণ কৰিব পাৰিব।" },
+        faq4: { question: "মোৰ ডেটা ব্যক্তিগত নেকি?", answer: "নিশ্চয়। আমি ব্যৱহাৰকাৰীৰ গোপনীয়তাৰ সম্পূৰ্ণ যত্ন লওঁ আৰু সকলো ডেটা নিৰাপদে সংৰক্ষণ কৰা হয়।" },
         testimonialsTitle: "আমাৰ ব্যৱহাৰকাৰীৰ মতামত",
+        testimonials: [
+          "মৈত্ৰীয়ে মোৰ উৎকণ্ঠা নিয়ন্ত্ৰণ কৰিবলৈ বৰ সহায় কৰিছে।",
+          "মই জাৰ্নেলিং ফিচাৰ পছন্দ কৰোঁ, ইয়াই মোৰ অনুভূতিসমূহ মনত ৰাখে।",
+          "পরামৰ্শদাতাৰ সহায় পেচাদাৰী আৰু সহানুভূতিপূৰ্ণ।",
+        ],
         contactTitle: "মৈত্ৰী আৰম্ভ কৰক",
+        contactDescription: "আজিৰ পৰা আপোনাৰ মানসিক স্বাস্থ্যৰ যাত্ৰা আৰম্ভ কৰক। আমাৰ জাৰ্নেলিং আৰু সহায়ক ফিচাৰসমূহৰ অন্বেষণ কৰক!",
         startButton: "জাৰ্নেলিং আৰম্ভ কৰক",
       },
+
     },
   },
 };

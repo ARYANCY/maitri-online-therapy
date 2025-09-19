@@ -78,7 +78,7 @@ export default function TalkToCounselor() {
             <p>
               <strong>{t("counselor.availability")}</strong> {t("counselor.availabilityDetails")}
             </p>
-            <a href="tel:8822925245" className="call-btn">{t("counselor.callButton")}</a>
+            <a href="tel:999999999" className="call-btn">{t("counselor.callButton")}</a>
           </div>
         </section>
 
