@@ -87,7 +87,7 @@ const resources = {
         title: "Talk to a Counselor",
         description:
           "Need guidance or support? Reach out to our professional counselor for a confidential and empathetic conversation.",
-        name: "Name",
+        name: "Dhritam tampatkam dehi",
         namePlaceholder: "Your Name",
         email: "Email",
         emailPlaceholder: "Your Email",
