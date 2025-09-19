@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import "../css/TalkToCounselor.css";
-import counselorImg from "../images/dhriti.jpg";
+import dhriti from "../src/images/dhriti.jpg"; 
 
 export default function TalkToCounselor({ user }) {
   const [formData, setFormData] = useState({
@@ -34,7 +34,7 @@ export default function TalkToCounselor({ user }) {
         </section>
 
         <section className="counselor-profile">
-          <img src={counselorImg} alt="Dhriti Tapati Dey" className="counselor-img" />
+          <img src={dhriti} alt="Dhriti Tapati Dey" className="counselor-img" />
           <div className="counselor-details">
             <h2>DHRITI TAPATI DEY</h2>
             <p><strong>Qualifications:</strong> M.A. in Clinical Psychology, Certified CBT Practitioner</p>

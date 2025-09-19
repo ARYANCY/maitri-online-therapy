@@ -38,24 +38,18 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Pre-save hook to hash password only if it exists and was modified
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password") || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
-
-// Compare password method for login
 userSchema.methods.comparePassword = async function(candidatePassword) {
   if (!candidatePassword || !this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
-
-// Optional: Custom validation to enforce password length only for local accounts
 userSchema.path("password").validate(function(value) {
-  if (this.googleId) return true; // skip validation for OAuth users
+  if (this.googleId) return true; 
   return value && value.length >= 6;
 }, "Password must be at least 6 characters long");
 
