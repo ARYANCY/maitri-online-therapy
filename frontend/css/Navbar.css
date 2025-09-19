@@ -5,30 +5,36 @@ html, body {
   font-family: "Inter", "Segoe UI", Roboto, sans-serif;
   background: #f5f7fa;
 }
+
 .navbar {
   position: sticky;
   top: 0;
   width: 100%;
   z-index: 1000;
-  backdrop-filter: blur(18px) saturate(200%);
-  -webkit-backdrop-filter: blur(18px) saturate(200%);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
   background: rgba(20, 20, 20, 0.55);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
-  border-radius: 0 0 15px 15px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  border-radius: 0 0 20px 20px;
   transition: background 0.3s ease, box-shadow 0.3s ease;
-  padding: 0.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
+
 .navbar-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.8rem 2rem;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
 .navbar-title {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   letter-spacing: 1px;
   background: linear-gradient(135deg, #4A90E2, #6C63FF);
   -webkit-background-clip: text;
@@ -36,19 +42,21 @@ html, body {
   color: transparent;
   -webkit-text-fill-color: transparent;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
+
 .navbar-title:hover {
   transform: scale(1.05);
   opacity: 0.95;
 }
+
 .navbar-link {
   color: #fff;
   text-decoration: none;
   font-weight: 500;
   margin-right: 1rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
   transition: all 0.3s ease;
 }
 
@@ -61,6 +69,7 @@ html, body {
 .navbar-link.active {
   border-bottom: 2px solid #6C63FF;
 }
+
 .navbar-chat-btn {
   background: linear-gradient(135deg, #4A90E2, #357ABD);
   color: #fff;
@@ -68,7 +77,6 @@ html, body {
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 500;
-  text-decoration: none;
   margin-left: 1rem;
   transition: all 0.3s ease;
   border: none;
@@ -79,6 +87,7 @@ html, body {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
+
 .lang-switcher {
   display: flex;
   gap: 0.5rem;
@@ -87,7 +96,7 @@ html, body {
 .lang-switcher button {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 5px 12px;
   cursor: pointer;
   color: #fff;
@@ -102,6 +111,7 @@ html, body {
   color: #6C63FF;
   transform: translateY(-1px);
 }
+
 .navbar-bottom {
   display: flex;
   justify-content: space-between;
@@ -109,11 +119,12 @@ html, body {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  padding: 0.5rem 2rem;
+  padding: 0.6rem 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
 .navbar-right {
   display: flex;
   align-items: center;
@@ -156,6 +167,7 @@ html, body {
   font-weight: 500;
   color: #fff;
 }
+
 .navbar-right button {
   background: transparent;
   border: none;
@@ -169,6 +181,7 @@ html, body {
   color: #6C63FF;
   transform: translateY(-1px);
 }
+
 .about-maitri-page {
   padding: 2rem;
   background: linear-gradient(135deg, #e0f0ff, #ffffff);
@@ -190,6 +203,7 @@ html, body {
   border-radius: 15px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
+
 @media (max-width: 1024px) {
   .navbar-top, .navbar-bottom {
     padding: 0.7rem 1.5rem;
