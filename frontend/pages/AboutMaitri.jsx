@@ -1,6 +1,7 @@
+// src/pages/AboutMaitri.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import "../css/AboutMaitri.css";
 import Navbar from "../components/Navbar";
+import "../css/AboutMaitri.css";
 import API from "../utils/axiosClient";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +11,7 @@ export default function AboutMaitri() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch user session safely
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -19,22 +21,22 @@ export default function AboutMaitri() {
       }
       setUser(data.user);
     } catch (err) {
-      console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
-      setError(t("dashboard.error.sessionCheckFailed", "Session check failed:") + " " + err.message);
+      console.error("Session check failed:", err);
+      setError("Session check failed: " + err.message);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
+  // Helper to safely get array translations
+  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
+
   if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
   if (error) return <p className="dashboard-error">{error}</p>;
-
-  // Helper function to safely get array from i18n
-  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
 
   return (
     <div className="about-maitri-page">
@@ -74,14 +76,12 @@ export default function AboutMaitri() {
               src="https://www.youtube.com/embed/92iQ5Yk0oc8"
               title="Mindfulness Meditation"
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
             <iframe
               src="https://www.youtube.com/embed/inpok4MKVLM"
               title="Stress Relief Techniques"
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
             <iframe
