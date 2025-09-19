@@ -17,7 +17,7 @@ export default function Navbar({ user }) {
 
       const handleLogout = () => {
         localStorage.removeItem("token");
-        navigate("/login"); // instead of window.location.href
+        navigate("https://maitri-online-therapy.vercel.app");
       };
 
 
