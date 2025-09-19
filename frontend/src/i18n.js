@@ -20,15 +20,15 @@ const resources = {
           chatbot: "Chatbot",
           chart: "Chart",
           todo: "To-Do",
+          notFound: "Tab not found",
         },
         loading: "Loading...",
-        error: "An error occurred",
         error: {
+          generic: "An error occurred",
           sessionCheckFailed: "Session check failed:",
           fetchFailed: "Dashboard fetch error:",
           updateTodosFailed: "Failed to update tasks:",
         },
-        tab: { notFound: "Tab not found" },
       },
       todo: {
         title: "My Tasks",
@@ -94,9 +94,11 @@ const resources = {
         message: "Message",
         messagePlaceholder: "Write your concerns here...",
         requestSession: "Request a Session",
-        requestSubmitted: "Your request has been submitted. Our counselor will contact you soon!",
+        requestSubmitted:
+          "Your request has been submitted. Our counselor will contact you soon!",
         qualifications: "Qualifications:",
-        qualificationsDetails: "M.A. in Clinical Psychology, Certified CBT Practitioner",
+        qualificationsDetails:
+          "M.A. in Clinical Psychology, Certified CBT Practitioner",
         experience: "Experience:",
         experienceDetails:
           "7 years in mental health counseling, specializing in anxiety, depression, and stress management",
@@ -159,15 +161,15 @@ const resources = {
           chatbot: "चैटबॉट",
           chart: "चार्ट",
           todo: "कार्यसूची",
+          notFound: "टैब नहीं मिला",
         },
         loading: "लोड हो रहा है...",
-        error: "कुछ गड़बड़ हुई",
         error: {
+          generic: "कुछ गड़बड़ हुई",
           sessionCheckFailed: "सत्र जांच विफल:",
           fetchFailed: "डैशबोर्ड डेटा लाने में त्रुटि:",
           updateTodosFailed: "टास्क अपडेट करने में विफल:",
         },
-        tab: { notFound: "टैब नहीं मिला" },
       },
       todo: {
         title: "मेरे कार्य",
@@ -296,15 +298,15 @@ const resources = {
           chatbot: "চেটবট",
           chart: "চাৰ্ট",
           todo: "টু-ডু",
+          notFound: "টেব্‌ নাপাইল",
         },
         loading: "লোড কৰা হৈছে...",
-        error: "কিবা সমস্যা হৈছে",
         error: {
+          generic: "কিবা সমস্যা হৈছে",
           sessionCheckFailed: "ছেছন পৰীক্ষা বিফল:",
           fetchFailed: "ডেশব'ৰ্ড লোডত বিফল:",
           updateTodosFailed: "টাস্ক আপডে'টত বিফল:",
         },
-        tab: { notFound: "টেব্‌ নাপাইল" },
       },
       todo: {
         title: "মোৰ কাম",
@@ -369,13 +371,11 @@ const resources = {
         message: "বার্তা",
         messagePlaceholder: "আপোনাৰ সমস্যা ইয়াত লিখক...",
         requestSession: "সেশ্যন অনুৰোধ কৰক",
-        requestSubmitted:
-          "আপোনাৰ অনুৰোধ পঠিওৱা হৈছে। আমাৰ পৰামৰ্শদাতাই শীঘ্ৰে আপোনাৰ সৈতে যোগাযোগ কৰিব।",
+        requestSubmitted: "আপোনাৰ অনুৰোধ পঠিওৱা হৈছে। আমাৰ পৰামৰ্শদাতাই শীঘ্ৰে আপোনাৰ সৈতে যোগাযোগ কৰিব।",
         qualifications: "যোগ্যতা:",
         qualificationsDetails: "ক্লিনিকেল চাইক’লজি ত M.A., প্ৰমাণিত CBT প্ৰশিক্ষক",
         experience: "অভিজ্ঞতা:",
-        experienceDetails:
-          "7 বছৰৰ মানসিক স্বাস্থ্য পৰামৰ্শ অভিজ্ঞতা, উৎকণ্ঠা, বিষাদ আৰু মানসিক চাপ পৰিচালনাত বিশেষজ্ঞতা",
+        experienceDetails: "7 বছৰৰ মানসিক স্বাস্থ্য পৰামৰ্শ অভিজ্ঞতা, উৎকণ্ঠা, বিষাদ আৰু মানসিক চাপ পৰিচালনাত বিশেষজ্ঞতা",
         languages: "ভাষাসমূহ:",
         languagesDetails: "ইংৰাজী, হিন্দী, অসমীয়া",
         availability: "উপলব্ধতা:",
@@ -425,6 +425,7 @@ i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
   interpolation: { escapeValue: false },
+  react: { useSuspense: false },
 });
 
 export default i18n;

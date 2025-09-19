@@ -17,7 +17,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
 
-  // Fetch user session
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -34,7 +33,6 @@ export default function Dashboard() {
     }
   }, [t]);
 
-  // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
     try {
@@ -64,7 +62,6 @@ export default function Dashboard() {
     }
   }, [user, t]);
 
-  // Update todos
   const handleTodosUpdate = async (updatedTodos) => {
     const prevTodos = [...todos];
     setTodos(updatedTodos);
@@ -89,7 +86,6 @@ export default function Dashboard() {
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // Render the main content
   const renderContent = () => {
     if (loading.user || loading.dashboard) {
       return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
@@ -106,7 +102,7 @@ export default function Dashboard() {
       case "todo":
         return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
       default:
-        return <p>{t("dashboard.tab.notFound", "Tab not found")}</p>;
+        return null;
     }
   };
 

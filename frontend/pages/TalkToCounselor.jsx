@@ -25,21 +25,21 @@ export default function TalkToCounselor() {
         return;
       }
       setUser(data.user);
-      setFormData({ ...formData, name: data.user.name });
+      setFormData(prev => ({ ...prev, name: data.user.name }));
     } catch (err) {
-      console.error("Session check failed:", err);
+      console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
       window.location.href = "/login";
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = (e) => {
@@ -48,7 +48,7 @@ export default function TalkToCounselor() {
     setFormData({ name: user?.name || "", email: "", message: "" });
   };
 
-  if (loading) return <p className="dashboard-loading">{t("loading", "Loading...")}</p>;
+  if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
   if (error) return <p className="dashboard-error">{error}</p>;
 
   return (
@@ -59,78 +59,66 @@ export default function TalkToCounselor() {
 
         <section className="hero">
           <h1>{t("counselor.title", "Talk to a Counselor")}</h1>
-          <p>
-            {t(
-              "counselor.description",
-              "Need guidance or support? Reach out to our professional counselor for a confidential and empathetic conversation."
-            )}
-          </p>
+          <p>{t("counselor.description")}</p>
         </section>
 
         <section className="counselor-profile">
-          <img src={dhriti} alt="Dhriti Tapati Dey" className="counselor-img" />
+          <img src={dhriti} alt={t("counselor.name")} className="counselor-img" />
           <div className="counselor-details">
-            <h2>{t("counselor.name", "DHRITI TAPATI DEY")}</h2>
+            <h2>{t("counselor.name")}</h2>
             <p>
-              <strong>{t("counselor.qualifications", "Qualifications:")}</strong>{" "}
-              {t("counselor.qualificationsDetails", "M.A. in Clinical Psychology, Certified CBT Practitioner")}
+              <strong>{t("counselor.qualifications")}</strong> {t("counselor.qualificationsDetails")}
             </p>
             <p>
-              <strong>{t("counselor.experience", "Experience:")}</strong>{" "}
-              {t(
-                "counselor.experienceDetails",
-                "7 years in mental health counseling, specializing in anxiety, depression, and stress management"
-              )}
+              <strong>{t("counselor.experience")}</strong> {t("counselor.experienceDetails")}
             </p>
             <p>
-              <strong>{t("counselor.languages", "Languages:")}</strong>{" "}
-              {t("counselor.languagesDetails", "English, Hindi, Assamese")}
+              <strong>{t("counselor.languages")}</strong> {t("counselor.languagesDetails")}
             </p>
             <p>
-              <strong>{t("counselor.availability", "Availability:")}</strong>{" "}
-              {t("counselor.availabilityDetails", "Mon-Fri, 10:00 AM - 6:00 PM")}
+              <strong>{t("counselor.availability")}</strong> {t("counselor.availabilityDetails")}
             </p>
-            <a href="tel:8822925245" className="call-btn">{t("counselor.callButton", "Call 88229 25245")}</a>
+            <a href="tel:8822925245" className="call-btn">{t("counselor.callButton")}</a>
           </div>
         </section>
 
         <section className="counselor-form-section">
-          <h2>{t("counselor.requestSession", "Request a Session")}</h2>
+          <h2>{t("counselor.requestSession")}</h2>
           <form className="counselor-form" onSubmit={handleSubmit}>
             <label>
-              {t("counselor.form.name", "Name")}
+              {t("counselor.form.name")}
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder={t("counselor.form.namePlaceholder", "Your Name")}
+                placeholder={t("counselor.form.namePlaceholder")}
                 required
               />
             </label>
             <label>
-              {t("counselor.form.email", "Email")}
+              {t("counselor.form.email")}
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder={t("counselor.form.emailPlaceholder", "Your Email")}
+                placeholder={t("counselor.form.emailPlaceholder")}
                 required
               />
             </label>
             <label>
-              {t("counselor.form.message", "Message")}
+              {t("counselor.form.message")}
               <textarea
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                placeholder={t("counselor.form.messagePlaceholder", "Write your concerns here...")}
+                placeholder={t("counselor.form.messagePlaceholder")}
                 rows="5"
                 required
               ></textarea>
             </label>
-            <button type="submit" className="submit-btn">{t("counselor.form.submit", "Submit Request")}</button>
+            <button type="submit" className="submit-btn">{t("counselor.form.submit")}</button>
           </form>
         </section>
 
