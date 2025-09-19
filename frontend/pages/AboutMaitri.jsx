@@ -8,6 +8,7 @@ export default function AboutMaitri() {
   const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -19,7 +20,7 @@ export default function AboutMaitri() {
       setUser(data.user);
     } catch (err) {
       console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
-      window.location.href = "/login";
+      setError(t("dashboard.error.sessionCheckFailed", "Session check failed:") + " " + err.message);
     } finally {
       setLoading(false);
     }
@@ -30,33 +31,42 @@ export default function AboutMaitri() {
   }, [fetchUser]);
 
   if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+  if (error) return <p className="dashboard-error">{error}</p>;
+
+  // Helper function to safely get array from i18n
+  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
 
   return (
     <div className="about-maitri-page">
       <Navbar user={user} />
 
       <div className="about-maitri-container">
+        {/* Hero Section */}
         <section className="maitri-hero">
           <h1>{t("aboutMaitri.heroTitle", "About Maitri")}</h1>
-          <p>{t("aboutMaitri.heroDescription")}</p>
+          <p>{t("aboutMaitri.heroDescription", "Maitri is dedicated to promoting mental health awareness...")}</p>
         </section>
 
+        {/* Mission & Vision */}
         <section className="maitri-mission">
           <h2>{t("aboutMaitri.missionTitle", "Our Mission")}</h2>
-          <p>{t("aboutMaitri.missionDescription")}</p>
+          <p>{t("aboutMaitri.missionDescription", "To empower individuals to take charge of their mental health...")}</p>
+
           <h2>{t("aboutMaitri.visionTitle", "Our Vision")}</h2>
-          <p>{t("aboutMaitri.visionDescription")}</p>
+          <p>{t("aboutMaitri.visionDescription", "A world where mental health is valued equally...")}</p>
         </section>
 
+        {/* Features */}
         <section className="maitri-features">
           <h2>{t("aboutMaitri.featuresTitle", "What We Offer")}</h2>
           <ul>
-            {t("aboutMaitri.features", [], { returnObjects: true }).map((item, idx) => (
-              <li key={idx}>{item}</li>
+            {getArray("aboutMaitri.features").map((feature, idx) => (
+              <li key={idx}>{feature}</li>
             ))}
           </ul>
         </section>
 
+        {/* Videos */}
         <section className="maitri-videos">
           <h2>{t("aboutMaitri.videosTitle", "Helpful Videos")}</h2>
           <div className="video-grid">
@@ -83,48 +93,49 @@ export default function AboutMaitri() {
           </div>
         </section>
 
+        {/* Mental Health Tips */}
         <section className="maitri-tips">
           <h2>{t("aboutMaitri.tipsTitle", "Mental Health Tips")}</h2>
           <ul>
-            {t("aboutMaitri.tips", [], { returnObjects: true }).map((tip, idx) => (
+            {getArray("aboutMaitri.tips").map((tip, idx) => (
               <li key={idx}>{tip}</li>
             ))}
           </ul>
         </section>
 
+        {/* FAQs */}
         <section className="maitri-faqs">
           <h2>{t("aboutMaitri.faqsTitle", "Frequently Asked Questions")}</h2>
-          <div className="faq-item">
-            <h3>{t("aboutMaitri.faq1.question", "What is Maitri?")}</h3>
-            <p>{t("aboutMaitri.faq1.answer")}</p>
-          </div>
-          <div className="faq-item">
-            <h3>{t("aboutMaitri.faq2.question", "Is it free to use?")}</h3>
-            <p>{t("aboutMaitri.faq2.answer")}</p>
-          </div>
-          <div className="faq-item">
-            <h3>{t("aboutMaitri.faq3.question", "Can I track my progress?")}</h3>
-            <p>{t("aboutMaitri.faq3.answer")}</p>
-          </div>
-          <div className="faq-item">
-            <h3>{t("aboutMaitri.faq4.question", "Is my data private?")}</h3>
-            <p>{t("aboutMaitri.faq4.answer")}</p>
-          </div>
+          {[1, 2, 3, 4].map((num) => (
+            <div key={num} className="faq-item">
+              <h3>{t(`aboutMaitri.faq${num}.question`, `FAQ ${num} Question`)}</h3>
+              <p>{t(`aboutMaitri.faq${num}.answer`, `FAQ ${num} Answer`)}</p>
+            </div>
+          ))}
         </section>
 
+        {/* Testimonials */}
         <section className="maitri-testimonials">
           <h2>{t("aboutMaitri.testimonialsTitle", "What Our Users Say")}</h2>
-          {t("aboutMaitri.testimonials", [], { returnObjects: true }).map((item, idx) => (
+          {getArray("aboutMaitri.testimonials").map((item, idx) => (
             <div key={idx} className="testimonial-card">
               <p>{item}</p>
             </div>
           ))}
         </section>
 
+        {/* Contact / Call to Action */}
         <section className="maitri-contact">
           <h2>{t("aboutMaitri.contactTitle", "Get Started with Maitri")}</h2>
-          <p>{t("aboutMaitri.contactDescription", "Start your journey toward better mental health today. Explore our journaling and support features now!")}</p>
-          <button className="maitri-start-btn">{t("aboutMaitri.startButton", "Start Journaling")}</button>
+          <p>
+            {t(
+              "aboutMaitri.contactDescription",
+              "Start your journey toward better mental health today. Explore our journaling and support features now!"
+            )}
+          </p>
+          <button className="maitri-start-btn">
+            {t("aboutMaitri.startButton", "Start Journaling")}
+          </button>
         </section>
       </div>
     </div>

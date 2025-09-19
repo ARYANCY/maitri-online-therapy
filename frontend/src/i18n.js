@@ -117,7 +117,7 @@ const resources = {
           messagePlaceholder: "Write your concerns here..."
         }
       },
-      aboutMaitri: {
+       aboutMaitri: {
         heroTitle: "About Maitri",
         heroDescription: "Maitri is dedicated to promoting mental health awareness and providing tools for emotional well-being. Our goal is to create a safe, supportive, and accessible space for everyone.",
         missionTitle: "Our Mission",
@@ -130,7 +130,7 @@ const resources = {
           "Interactive chatbot for mental health support.",
           "Emotional and screening metrics to understand your mental state.",
           "Educational resources and videos on mental wellness.",
-          "Community support and expert advice.",
+          "Community support and expert advice."
         ],
         videosTitle: "Helpful Videos",
         tipsTitle: "Mental Health Tips",
@@ -140,24 +140,23 @@ const resources = {
           "Stay connected with friends and loved ones.",
           "Set realistic goals and break them into small tasks.",
           "Take breaks from social media to reduce anxiety.",
-          "Practice deep breathing or meditation daily.",
+          "Practice deep breathing or meditation daily."
         ],
         faqsTitle: "Frequently Asked Questions",
-        faq1: { question: "What is Maitri?", answer: "Maitri is a platform dedicated to mental well-being, providing tools, guidance, and community support." },
-        faq2: { question: "Is it free to use?", answer: "Yes! Maitri is completely free for everyone." },
-        faq3: { question: "Can I track my progress?", answer: "Yes, you can track your emotional and mental wellness through guided journaling and metrics." },
-        faq4: { question: "Is my data private?", answer: "Absolutely. We take user privacy seriously and all data is securely stored." },
+        faq1: { question: "What is Maitri?", answer: "Maitri is a platform designed to support mental health through journaling, guidance, and community engagement." },
+        faq2: { question: "Is it free to use?", answer: "Yes, Maitri is completely free to use for everyone." },
+        faq3: { question: "Can I track my progress?", answer: "Yes, the platform provides tools to monitor your emotional and mental health over time." },
+        faq4: { question: "Is my data private?", answer: "Absolutely. Your data is private and stored securely." },
         testimonialsTitle: "What Our Users Say",
         testimonials: [
-          "Maitri has really helped me manage my anxiety.",
-          "I love the journaling feature, it keeps me aware of my emotions.",
-          "The counselor support is professional and empathetic.",
+          "Maitri has helped me manage my stress levels effectively.",
+          "The journaling feature makes it easy to track my mood daily.",
+          "I love the community support and expert advice available here."
         ],
         contactTitle: "Get Started with Maitri",
         contactDescription: "Start your journey toward better mental health today. Explore our journaling and support features now!",
-        startButton: "Start Journaling",
+        startButton: "Start Journaling"
       },
-
     },
   },
   hi: {
@@ -275,47 +274,46 @@ const resources = {
         }
       },
 
-   aboutMaitri: {
-      heroTitle: "मैत्री के बारे में",
-      heroDescription: "मैत्री मानसिक स्वास्थ्य जागरूकता बढ़ाने और भावनात्मक स्वास्थ्य के लिए टूल प्रदान करने के लिए समर्पित है। हमारा लक्ष्य सभी के लिए सुरक्षित और सहायक जगह बनाना है।",
-      missionTitle: "हमारा मिशन",
-      missionDescription: "व्यक्तियों को उनके मानसिक स्वास्थ्य को समझने और नियंत्रित करने के लिए सशक्त बनाना। इसमें जर्नलिंग, मार्गदर्शित संसाधन और समुदाय समर्थन शामिल है। हम मानसिक स्वास्थ्य पर खुली बातचीत को बढ़ावा देते हैं।",
-      visionTitle: "हमारी दृष्टि",
-      visionDescription: "एक दुनिया जहां मानसिक स्वास्थ्य को शारीरिक स्वास्थ्य के बराबर महत्व दिया जाता है और समर्थन सभी के लिए सुलभ हो।",
-      featuresTitle: "हम क्या प्रदान करते हैं",
-      features: [
-        "मूड और भावनाओं को ट्रैक करने के लिए मार्गदर्शित जर्नलिंग।",
-        "मानसिक स्वास्थ्य सहायता के लिए इंटरैक्टिव चैटबॉट।",
-        "भावनात्मक और स्क्रीनिंग मेट्रिक्स से मानसिक स्थिति को समझना।",
-        "मानसिक स्वास्थ्य पर शैक्षिक संसाधन और वीडियो।",
-        "समुदाय समर्थन और विशेषज्ञ सलाह।",
-      ],
-      videosTitle: "सहायक वीडियो",
-      tipsTitle: "मानसिक स्वास्थ्य सुझाव",
-      tips: [
-        "दैनिक आभार जर्नलिंग का अभ्यास करें।",
-        "मूड बढ़ाने और तनाव कम करने के लिए नियमित व्यायाम करें।",
-        "दोस्तों और प्रियजनों के साथ जुड़े रहें।",
-        "वास्तविक लक्ष्यों को निर्धारित करें और उन्हें छोटे कार्यों में विभाजित करें।",
-        "उत्तेजना कम करने के लिए सोशल मीडिया से ब्रेक लें।",
-        "दैनिक रूप से गहरी साँस या ध्यान का अभ्यास करें।",
-      ],
-      faqsTitle: "अक्सर पूछे जाने वाले प्रश्न",
-      faq1: { question: "मैत्री क्या है?", answer: "मैत्री एक प्लेटफ़ॉर्म है जो मानसिक स्वास्थ्य के लिए टूल, मार्गदर्शन और समुदाय समर्थन प्रदान करता है।" },
-      faq2: { question: "क्या इसका उपयोग मुफ्त है?", answer: "हाँ! मैत्री सभी के लिए पूरी तरह से मुफ्त है।" },
-      faq3: { question: "क्या मैं अपनी प्रगति ट्रैक कर सकता हूँ?", answer: "हाँ, आप जर्नलिंग और मेट्रिक्स के माध्यम से अपनी भावनात्मक और मानसिक स्थिति ट्रैक कर सकते हैं।" },
-      faq4: { question: "क्या मेरा डेटा सुरक्षित है?", answer: "बिलकुल। हम उपयोगकर्ता की गोपनीयता का गंभीरता से पालन करते हैं और सभी डेटा सुरक्षित रूप से संग्रहित हैं।" },
-      testimonialsTitle: "हमारे उपयोगकर्ता क्या कहते हैं",
-      testimonials: [
-        "मैत्री ने मेरी चिंता को नियंत्रित करने में बहुत मदद की।",
-        "मुझे जर्नलिंग फीचर बहुत पसंद है, यह मेरी भावनाओं का ध्यान रखता है।",
-        "काउंसलर सहायता पेशेवर और सहानुभूतिपूर्ण है।",
-      ],
-      contactTitle: "मैत्री के साथ शुरुआत करें",
-      contactDescription: "आज ही बेहतर मानसिक स्वास्थ्य की दिशा में अपनी यात्रा शुरू करें। हमारी जर्नलिंग और सपोर्ट फीचर्स का अन्वेषण करें!",
-      startButton: "जर्नलिंग शुरू करें",
-    }
-
+      aboutMaitri: {
+            heroTitle: "মৈত্রীৰ বিষয়ে",
+            heroDescription: "মৈত্রী মানসিক স্বাস্থ্যৰ বিষয়ে সচেতনতা বঢ়াবলৈ আৰু মানসিক সু-স্বাস্থ্যৰ উপকৰণ প্ৰদান কৰিবলৈ প্ৰতিশ্ৰুতিবদ্ধ। আমাৰ লক্ষ্য সকলোৰে বাবে এটা নিৰাপদ, সহায়ক আৰু সহজলভ্য স্থান সৃষ্টি কৰা।",
+            missionTitle: "আমাৰ লক্ষ্য",
+            missionDescription: "ব্যক্তিসকলক তেওঁলোকৰ মানসিক স্বাস্থ্য নিয়ন্ত্ৰণত লোৱাৰ বাবে শক্তিশালী কৰা। আমি মানসিক স্বাস্থ্যৰ বিষয়ে খোলাখুলি আলোচনা প্ৰেৰণা দিয়াৰ লক্ষ্য ৰাখো।",
+            visionTitle: "আমাৰ দৃষ্টিভংগী",
+            visionDescription: "এখন পৃথিৱী য’ত মানসিক স্বাস্থ্যক শাৰীৰিক স্বাস্থ্যৰ সমান গুৰুত্ব দিয়া হয় আৰু সহায়তা সকলোৰে বাবে উপলব্ধ।",
+            featuresTitle: "আমি কি প্ৰদান কৰোঁ",
+            features: [
+              "মুড আৰু অনুভূতি অনুসৰণ কৰিবলৈ দিহা প্ৰদান কৰা জাৰ্নেলিং।",
+              "মানসিক স্বাস্থ্য সহায়ৰ বাবে ইণ্টাৰেক্টিভ চেটবট।",
+              "আপোনাৰ মানসিক অৱস্থা বুজিবলৈ অনুভূতি আৰু স্ক্ৰীণিং মেট্ৰিক।",
+              "মানসিক সু-স্বাস্থ্যৰ বিষয়ে শিক্ষামূলক সম্পদ আৰু ভিডিঅ’।",
+              "সম্প্ৰদায়িক সহায় আৰু বিশেষজ্ঞ পৰামৰ্শ।"
+            ],
+            videosTitle: "সহায়ক ভিডিঅ’",
+            tipsTitle: "মানসিক স্বাস্থ্যৰ টিপছ",
+            tips: [
+              "দৈনিক কৃতজ্ঞতা জাৰ্নেলিং প্ৰৱৃত্তি কৰা।",
+              "মুড বঢ়াবলৈ আৰু মানসিক চাপ কমাবলৈ নিয়মিত ব্যায়াম কৰা।",
+              "বন্ধু-বান্ধৱ আৰু প্ৰিয়জনৰ সৈতে সংযুক্ত থাকক।",
+              "বাস্তৱিক লক্ষ্য নিৰ্ধাৰণ কৰক আৰু সৰু কামত ভাগ কৰক।",
+              "মানসিক চাপ কমাবলৈ ছ’চিয়েল মিডিয়াৰ পৰা বিরতি লোৱা।",
+              "দৈনিক গভীৰ নিশ্বাস বা ধ্যানৰ অভ্যাস কৰক।"
+            ],
+            faqsTitle: "সৰ্বাধিক সোধা প্ৰশ্ন",
+            faq1: { question: "মৈত্রী কি?", answer: "মৈত্ৰী এটা প্লেটফৰ্ম যি জাৰ্নেলিং, পৰামৰ্শ আৰু সম্প্ৰদায়িক অংশগ্ৰহণৰ মাধ্যমে মানসিক স্বাস্থ্যক সহায় কৰে।" },
+            faq2: { question: "ই ব্যৱহাৰ কৰাটো মফৎ নেকি?", answer: "হয়, মৈত্ৰী সকলোৰে বাবে সম্পূর্ণ মফৎ।" },
+            faq3: { question: "মই মোৰ অগ্ৰগতি ট্রেক কৰিব পাৰিম নেকি?", answer: "হয়, প্লেটফৰ্মে সময়ৰ সৈতে আপোনাৰ মানসিক আৰু অনুভূতিৰ অৱস্থা মনিটৰ কৰিবলৈ উপকৰণ প্ৰদান কৰে।" },
+            faq4: { question: "মোৰ ডাটা ব্যক্তিগত নেকি?", answer: "নিশ্চয়। আপোনাৰ ডাটা ব্যক্তিগত আৰু নিৰাপদ ৰূপে সংৰক্ষিত থাকে।" },
+            testimonialsTitle: "আমাৰ ব্যৱহাৰকাৰীৰ মতামত",
+            testimonials: [
+              "মৈত্রীয়ে মোক মানসিক চাপ প্ৰৱন্ধন কৰিবলৈ সহায় কৰিছে।",
+              "জাৰ্নেলিং ফিচাৰে মোৰ মুড দৈনিক ট্রেক কৰা সহজ কৰি তুলিছে।",
+              "মোক ইয়াত উপলব্ধ সম্প্ৰদায়িক সহায় আৰু বিশেষজ্ঞ পৰামৰ্শ খুব পছন্দ।"
+            ],
+            contactTitle: "মৈত্রীৰ সৈতে আৰম্ভ কৰক",
+            contactDescription: "আজিয়েই আপোনাৰ মানসিক স্বাস্থ্যৰ যাত্ৰা আৰম্ভ কৰক। আমাৰ জাৰ্নেলিং আৰু সহায় সুবিধাসমূহ পৰীক্ষা কৰক!",
+            startButton: "জাৰ্নেলিং আৰম্ভ কৰক"
+          },
     },
   },
   as: {
