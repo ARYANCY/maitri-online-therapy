@@ -13,7 +13,6 @@
   gap: 2rem;
 }
 
-/* Hero Section */
 .maitri-hero {
   text-align: center;
   padding: 2rem;
@@ -34,7 +33,6 @@
   color: #34495e;
 }
 
-/* Sections */
 .about-maitri-container section {
   padding: 1.5rem;
   background: rgba(255, 255, 255, 0.45);
@@ -43,7 +41,6 @@
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* Features & Tips */
 .maitri-features ul,
 .maitri-tips ul {
   list-style: disc;
@@ -51,7 +48,6 @@
   color: #2c3e50;
 }
 
-/* Videos */
 .maitri-videos .video-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -65,7 +61,6 @@
   border: none;
 }
 
-/* FAQs */
 .maitri-faqs .faq-item {
   margin-bottom: 1rem;
 }
@@ -80,7 +75,6 @@
   color: #34495e;
 }
 
-/* Testimonials */
 .maitri-testimonials .testimonial-card {
   padding: 1rem;
   margin-bottom: 1rem;
@@ -89,7 +83,6 @@
   font-style: italic;
 }
 
-/* Contact / CTA */
 .maitri-contact {
   text-align: center;
 }
@@ -111,7 +104,6 @@
   transform: translateY(-2px);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .maitri-hero h1 {
     font-size: 2rem;

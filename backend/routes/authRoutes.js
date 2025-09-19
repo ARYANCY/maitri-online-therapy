@@ -13,11 +13,8 @@ router.get(
       console.error("No user found after Google login");
       return res.redirect(`${process.env.CLIENT_URL}/login`);
     }
-
-    // ✅ Save user ID for your API authentication
     req.session.userId = req.user._id;
 
-    // Save session and redirect
     req.session.save(err => {
       if (err) {
         console.error("Session save error:", err);

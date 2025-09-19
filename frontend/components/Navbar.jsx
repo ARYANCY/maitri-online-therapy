@@ -15,11 +15,9 @@ export default function Navbar({ user }) {
 
   return (
     <nav className="navbar glass">
-      {/* Top section */}
       <div className="navbar-top">
         <h1 className="navbar-title">{t("navbar.title")}</h1>
 
-        {/* Language switcher */}
         <div className="lang-switcher">
           {["en", "hi", "as"].map((lng) => (
             <button
@@ -36,10 +34,8 @@ export default function Navbar({ user }) {
         </div>
       </div>
 
-      {/* Bottom section */}
       <div className="navbar-bottom">
         <div className="navbar-left">
-          {/* Feeling lonely button */}
           <a
             href="https://chat-app-ashen-phi.vercel.app/"
             target="_blank"
@@ -53,7 +49,6 @@ export default function Navbar({ user }) {
         <div className="navbar-right">
           <ReminderBell />
 
-          {/* User avatar + name */}
           <div className="navbar-user">
             {user?.avatar ? (
               <img

@@ -11,11 +11,9 @@ export default function Chatbot({ onTodosUpdate }) {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Scroll to bottom whenever messages change
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages]);
 
-  // Fetch chatbot messages and todos
   const fetchMessages = async () => {
     try {
       const session = await API.auth.checkSession();
@@ -37,7 +35,6 @@ export default function Chatbot({ onTodosUpdate }) {
     fetchMessages();
   }, []);
 
-  // Send user message to chatbot
   const handleSend = async () => {
     if (!input.trim()) return;
 

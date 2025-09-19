@@ -9,7 +9,6 @@ exports.getDashboard = async (req, res) => {
 
     const type = req.query.type || "entries";
 
-    // Fetch metrics & screening
     let metricsRecords = [];
     let screeningRecords = [];
 

@@ -8,11 +8,9 @@ export default function Todo({
   tasks: initialTasks = [],
   onUpdate,
   loading,
-  maxTasks = 10, // ✅ configurable max limit
+  maxTasks = 10,
 }) {
   const { t } = useTranslation();
-
-  // ✅ Local state for tasks
   const [tasks, setTasks] = useState(() => {
     const stored = localStorage.getItem("tasks");
     const local = stored ? JSON.parse(stored) : [];
@@ -23,9 +21,7 @@ export default function Todo({
 
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
-  const [lastGoodState, setLastGoodState] = useState(tasks); // ✅ rollback on server fail
-
-  // ✅ Sync with parent updates (from Chatbot via Dashboard)
+  const [lastGoodState, setLastGoodState] = useState(tasks);
   useEffect(() => {
     if (initialTasks && Array.isArray(initialTasks)) {
       setTasks(prev => {
@@ -35,8 +31,6 @@ export default function Todo({
       });
     }
   }, [initialTasks]);
-
-  // ✅ Save tasks to localStorage
   useEffect(() => {
     if (tasks.length > 0) {
       localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -44,25 +38,21 @@ export default function Todo({
       localStorage.removeItem("tasks");
     }
   }, [tasks]);
-
-  // ✅ Update tasks both locally & server with rollback
   const updateTasks = useCallback(
     async (updatedTasks) => {
-      setLastGoodState(tasks); // keep old state for rollback
-      setTasks(updatedTasks); // optimistic update
+      setLastGoodState(tasks); 
+      setTasks(updatedTasks); 
       try {
         if (onUpdate) await onUpdate(updatedTasks);
         setError("");
       } catch (err) {
         console.error("Failed to update tasks:", err);
-        setTasks(lastGoodState); // rollback
+        setTasks(lastGoodState); 
         setError(t("todo.updateError", "Failed to update tasks on server."));
       }
     },
     [tasks, onUpdate, t, lastGoodState]
   );
-
-  // ✅ Add task
   const handleAdd = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed) {
@@ -78,8 +68,6 @@ export default function Todo({
     setInput("");
     setError("");
   }, [input, tasks, updateTasks, t, maxTasks]);
-
-  // ✅ Toggle completion
   const toggleDone = useCallback(
     (id) => {
       updateTasks(
@@ -90,19 +78,13 @@ export default function Todo({
     },
     [tasks, updateTasks]
   );
-
-  // ✅ Delete
   const handleDelete = useCallback(
     (id) => {
       updateTasks(tasks.filter((t) => t._id !== id));
     },
     [tasks, updateTasks]
   );
-
-  // ✅ Enter key add
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
-
-  // ✅ Memoize allCompleted
   const allCompleted = useMemo(
     () => tasks.length > 0 && tasks.every((t) => t.completed),
     [tasks]
@@ -118,8 +100,6 @@ export default function Todo({
   return (
     <div className="todo-container">
       <h2 className="todo-title">{t("todo.title", "My Tasks")}</h2>
-
-      {/* Input Area */}
       <div className="todo-input-area">
         <input
           type="text"
@@ -135,10 +115,8 @@ export default function Todo({
         </button>
       </div>
 
-      {/* Error */}
       {error && <p className="todo-error" role="alert">{error}</p>}
 
-      {/* Task List */}
       {tasks.length === 0 ? (
         <p className="todo-empty">{t("todo.empty", "No tasks yet.")}</p>
       ) : (
@@ -154,7 +132,6 @@ export default function Todo({
                 className={`todo-item ${task.completed ? "completed" : ""}`}
               >
                 <label className="todo-left">
-                  {/* ✅ Accessible checkbox */}
                   <input
                     type="checkbox"
                     checked={task.completed}
@@ -178,8 +155,6 @@ export default function Todo({
           </AnimatePresence>
         </ul>
       )}
-
-      {/* Celebration */}
       {allCompleted && (
         <motion.div
           initial={{ scale: 0 }}

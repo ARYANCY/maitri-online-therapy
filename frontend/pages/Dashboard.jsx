@@ -17,7 +17,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
 
-  // ----- Fetch user session -----
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -34,15 +33,12 @@ export default function Dashboard() {
     }
   }, []);
 
-  // ----- Fetch dashboard data -----
-
     const fetchDashboardData = useCallback(async () => {
       if (!user) return;
       try {
         setLoading(prev => ({ ...prev, dashboard: true }));
         const data = await API.dashboard.get();
 
-        // Normalize chartData: convert numbers to single-element arrays
         const rawChartData = data.chartData || {};
         const chartDataNormalized = {};
         Object.keys(rawChartData).forEach(key => {
@@ -66,8 +62,6 @@ export default function Dashboard() {
       }
     }, [user]);
 
-
-  // ----- Update todos -----
   const handleTodosUpdate = async (updatedTodos) => {
     const prevTodos = [...todos];
     setTodos(updatedTodos);
@@ -85,19 +79,15 @@ export default function Dashboard() {
     }
   };
 
-  // ----- Init: fetch user first -----
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  // ----- Fetch dashboard only after user is set -----
   useEffect(() => { fetchDashboardData(); }, [user, fetchDashboardData]);
 
-  // ----- Expose global chart refresh -----
   useEffect(() => {
     window.updateDashboardChart = fetchDashboardData;
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
-  // ----- Render content -----
   const renderContent = () => {
     if (loading.user || loading.dashboard) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
     if (error.dashboard) return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;

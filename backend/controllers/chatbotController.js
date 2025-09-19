@@ -43,7 +43,6 @@ function cleanJsonString(str) {
   }
 }
 
-// GET Chatbot Session
 exports.getChatbot = (req, res) => {
   try {
     const user = req.user;
@@ -68,7 +67,6 @@ exports.getChatbot = (req, res) => {
   }
 };
 
-// POST Chatbot Message
 exports.postChatbot = async (req, res) => {
   try {
     const user = req.user;
@@ -88,8 +86,6 @@ exports.postChatbot = async (req, res) => {
     let metricsData = {};
     let screeningData = {};
     let todosData = [];
-
-    // 1️⃣ Chatbot Response
     try {
       const chatbotPrompt = `You are a friendly therapist chatbot.
 Conversation so far:
@@ -105,7 +101,6 @@ Respond empathetically and naturally.`;
       session.messages.push({ sender: "bot", text: botResponse });
     }
 
-    // 2️⃣ Metrics + Screening
     try {
       const metricsPrompt = `Analyze the user's emotional state and screening results.
 Respond ONLY in strict JSON format with keys "metrics" and "screening". Include:
@@ -120,7 +115,6 @@ User message: "${message}"`;
       metricsData = parsed.metrics || {};
       screeningData = parsed.screening || {};
 
-      // Save Metrics
      await Metrics.create({
        userId: user._id,
        message,
@@ -131,8 +125,6 @@ User message: "${message}"`;
        createdAt: new Date(),
      });
 
-
-      // Save Screening
       await Screening.create({
         userId: user._id,
         message,
@@ -151,7 +143,6 @@ User message: "${message}"`;
       screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
     }
 
-    // 3️⃣ Todo Suggestions
     try {
       const todoPrompt = `You are a wellness assistant. Based on the conversation and metrics, suggest 5 actionable tasks.
 Metrics: ${JSON.stringify(metricsData)}

@@ -20,26 +20,25 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     minlength: 6,
-    select: false // hide password by default when querying
+    select: false 
   },
   googleId: {
     type: String,
     unique: true,
-    sparse: true // allows multiple users without googleId
+    sparse: true 
   },
   avatar: {
-    type: String, // URL of profile picture
-    default: ""   // empty string if not set
+    type: String, 
+    default: ""   
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
-  timestamps: true // adds createdAt & updatedAt automatically
+  timestamps: true 
 });
 
-// Hash password before saving
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password") || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
@@ -47,7 +46,6 @@ userSchema.pre("save", async function(next) {
   next();
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   if (!candidatePassword || !this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);

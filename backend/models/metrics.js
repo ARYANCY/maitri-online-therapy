@@ -1,10 +1,7 @@
 const mongoose = require("mongoose");
-
 const MetricsSchema = new mongoose.Schema({
   userId: { type: String, ref: "User", required: true },
   message: { type: String, required: true },
-
-  // Emotional metrics (0–50 scale)
   stress_level: { type: Number, default: 0 },
   happiness_level: { type: Number, default: 0 },
   anxiety_level: { type: Number, default: 0 },

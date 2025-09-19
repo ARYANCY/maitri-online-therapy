@@ -15,7 +15,6 @@ import {
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
-// Register required Chart.js modules
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -34,14 +33,12 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // ---- Normalize array helper ----
   const normalizeArray = (arr, length) => {
     if (!arr) return Array(length).fill(0);
     if (!Array.isArray(arr)) arr = [arr];
     return Array.from({ length }, (_, i) => (arr[i] != null ? arr[i] : 0));
   };
 
-  // ---- Prepare chart datasets ----
   const data = useMemo(() => {
     if (!chartLabels.length) return { labels: [], datasets: [] };
 
@@ -76,7 +73,6 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
     };
   }, [chartData, chartLabels, metricsType, chartType, t]);
 
-  // ---- Chart options ----
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -99,7 +95,6 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
     },
   };
 
-  // ---- Render fallback if no data ----
   if (!data.datasets.length) {
     return (
       <p className="chart-message chart-no-data">
@@ -108,10 +103,8 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
     );
   }
 
-  // ---- Render chart ----
   return (
     <div className="chart-card">
-      {/* Controls */}
       <div className="chart-controls">
         <select
           value={chartType}
@@ -136,7 +129,6 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
         </select>
       </div>
 
-      {/* Chart Wrapper */}
       <div className="chart-wrapper" style={{ height: "400px" }}>
         {chartType === "bar" ? (
           <Bar data={data} options={options} />

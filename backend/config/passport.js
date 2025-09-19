@@ -12,7 +12,6 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         console.log("Google profile received:", profile);
-
         const email = profile.emails?.[0]?.value?.toLowerCase();
         const avatar = profile.photos?.[0]?.value || "";
 
@@ -23,17 +22,15 @@ passport.use(
         let user = await User.findOne({ email });
 
         if (!user) {
-          // Create a new user
           user = await User.create({
             name: profile.displayName || "Unknown User",
             email,
             googleId: profile.id,
-            avatar,      // ✅ save Google profile picture
-            password: "", // no local password for Google accounts
+            avatar,      
+            password: "",
           });
           console.log("New user created:", user._id);
         } else {
-          // If user exists but avatar is missing, update it
           if (!user.avatar && avatar) {
             user.avatar = avatar;
             await user.save();
@@ -49,8 +46,6 @@ passport.use(
     }
   )
 );
-
-// Serialize & Deserialize
 passport.serializeUser((user, done) => {
   if (!user?._id) {
     console.error("serializeUser: user or _id missing", user);
@@ -59,7 +54,6 @@ passport.serializeUser((user, done) => {
   console.log("serializeUser:", user._id);
   done(null, user._id);
 });
-
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);
