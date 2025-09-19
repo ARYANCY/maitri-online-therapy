@@ -50,7 +50,6 @@ export default function TalkToCounselor() {
 
   if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
   if (error) return <p className="dashboard-error">{error}</p>;
-
   return (
     <div className="talk-counselor-page">
       <Navbar user={user} />
