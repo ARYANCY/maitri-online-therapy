@@ -11,10 +11,11 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler, // Added Filler for `fill` option
+  Filler,
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 
+// Register required Chart.js modules
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -33,18 +34,20 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
   const [chartType, setChartType] = useState("bar");
   const [metricsType, setMetricsType] = useState("emotional");
 
-  // Normalize values: ensures arrays have same length as labels and no null/undefined
+  // ---- Normalize array helper ----
   const normalizeArray = (arr, length) => {
     if (!arr) return Array(length).fill(0);
     if (!Array.isArray(arr)) arr = [arr];
     return Array.from({ length }, (_, i) => (arr[i] != null ? arr[i] : 0));
   };
 
+  // ---- Prepare chart datasets ----
   const data = useMemo(() => {
     if (!chartLabels.length) return { labels: [], datasets: [] };
-    const len = chartLabels.length;
 
+    const len = chartLabels.length;
     let datasets = [];
+
     if (metricsType === "emotional") {
       datasets = [
         { label: t("chart.stress", "Stress"), data: normalizeArray(chartData.stress_level, len), color: "255,99,132" },
@@ -69,42 +72,77 @@ export default function Chart({ chartData = {}, chartLabels = [] }) {
         backgroundColor: `rgba(${ds.color},0.6)`,
         fill: chartType === "line",
         spanGaps: true,
-      }))
+      })),
     };
   }, [chartData, chartLabels, metricsType, chartType, t]);
 
+  // ---- Chart options ----
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: t("chart.title", "User Metrics") + ` (${metricsType})` },
+      title: {
+        display: true,
+        text: `${t("chart.title", "User Metrics")} (${metricsType})`,
+      },
     },
     scales: {
-      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } },
-      y: { beginAtZero: true, suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10) },
+      x: {
+        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 },
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMax: Math.max(...data.datasets.flatMap(ds => ds.data), 10),
+      },
     },
   };
 
-  if (!data.datasets.length)
-    return <p className="chart-message chart-no-data">📉 {t("chart.noData", "No metrics available yet.")}</p>;
+  // ---- Render fallback if no data ----
+  if (!data.datasets.length) {
+    return (
+      <p className="chart-message chart-no-data">
+        📉 {t("chart.noData", "No metrics available yet.")}
+      </p>
+    );
+  }
 
+  // ---- Render chart ----
   return (
     <div className="chart-card">
+      {/* Controls */}
       <div className="chart-controls">
-        <select value={chartType} onChange={e => setChartType(e.target.value)} className="chart-select">
+        <select
+          value={chartType}
+          onChange={e => setChartType(e.target.value)}
+          className="chart-select"
+        >
           <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
           <option value="line">{t("chart.lineChart", "Line Chart")}</option>
         </select>
-        <select value={metricsType} onChange={e => setMetricsType(e.target.value)} className="chart-select">
-          <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
-          <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
+
+        <select
+          value={metricsType}
+          onChange={e => setMetricsType(e.target.value)}
+          className="chart-select"
+        >
+          <option value="emotional">
+            {t("chart.emotionalMetrics", "Emotional Metrics")}
+          </option>
+          <option value="screening">
+            {t("chart.screeningMetrics", "Screening Metrics")}
+          </option>
         </select>
       </div>
 
+      {/* Chart Wrapper */}
       <div className="chart-wrapper" style={{ height: "400px" }}>
-        {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
+        {chartType === "bar" ? (
+          <Bar data={data} options={options} />
+        ) : (
+          <Line data={data} options={options} />
+        )}
       </div>
     </div>
   );

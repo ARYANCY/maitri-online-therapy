@@ -12,7 +12,7 @@ export default function Todo({
 }) {
   const { t } = useTranslation();
 
-  // ✅ Merge localStorage + initialTasks safely
+  // ✅ Local state for tasks
   const [tasks, setTasks] = useState(() => {
     const stored = localStorage.getItem("tasks");
     const local = stored ? JSON.parse(stored) : [];
@@ -25,7 +25,18 @@ export default function Todo({
   const [error, setError] = useState("");
   const [lastGoodState, setLastGoodState] = useState(tasks); // ✅ rollback on server fail
 
-  // ✅ Save tasks to localStorage (debounced in real app, simple here)
+  // ✅ Sync with parent updates (from Chatbot via Dashboard)
+  useEffect(() => {
+    if (initialTasks && Array.isArray(initialTasks)) {
+      setTasks(prev => {
+        const combined = [...initialTasks];
+        const uniqueById = Array.from(new Map(combined.map(t => [t._id, t])).values());
+        return uniqueById;
+      });
+    }
+  }, [initialTasks]);
+
+  // ✅ Save tasks to localStorage
   useEffect(() => {
     if (tasks.length > 0) {
       localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -91,7 +102,7 @@ export default function Todo({
   // ✅ Enter key add
   const handleKeyPress = (e) => e.key === "Enter" && handleAdd();
 
-  // ✅ Memoize allCompleted for performance
+  // ✅ Memoize allCompleted
   const allCompleted = useMemo(
     () => tasks.length > 0 && tasks.every((t) => t.completed),
     [tasks]
