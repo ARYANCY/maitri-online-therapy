@@ -1,17 +1,23 @@
 import React from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../css/Navbar.css";
 
 export default function Navbar({ user }) {
   const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
 
   const changeLang = (lng) => {
     if (i18n.language !== lng) {
       i18n.changeLanguage(lng);
       localStorage.setItem("preferredLang", lng);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // or your session token
+    window.location.href = "/login"; // redirect to login page
   };
 
   return (
@@ -37,9 +43,9 @@ export default function Navbar({ user }) {
 
       <div className="navbar-bottom">
         <div className="navbar-left">
-          <Link to="/" className="navbar-link">
-            {t("navbar.home", "Home")}
-          </Link>
+          <button onClick={handleLogout} className="navbar-link">
+            {t("navbar.logout", "Logout")}
+          </button>
           <Link to="/dashboard" className="navbar-link">
             {t("navbar.dashboard", "Dashboard")}
           </Link>

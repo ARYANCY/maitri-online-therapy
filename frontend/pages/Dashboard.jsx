@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
 
+  // Fetch user session
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -26,42 +27,44 @@ export default function Dashboard() {
       }
       setUser(data.user);
     } catch (err) {
-      console.error("Session check failed:", err);
+      console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
       window.location.href = "/login";
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
-  }, []);
+  }, [t]);
 
-    const fetchDashboardData = useCallback(async () => {
-      if (!user) return;
-      try {
-        setLoading(prev => ({ ...prev, dashboard: true }));
-        const data = await API.dashboard.get();
+  // Fetch dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(prev => ({ ...prev, dashboard: true }));
+      const data = await API.dashboard.get();
 
-        const rawChartData = data.chartData || {};
-        const chartDataNormalized = {};
-        Object.keys(rawChartData).forEach(key => {
-          const value = rawChartData[key];
-          chartDataNormalized[key] = Array.isArray(value) ? value : [value];
-        });
+      const rawChartData = data.chartData || {};
+      const chartDataNormalized = {};
+      Object.keys(rawChartData).forEach(key => {
+        const value = rawChartData[key];
+        chartDataNormalized[key] = Array.isArray(value) ? value : [value];
+      });
 
-        setChartData(chartDataNormalized);
-        setChartLabels(data.chartLabels || []);
-        setTodos(data.todos || []);
-        setError(prev => ({ ...prev, dashboard: null }));
-      } catch (err) {
-        console.error("Dashboard fetch error:", err);
-        if (err.message.includes("401")) {
-          window.location.href = "/login";
-        } else {
-          setError(prev => ({ ...prev, dashboard: err.message }));
-        }
-      } finally {
-        setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
+      setChartData(chartDataNormalized);
+      setChartLabels(data.chartLabels || []);
+      setTodos(data.todos || []);
+      setError(prev => ({ ...prev, dashboard: null }));
+    } catch (err) {
+      console.error(t("dashboard.error.fetchFailed", "Dashboard fetch error:"), err);
+      if (err.message.includes("401")) {
+        window.location.href = "/login";
+      } else {
+        setError(prev => ({ ...prev, dashboard: err.message }));
       }
-    }, [user]);
+    } finally {
+      setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
+    }
+  }, [user, t]);
 
+  // Update todos
   const handleTodosUpdate = async (updatedTodos) => {
     const prevTodos = [...todos];
     setTodos(updatedTodos);
@@ -71,7 +74,7 @@ export default function Dashboard() {
       await API.dashboard.updateTasks(updatedTodos);
       setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
-      console.error("Failed to update tasks:", err);
+      console.error(t("dashboard.error.updateTodosFailed", "Failed to update tasks:"), err);
       setTodos(prevTodos);
       setError(prev => ({ ...prev, todos: err.message }));
     } finally {
@@ -80,17 +83,20 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
-
   useEffect(() => { fetchDashboardData(); }, [user, fetchDashboardData]);
-
   useEffect(() => {
     window.updateDashboardChart = fetchDashboardData;
     return () => { window.updateDashboardChart = null; };
   }, [fetchDashboardData]);
 
+  // Render the main content
   const renderContent = () => {
-    if (loading.user || loading.dashboard) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
-    if (error.dashboard) return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
+    if (loading.user || loading.dashboard) {
+      return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+    }
+    if (error.dashboard) {
+      return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
+    }
 
     switch (activeTab) {
       case "chatbot":
@@ -100,7 +106,7 @@ export default function Dashboard() {
       case "todo":
         return <Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} />;
       default:
-        return null;
+        return <p>{t("dashboard.tab.notFound", "Tab not found")}</p>;
     }
   };
 
