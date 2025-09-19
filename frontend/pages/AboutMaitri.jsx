@@ -1,11 +1,39 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "../css/AboutMaitri.css";
 import Navbar from "../components/Navbar";
+import API from "../utils/axiosClient";
 
 export default function AboutMaitri() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const data = await API.auth.checkSession();
+      if (!data.user) {
+        window.location.href = "/login";
+        return;
+      }
+      setUser(data.user);
+    } catch (err) {
+      console.error("Session check failed:", err);
+      window.location.href = "/login";
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  if (loading) return <p className="dashboard-loading">Loading...</p>;
+  if (error) return <p className="dashboard-error">{error}</p>;
+
   return (
     <div className="about-maitri-page">
-      <Navbar />
+      <Navbar user={user} />
 
       <div className="about-maitri-container">
 

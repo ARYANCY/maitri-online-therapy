@@ -1,14 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import "../css/TalkToCounselor.css";
 import dhriti from "../src/images/dd.jpeg"; 
+import API from "../utils/axiosClient"; // Make sure your axiosClient has auth.checkSession()
 
-export default function TalkToCounselor({ user }) {
+export default function TalkToCounselor() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [formData, setFormData] = useState({
-    name: user?.name || "",
+    name: "",
     email: "",
     message: ""
   });
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const data = await API.auth.checkSession();
+      if (!data.user) {
+        window.location.href = "/login";
+        return;
+      }
+      setUser(data.user);
+      setFormData({ ...formData, name: data.user.name });
+    } catch (err) {
+      console.error("Session check failed:", err);
+      window.location.href = "/login";
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,6 +45,9 @@ export default function TalkToCounselor({ user }) {
     alert("Your request has been submitted. Our counselor will contact you soon!");
     setFormData({ name: user?.name || "", email: "", message: "" });
   };
+
+  if (loading) return <p className="dashboard-loading">Loading...</p>;
+  if (error) return <p className="dashboard-error">{error}</p>;
 
   return (
     <div className="talk-counselor-page">
