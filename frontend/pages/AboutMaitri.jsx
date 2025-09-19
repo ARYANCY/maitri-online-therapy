@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import API from "../utils/axiosClient";
-import "../css/AboutMaitri.css";
 import { useTranslation } from "react-i18next";
+import "../css/AboutMaitri.css";
 
 export default function AboutMaitri() {
   const { t } = useTranslation();
@@ -31,18 +31,18 @@ export default function AboutMaitri() {
     fetchUser();
   }, [fetchUser]);
 
-  // Helper to get array from i18n
-  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
-
   if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
   if (error) return <p className="dashboard-error">{error}</p>;
+
+  // Helper to safely get arrays from i18n
+  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
 
   return (
     <div className="about-maitri-page">
       <Navbar user={user} />
 
       <div className="about-maitri-container">
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="maitri-hero">
           <h1>{t("aboutMaitri.heroTitle")}</h1>
           <p>{t("aboutMaitri.heroDescription")}</p>
@@ -52,7 +52,6 @@ export default function AboutMaitri() {
         <section className="maitri-mission">
           <h2>{t("aboutMaitri.missionTitle")}</h2>
           <p>{t("aboutMaitri.missionDescription")}</p>
-
           <h2>{t("aboutMaitri.visionTitle")}</h2>
           <p>{t("aboutMaitri.visionDescription")}</p>
         </section>
@@ -77,14 +76,19 @@ export default function AboutMaitri() {
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-            />
+            ></iframe>
             <iframe
               src="https://www.youtube.com/embed/inpok4MKVLM"
               title="Stress Relief Techniques"
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-            />
+            ></iframe>
+            <iframe
+              src="https://www.youtube.com/embed/oHg5SJYRHA0"
+              title="Positive Thinking Techniques"
+              frameBorder="0"
+              allowFullScreen
+            ></iframe>
           </div>
         </section>
 
@@ -119,7 +123,7 @@ export default function AboutMaitri() {
           ))}
         </section>
 
-        {/* Contact */}
+        {/* Contact / CTA */}
         <section className="maitri-contact">
           <h2>{t("aboutMaitri.contactTitle")}</h2>
           <p>{t("aboutMaitri.contactDescription")}</p>

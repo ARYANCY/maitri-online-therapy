@@ -15,10 +15,11 @@ export default function Navbar({ user }) {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // or your session token
-    window.location.href = "/login"; // redirect to login page
-  };
+      const handleLogout = () => {
+        localStorage.removeItem("token");
+        navigate("/login"); // instead of window.location.href
+      };
+
 
   return (
     <nav className="navbar glass">
