@@ -21,7 +21,9 @@ export default function AboutMaitri() {
       setUser(data.user);
     } catch (err) {
       console.error(t("dashboard.error.sessionCheckFailed", "Session check failed:"), err);
-      setError(t("dashboard.error.sessionCheckFailed", "Session check failed:") + " " + err.message);
+      setError(
+        t("dashboard.error.sessionCheckFailed", "Session check failed:") + " " + err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -31,8 +33,11 @@ export default function AboutMaitri() {
     fetchUser();
   }, [fetchUser]);
 
-  // Helper to safely get arrays from i18n
-  const getArray = (key) => t(key, [], { returnObjects: true }) || [];
+  // Safe function to get array from i18n
+  const getArray = (key) => {
+    const value = t(key, [], { returnObjects: true });
+    return Array.isArray(value) ? value : [];
+  };
 
   if (loading) return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
   if (error) return <p className="dashboard-error">{error}</p>;
@@ -45,16 +50,31 @@ export default function AboutMaitri() {
         {/* Hero Section */}
         <section className="maitri-hero">
           <h1>{t("aboutMaitri.heroTitle", "About Maitri")}</h1>
-          <p>{t("aboutMaitri.heroDescription", "Maitri is dedicated to promoting mental health awareness and support.")}</p>
+          <p>
+            {t(
+              "aboutMaitri.heroDescription",
+              "Maitri is dedicated to promoting mental health awareness and support."
+            )}
+          </p>
         </section>
 
         {/* Mission & Vision */}
         <section className="maitri-mission">
           <h2>{t("aboutMaitri.missionTitle", "Our Mission")}</h2>
-          <p>{t("aboutMaitri.missionDescription", "To empower individuals to take charge of their mental health.")}</p>
+          <p>
+            {t(
+              "aboutMaitri.missionDescription",
+              "To empower individuals to take charge of their mental health."
+            )}
+          </p>
 
           <h2>{t("aboutMaitri.visionTitle", "Our Vision")}</h2>
-          <p>{t("aboutMaitri.visionDescription", "A world where mental health is valued and supported equally.")}</p>
+          <p>
+            {t(
+              "aboutMaitri.visionDescription",
+              "A world where mental health is valued and supported equally."
+            )}
+          </p>
         </section>
 
         {/* Features */}
@@ -128,8 +148,15 @@ export default function AboutMaitri() {
         {/* Contact / Call to Action */}
         <section className="maitri-contact">
           <h2>{t("aboutMaitri.contactTitle", "Get Started with Maitri")}</h2>
-          <p>{t("aboutMaitri.contactDescription", "Start your journey toward better mental health today. Explore our journaling and support features now!")}</p>
-          <button className="maitri-start-btn">{t("aboutMaitri.startButton", "Start Journaling")}</button>
+          <p>
+            {t(
+              "aboutMaitri.contactDescription",
+              "Start your journey toward better mental health today. Explore our journaling and support features now!"
+            )}
+          </p>
+          <button className="maitri-start-btn">
+            {t("aboutMaitri.startButton", "Start Journaling")}
+          </button>
         </section>
       </div>
     </div>
