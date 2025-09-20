@@ -205,38 +205,76 @@ html, body {
   0% { opacity: 0; transform: translateY(25px);}
   100% { opacity: 1; transform: translateY(0);}
 }
-
 @media (max-width: 768px) {
   .counselor-profile {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    gap: 1.5rem;
   }
 
   .counselor-img {
-    width: 180px;
-    height: 180px;
+    width: 160px;
+    height: 160px;
+    border-width: 3px;
   }
 
   .counselor-details {
     text-align: center;
+    padding: 0 1rem;
+  }
+
+  .counselor-details h2 {
+    font-size: 1.6rem;
+  }
+
+  .counselor-details p {
+    font-size: 0.95rem;
   }
 
   .call-btn {
-    margin-bottom: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    width: 80%;
+    text-align: center;
+  }
+
+  .counselor-form-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .counselor-form-section h2 {
+    font-size: 1.6rem;
   }
 }
 
 @media (max-width: 480px) {
   .hero h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    line-height: 1.2;
   }
 
   .counselor-details h2 {
     font-size: 1.4rem;
   }
 
+  .counselor-details p {
+    font-size: 0.9rem;
+  }
+
   .counselor-form-section h2 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+  }
+
+  .counselor-form input,
+  .counselor-form textarea {
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .call-btn,
+  .submit-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
   }
 }
