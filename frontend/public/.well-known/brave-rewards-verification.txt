@@ -1,4 +1,4 @@
 This is a Brave Creators publisher verification file.
 
 Domain: maitri-online-therapy.vercel.app
-Token: 242dc48a8a342a7f4aa00da07e58e1e69f479333dc33b6a1857b3a5476fbde2f
+Token: e141894273cadd649e7ceb20f2e47ec6f85b44786f89cf1f5683f3c11ef8d6f6
