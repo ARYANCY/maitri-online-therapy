@@ -144,7 +144,7 @@ User message: "${message}"`;
     }
 
     try {
-      const todoPrompt = `You are a wellness assistant. Based on the conversation and metrics, suggest 5 actionable tasks.
+      const todoPrompt = `You are a wellness assistant. Based on the conversation and metrics, suggest 5-10 actionable tasks.
 Metrics: ${JSON.stringify(metricsData)}
 Screening: ${JSON.stringify(screeningData)}
 Respond ONLY in strict JSON: { "todos": [ { "title": "...", "completed": false }, ... ] }`;
