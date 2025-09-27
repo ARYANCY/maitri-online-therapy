@@ -13,16 +13,16 @@
 
 .splash-video {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: auto;
   height: 100%;
   max-width: 100%;
   object-fit: cover;
   z-index: 1;
   opacity: 0;
-  animation: fadeInVideo 2s ease forwards;
+  animation: fadeInVideo 4s ease forwards;
 }
 
 .splash-overlay {
@@ -35,6 +35,7 @@
   color: white;
   width: 90%;
   max-width: 900px;
+  pointer-events: none;
 }
 
 .splash-text {
@@ -43,14 +44,16 @@
   letter-spacing: 2px;
   margin-bottom: 1rem;
   opacity: 0;
-  animation: fadeInText 1.5s ease forwards;
+  animation: fadeInText 1.8s ease forwards 0.6s;
+  text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
 }
 
 .splash-subtext {
   font-size: 1.3rem;
   margin-bottom: 2rem;
   opacity: 0;
-  animation: fadeInText 2.5s ease forwards;
+  animation: fadeInText 2.8s ease forwards 1s;
+  text-shadow: 1px 1px 8px rgba(0,0,0,0.6);
 }
 
 .splash-btn {
@@ -61,16 +64,16 @@
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
   opacity: 0;
-  animation: fadeInText 3s ease forwards;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  animation: fadeInText 3.2s ease forwards 1.4s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
 }
 
 .splash-btn:hover {
   background: #fff;
-  transform: scale(1.08);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.55);
 }
 
 .skip-btn {
@@ -85,26 +88,27 @@
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
   opacity: 1;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
 
 .skip-btn:hover {
   background: white;
-  transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
 }
 
 @keyframes fadeInText {
-  0% { opacity: 0; transform: translateY(20px); }
+  0% { opacity: 0; transform: translateY(25px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInVideo {
-  0% { opacity: 0; transform: scale(1.05); }
-  50% { opacity: 0.3; transform: scale(1.02); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; filter: brightness(0); transform: translate(-50%, -50%) scale(1.03); }
+  40% { opacity: 0.3; filter: brightness(0.15); transform: translate(-50%, -50%) scale(1.015); }
+  70% { opacity: 0.7; filter: brightness(0.5); transform: translate(-50%, -50%) scale(1.005); }
+  100% { opacity: 1; filter: brightness(1); transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes fadeOut {
@@ -122,13 +126,6 @@
 @media (max-width: 500px) {
   .splash-text { font-size: 1.5rem; }
   .splash-subtext { font-size: 0.9rem; }
-  .splash-btn {
-    font-size: 0.8rem;
-    padding: 0.5rem 1.2rem;
-    margin-bottom: 1rem;
-  }
-  .skip-btn {
-    font-size: 0.7rem;
-    padding: 0.35rem 0.9rem;
-  }
+  .splash-btn { font-size: 0.8rem; padding: 0.5rem 1.2rem; margin-bottom: 1rem; }
+  .skip-btn { font-size: 0.7rem; padding: 0.35rem 0.9rem; }
 }
