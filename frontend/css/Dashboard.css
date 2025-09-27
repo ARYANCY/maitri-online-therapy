@@ -92,7 +92,7 @@ body {
 }
 
 .dashboard-tab-btn.active {
-  background: linear-gradient(135deg, #9b4dca, #ff6fd8);
+  background: linear-gradient(135deg, #3e1e52, #522045);
   box-shadow: 0 0 15px rgba(155, 77, 202, 0.8), 
               0 0 30px rgba(255, 111, 216, 0.5);
 }
@@ -102,7 +102,7 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  background: linear-gradient(135deg, #9b4dca, #ff6fd8);
+  background: linear-gradient(135deg, #46215f, #752f61);
   z-index: -1;
   filter: blur(12px);
   opacity: 0.85;
@@ -140,7 +140,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #7a1ea0, #d23aff);
+  background: linear-gradient(135deg, #000000, #1d0026);
   font-weight: var(--font-weight-btn);
   color: #fff;
   cursor: pointer;
