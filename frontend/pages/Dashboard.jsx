@@ -160,22 +160,43 @@ const handleDownloadReport = useCallback(async () => {
     };
 
     const getColor = (metric, value) => {
-      const t = metricInfo[metric]?.thresholds;
-      if (!t) return "#000000";
-      if (metric === "happiness_level") {
-        if (value < t[1]) return "#FF0000";
-        if (value <= t[2]) return "#008000";
-        return "#FFA500";
-      } else if (metric === "stress_level" || metric === "overall_mood_level") {
-        if (value < t[1]) return "#008000";
-        if (value < t[2]) return "#FFA500";
-        return "#FF0000";
-      } else {
-        if (value < t[1]) return "#008000";
-        if (value < t[2]) return "#FFA500";
-        return "#FF0000";
+      switch(metric) {
+        case "stress_level":
+          if (value <= 14) return "#00FF00"; 
+          if (value <= 25) return "#FFD700"; 
+          return "#FF0000"; 
+        case "happiness_level":
+          if (value >= 50) return "#00FF00"; 
+          if (value >= 30) return "#FFD700"; 
+          return "#FF0000"; 
+        case "anxiety_level":
+          if (value <= 4) return "#00FF00"; 
+          if (value <= 9) return "#FFD700"; 
+          if (value <= 14) return "#FFA500"; 
+          return "#FF0000"; 
+        case "overall_mood_level":
+          if (value >= 40) return "#00FF00"; 
+          if (value >= 20) return "#FFD700"; 
+          return "#FF0000"; 
+        case "phq9_score":
+          if (value <= 4) return "#00FF00"; 
+          if (value <= 9) return "#FFD700"; 
+          if (value <= 14) return "#FFA500"; 
+          return "#FF0000"; 
+        case "gad7_score":
+          if (value <= 4) return "#00FF00"; 
+          if (value <= 9) return "#FFD700"; 
+          if (value <= 14) return "#FFA500"; 
+          return "#FF0000"; 
+        case "ghq_score":
+          if (value <= 11) return "#00FF00"; 
+          if (value <= 20) return "#FFD700"; 
+          return "#FF0000"; 
+        default:
+          return "#000000";
       }
     };
+
 
     if (latestChartData && Object.keys(latestChartData).length > 0) {
       Object.keys(latestChartData).forEach(key => {
