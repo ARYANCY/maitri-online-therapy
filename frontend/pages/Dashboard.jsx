@@ -99,8 +99,8 @@ const handleDownloadReport = useCallback(async () => {
     const normalizedChartData = {};
     Object.keys(data.chartData || {}).forEach(key => {
       normalizedChartData[key] = Array.isArray(data.chartData[key])
-        ? data.chartData[key]
-        : [data.chartData[key]];
+        ? data.chartData[key].map(v => parseFloat(v))
+        : [parseFloat(data.chartData[key])];
     });
     latestChartData = normalizedChartData;
   } catch (err) {
@@ -113,13 +113,11 @@ const handleDownloadReport = useCallback(async () => {
     let yPos = 20;
     const leftMargin = 12;
 
-    // Title
     pdf.setFontSize(20);
     pdf.setFont("helvetica", "bold");
     pdf.text("Maitri Report", pageWidth / 2, yPos, { align: "center" });
     yPos += 10;
 
-    // Disclaimer
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "normal");
     const disclaimer =
@@ -128,7 +126,6 @@ const handleDownloadReport = useCallback(async () => {
     pdf.text(pdf.splitTextToSize(disclaimer, pageWidth - 2 * leftMargin), leftMargin, yPos);
     yPos += 24;
 
-    // User Info
     pdf.setFontSize(14);
     pdf.text("User Information:", leftMargin, yPos);
     yPos += 8;
@@ -140,7 +137,6 @@ const handleDownloadReport = useCallback(async () => {
     pdf.text(`Language: ${localStorage.getItem("preferredLang") || "en"}`, leftMargin + 2, yPos);
     yPos += 12;
 
-    // Screening Metrics Table
     pdf.setFontSize(14);
     pdf.text("Screening Metrics:", leftMargin, yPos);
     yPos += 8;
@@ -150,59 +146,57 @@ const handleDownloadReport = useCallback(async () => {
     const rowPadding = 2;
 
     const metricInfo = {
-      stress_level: { info: "Stress Level. Normal: 0-14 Low, 15-25 Moderate, 26+ High", thresholds: [0, 15, 26] },
-      happiness_level: { info: "Happiness Level. Normal: 30-50 Average, <30 Low", thresholds: [0, 30, 50] },
-      anxiety_level: { info: "Anxiety Level. Normal: 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      overall_mood_level: { info: "Overall Mood. Normal: 20-40 Average, <20 Low", thresholds: [0, 20, 40] },
-      phq9_score: { info: "PHQ-9 Depression. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      gad7_score: { info: "GAD-7 Anxiety. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      ghq_score: { info: "GHQ-12 General mental health. 0-11 Healthy, 12-20 At risk, 21+ High distress", thresholds: [0, 12, 21] }
+      stress_level: { info: "Stress Level. 0-14 Low, 15-25 Moderate, 26+ High" },
+      happiness_level: { info: "Happiness Level. <30 Low, 30-49 Moderate, 50+ High" },
+      anxiety_level: { info: "Anxiety Level. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe" },
+      overall_mood_level: { info: "Overall Mood. <20 Low, 20-39 Moderate, 40+ High" },
+      phq9_score: { info: "PHQ-9 Depression. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe" },
+      gad7_score: { info: "GAD-7 Anxiety. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe" },
+      ghq_score: { info: "GHQ-12 General mental health. 0-11 Healthy, 12-20 At risk, 21+ High distress" }
     };
 
     const getColor = (metric, value) => {
       switch(metric) {
         case "stress_level":
-          if (value <= 14) return "#00FF00"; 
-          if (value <= 25) return "#FFD700"; 
-          return "#FF0000"; 
+          if (value <= 14) return "#00FF00";
+          if (value <= 25) return "#FFD700";
+          return "#FF0000";
         case "happiness_level":
-          if (value >= 50) return "#00FF00"; 
-          if (value >= 30) return "#FFD700"; 
-          return "#FF0000"; 
+          if (value >= 50) return "#00FF00";
+          if (value >= 30) return "#FFD700";
+          return "#FF0000";
         case "anxiety_level":
-          if (value <= 4) return "#00FF00"; 
-          if (value <= 9) return "#FFD700"; 
-          if (value <= 14) return "#FFA500"; 
-          return "#FF0000"; 
+          if (value <= 4) return "#00FF00";
+          if (value <= 9) return "#FFD700";
+          if (value <= 14) return "#FFA500";
+          return "#FF0000";
         case "overall_mood_level":
-          if (value >= 40) return "#00FF00"; 
-          if (value >= 20) return "#FFD700"; 
-          return "#FF0000"; 
+          if (value >= 40) return "#00FF00";
+          if (value >= 20) return "#FFD700";
+          return "#FF0000";
         case "phq9_score":
-          if (value <= 4) return "#00FF00"; 
-          if (value <= 9) return "#FFD700"; 
-          if (value <= 14) return "#FFA500"; 
-          return "#FF0000"; 
+          if (value <= 4) return "#00FF00";
+          if (value <= 9) return "#FFD700";
+          if (value <= 14) return "#FFA500";
+          return "#FF0000";
         case "gad7_score":
-          if (value <= 4) return "#00FF00"; 
-          if (value <= 9) return "#FFD700"; 
-          if (value <= 14) return "#FFA500"; 
-          return "#FF0000"; 
+          if (value <= 4) return "#00FF00";
+          if (value <= 9) return "#FFD700";
+          if (value <= 14) return "#FFA500";
+          return "#FF0000";
         case "ghq_score":
-          if (value <= 11) return "#00FF00"; 
-          if (value <= 20) return "#FFD700"; 
-          return "#FF0000"; 
+          if (value <= 11) return "#00FF00";
+          if (value <= 20) return "#FFD700";
+          return "#FF0000";
         default:
           return "#000000";
       }
     };
 
-
     if (latestChartData && Object.keys(latestChartData).length > 0) {
       Object.keys(latestChartData).forEach(key => {
-        const value = latestChartData[key].join(", ");
+        const values = latestChartData[key];
         const infoText = metricInfo[key]?.info || "Info not available";
-        const numericValue = parseFloat(latestChartData[key][0]);
 
         const splitInfo = pdf.splitTextToSize(infoText, tableColWidths[2] - 2 * rowPadding);
         const rowHeight = Math.max(8, splitInfo.length * 6 + rowPadding);
@@ -215,8 +209,12 @@ const handleDownloadReport = useCallback(async () => {
 
         pdf.text(key.replace(/_/g, " ").toUpperCase(), leftMargin + 2, yPos);
 
-        pdf.setTextColor(getColor(key, numericValue));
-        pdf.text(value, leftMargin + tableColWidths[0] + 2, yPos);
+        values.forEach((val, idx) => {
+          const color = getColor(key, val);
+          pdf.setTextColor(color);
+          pdf.text(val.toString(), leftMargin + tableColWidths[0] + 2, yPos + idx * 6);
+        });
+
         pdf.setTextColor("#000000");
         pdf.text(splitInfo, leftMargin + tableColWidths[0] + tableColWidths[1] + 2, yPos);
 
@@ -227,30 +225,24 @@ const handleDownloadReport = useCallback(async () => {
       yPos += 8;
     }
 
-    // Add chart snapshot after table
-const chartElement = document.querySelector(".dashboard-tab-content canvas");
-if (chartElement) {
-  const canvas = await html2canvas(chartElement, { scale: 2 });
-  const imgData = canvas.toDataURL("image/png");
+    const chartElement = document.querySelector(".dashboard-tab-content canvas");
+    if (chartElement) {
+      const canvas = await html2canvas(chartElement, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
 
-  if (yPos > 200) { // new page if not enough space
-    pdf.addPage();
-    yPos = 20;
-  }
+      if (yPos > 200) { pdf.addPage(); yPos = 20; }
 
-  pdf.setFontSize(14);
-  pdf.text("Visual Chart Representation:", leftMargin, yPos + 10);
-  yPos += 20;
+      pdf.setFontSize(14);
+      pdf.text("Visual Chart Representation:", leftMargin, yPos + 10);
+      yPos += 20;
 
-  // Keep image smaller to fit on page
-  const maxImgWidth = pageWidth - leftMargin * 2 - 15; // narrower than full width
-  const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
-  const maxImgHeight = 100; // limit height so it doesn’t overflow
-  const finalHeight = imgHeight > maxImgHeight ? maxImgHeight : imgHeight;
+      const maxImgWidth = pageWidth - leftMargin * 2 - 18;
+      const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
+      const finalHeight = imgHeight > 100 ? 100 : imgHeight;
 
-  pdf.addImage(imgData, "PNG", leftMargin, yPos, maxImgWidth, finalHeight);
-  yPos += finalHeight + 10;
-}
+      pdf.addImage(imgData, "PNG", leftMargin, yPos, maxImgWidth, finalHeight);
+      yPos += finalHeight + 10;
+    }
 
     pdf.save("maitri-report.pdf");
   } catch (err) {
@@ -259,6 +251,7 @@ if (chartElement) {
     setDownloading(false);
   }
 }, [user, chartData]);
+
 
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
