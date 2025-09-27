@@ -18,14 +18,14 @@
     --shadow-hover: rgba(0, 0, 0, .9);
     --border-color: rgba(255, 255, 255, .12);
     --border-radius: 3rem;
-    --padding-container: 1.0rem 1.5rem;
+    --padding-container: 1rem 1.5rem;
     --padding-tab-btn: 0.9rem 2rem;
-    --padding-content: -55.5rem;
+    --padding-content: 1.5rem;
     --gap-container: 20px;
     --gap-tabs: 10px;
     --font-size-tab: 1.05rem;
-    --font-size-content: 1rem;
-    --font-weight-tab: 700;
+    --font-size-content: 0rem;
+    --font-weight-tab: 914;
     --font-weight-btn: 600;
 }
 
