@@ -243,7 +243,7 @@ if (chartElement) {
   yPos += 20;
 
   // Keep image smaller to fit on page
-  const maxImgWidth = pageWidth - leftMargin * 2 - 20; // narrower than full width
+  const maxImgWidth = pageWidth - leftMargin * 2 - 15; // narrower than full width
   const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
   const maxImgHeight = 100; // limit height so it doesn’t overflow
   const finalHeight = imgHeight > maxImgHeight ? maxImgHeight : imgHeight;
