@@ -1,0 +1,96 @@
+.splash-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+  background: black;
+}
+
+.splash-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+  color: white;
+  width: 90%;
+  max-width: 900px;
+}
+
+.splash-text {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 1.5s ease forwards;
+  opacity: 0;
+}
+
+.splash-subtext {
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 2s ease forwards;
+  opacity: 0;
+}
+
+.splash-btn {
+  background: white;
+  color: black;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fadeIn 2.5s ease forwards;
+  opacity: 0;
+}
+
+.splash-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .splash-video {
+    object-fit: cover;
+  }
+
+  .splash-text {
+    font-size: 2rem;
+  }
+
+  .splash-subtext {
+    font-size: 1rem;
+  }
+
+  .splash-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 1.5rem;
+  }
+}

@@ -1,0 +1,270 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+  background-image: url('/images/bg.jpg');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  background-size: cover;
+  width: 100%;
+  overflow-x: hidden; 
+}
+
+.talk-counselor-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  align-items: stretch; 
+}
+
+.talk-counselor-container {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  margin: 0 auto; 
+}
+
+.hero {
+  text-align: center;
+  padding: 3rem 2rem;
+  width: 100%;
+  border-radius: 25px;
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.2rem);
+  margin-bottom: 1rem;
+  font-weight: 800;
+  color: #2c3e50;
+}
+
+.hero h1 span {
+  color: #4a90e2;
+  text-shadow: 0 0 12px rgba(74,144,226,0.6);
+}
+
+.hero p {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: #34495e;
+  line-height: 1.6;
+}
+
+/* Counselor Profile */
+.counselor-profile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  padding: 2rem;
+  border-radius: 25px;
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.counselor-profile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+}
+
+.counselor-img {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 4px solid #4A90E2;
+  object-fit: cover;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.counselor-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.counselor-details {
+  flex: 1;
+  min-width: 250px;
+  text-align: left;
+}
+
+.counselor-details h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+/* Call Button */
+.call-btn {
+  display: inline-block;
+  margin-top: 1.2rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: #fff;
+  border-radius: 25px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  transition: all 0.3s ease;
+}
+
+.call-btn:hover {
+  background: linear-gradient(135deg, #357ABD, #2c5aa0);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+}
+
+/* Form Section */
+.counselor-form-section {
+  width: 100%;
+  padding: 2rem;
+  border-radius: 25px;
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+}
+
+.counselor-form-section h2 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.counselor-form input,
+.counselor-form textarea {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.6);
+  transition: all 0.3s ease;
+}
+
+.counselor-form input:focus,
+.counselor-form textarea:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 10px rgba(74,144,226,0.6);
+}
+
+.submit-btn {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #357ABD, #2c5aa0);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(25px);}
+  100% { opacity: 1; transform: translateY(0);}
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .counselor-profile {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .counselor-img {
+    width: 160px;
+    height: 160px;
+    border-width: 3px;
+  }
+
+  .counselor-details {
+    text-align: center;
+    padding: 0 1rem;
+  }
+
+  .counselor-details h2 {
+    font-size: 1.6rem;
+  }
+
+  .counselor-details p {
+    font-size: 0.95rem;
+  }
+
+  .call-btn {
+    width: 80%;
+    text-align: center;
+    margin: 1rem 0 1.5rem;
+  }
+
+  .counselor-form-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .counselor-form-section h2 {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+
+  .counselor-details h2 {
+    font-size: 1.4rem;
+  }
+
+  .counselor-details p {
+    font-size: 0.9rem;
+  }
+
+  .counselor-form-section h2 {
+    font-size: 1.4rem;
+  }
+
+  .counselor-form input,
+  .counselor-form textarea {
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .call-btn,
+  .submit-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .counselor-form input,
+  .counselor-form textarea {
+    padding: 0.6rem 0.9rem;
+  }
+
+  .call-btn,
+  .submit-btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
