@@ -64,6 +64,34 @@
   gap: 0.7rem;
   border-radius: 0 0 24px 24px;
 }
+.navbar-bottom .dashboard-btn {
+  background: var(--btn-bg-default);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--padding-tab-btn);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.35s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbar-bottom .dashboard-btn:hover {
+  background: var(--btn-bg-hover);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 18px rgba(155,77,202,0.5);
+}
+
+.navbar-bottom .dashboard-btn.logout-btn {
+  color: #000;
+  background: var(--btn-bg-default);
+}
+
+.navbar-bottom .dashboard-btn.logout-btn:hover {
+  background: var(--btn-bg-hover);
+  transform: translateY(-2px) scale(1.03);
+}
+
 .pdf-export .navbar-link,
 .pdf-export .download-btn,
 .pdf-export .lang-switcher {
