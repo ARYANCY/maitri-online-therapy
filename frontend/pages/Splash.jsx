@@ -26,10 +26,14 @@ export default function Splash() {
   }, []);
 
   useEffect(() => {
-    if (started && videoRef.current) {
-      videoRef.current.play().catch(() => {});
+    if (started && videoRef.current && !reducedMotion) {
+      videoRef.current.style.opacity = 0;
+      videoRef.current.play().then(() => {
+        videoRef.current.style.transition = "opacity 2s ease";
+        videoRef.current.style.opacity = 1;
+      }).catch(() => {});
     }
-  }, [started]);
+  }, [started, reducedMotion]);
 
   const handleVideoEnd = () => {
     setFadeOut(true);
@@ -67,8 +71,8 @@ export default function Splash() {
         <>
           <video
             ref={videoRef}
-            className="splash-video fade-in"
-            autoPlay
+            className="splash-video"
+            autoPlay={false}
             playsInline
             preload={isDesktop ? "auto" : "none"}
             onEnded={handleVideoEnd}
