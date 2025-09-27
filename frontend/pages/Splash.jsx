@@ -29,8 +29,10 @@ export default function Splash() {
     if (started && videoRef.current && !reducedMotion) {
       videoRef.current.style.opacity = 0;
       videoRef.current.play().then(() => {
-        videoRef.current.style.transition = "opacity 2s ease";
-        videoRef.current.style.opacity = 1;
+        videoRef.current.style.transition = "opacity 3s ease";
+        setTimeout(() => {
+          videoRef.current.style.opacity = 1;
+        }, 100); // slight delay to ensure transition works
       }).catch(() => {});
     }
   }, [started, reducedMotion]);
