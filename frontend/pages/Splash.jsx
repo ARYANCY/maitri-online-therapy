@@ -14,13 +14,14 @@ export default function Splash() {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
 
     window.addEventListener("resize", handleResize);
-    mediaQuery.addEventListener("change", (e) => setReducedMotion(e.matches));
+    mediaQuery.addEventListener("change", listener);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      mediaQuery.removeEventListener("change", () => {});
+      mediaQuery.removeEventListener("change", listener);
     };
   }, []);
 
@@ -80,7 +81,6 @@ export default function Splash() {
               src={isDesktop ? "/videos/splashd.webm" : "/videos/splash.webm"}
               type="video/webm"
             />
-            Your browser does not support the video tag.
           </video>
 
           {!isDesktop && (
