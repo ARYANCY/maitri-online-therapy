@@ -6,71 +6,95 @@ export default function Splash() {
   const navigate = useNavigate();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const [started, setStarted] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
   const videoRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    mediaQuery.addEventListener("change", (e) => setReducedMotion(e.matches));
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      mediaQuery.removeEventListener("change", () => {});
+    };
   }, []);
 
   useEffect(() => {
-    let timer;
     if (started && videoRef.current) {
-      const onPlay = () => {
-        timer = setTimeout(() => navigate("/dashboard"), 12000);
-      };
-      videoRef.current.addEventListener("play", onPlay, { once: true });
-
-      return () => {
-        clearTimeout(timer);
-        if (videoRef.current) {
-          videoRef.current.removeEventListener("play", onPlay);
-        }
-      };
-    }
-  }, [started, navigate]);
-
-  useEffect(() => {
-    if (started && videoRef.current) {
-      videoRef.current.muted = false;
       videoRef.current.play().catch(() => {});
     }
   }, [started]);
 
+  const handleVideoEnd = () => {
+    setFadeOut(true);
+    setTimeout(() => navigate("/dashboard"), 1200);
+  };
+
+  const handleSkip = () => {
+    setFadeOut(true);
+    setTimeout(() => navigate("/dashboard"), 600);
+  };
+
   return (
-    <div className="splash-container">
+    <div className={`splash-container ${fadeOut ? "fade-out" : ""}`}>
       {!started ? (
         <div className="splash-overlay">
           <h1 className="splash-text">MAITRI</h1>
           <p className="splash-subtext">
-            Not just a chatbot — a warm, safe space for your well-being.
+            Not just a chatbot — a safe, warm space for your well-being.
           </p>
           <button className="splash-btn" onClick={() => setStarted(true)}>
             Tap to Start
+          </button>
+        </div>
+      ) : reducedMotion ? (
+        <div className="splash-overlay">
+          <h1 className="splash-text">MAITRI</h1>
+          <p className="splash-subtext">
+            Welcome — supporting your well-being every step of the way.
+          </p>
+          <button className="splash-btn" onClick={handleSkip}>
+            Continue
           </button>
         </div>
       ) : (
         <>
           <video
             ref={videoRef}
-            className="splash-video"
+            className="splash-video fade-in"
             autoPlay
             playsInline
+            preload={isDesktop ? "auto" : "none"}
+            onEnded={handleVideoEnd}
           >
             <source
               src={isDesktop ? "/videos/splashd.MP4" : "/videos/splash.MP4"}
               type="video/mp4"
             />
+            <source
+              src={isDesktop ? "/videos/splashd.webm" : "/videos/splash.webm"}
+              type="video/webm"
+            />
             Your browser does not support the video tag.
           </video>
+
           {!isDesktop && (
-            <div className="splash-overlay">
-              <h1 className="splash-text">
-                MAITRI is not just a chatbot—it is a warm, safe space to support your mental well-being.
-              </h1>
+            <div className="splash-overlay mobile-text">
+              <h1 className="splash-text">Welcome to MAITRI</h1>
+              <p className="splash-subtext">
+                Your caring companion for mental well-being.
+              </p>
             </div>
           )}
+
+          <button className="skip-btn" onClick={handleSkip}>
+            Skip Intro →
+          </button>
         </>
       )}
     </div>
