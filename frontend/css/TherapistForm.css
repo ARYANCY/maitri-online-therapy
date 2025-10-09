@@ -1,0 +1,58 @@
+.therapist-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.therapist-container h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #007BFF;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.therapist-footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.therapist-footer hr {
+  margin: 20px 0;
+}
+
+.footer-link {
+  margin: 0 15px;
+  color: #007BFF;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}

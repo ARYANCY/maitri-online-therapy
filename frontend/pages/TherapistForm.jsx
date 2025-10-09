@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import API from "../utils/axiosClient";
 import { Link } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function TherapistForm() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ export default function TherapistForm() {
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = e => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -23,6 +25,18 @@ export default function TherapistForm() {
     setMessage("");
     setError("");
 
+    // Bootstrap-friendly client-side validation
+    if (!formData.name || !formData.email || !formData.phone || !formData.specialization || !formData.experience) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.phone)) {
+      setError("Phone number must be 10 digits");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await API.therapist.apply(formData);
       setMessage("Form submitted successfully!");
@@ -36,49 +50,58 @@ export default function TherapistForm() {
       });
     } catch (err) {
       setError(err.message || "Error submitting form");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Application Form</h1>
+    <div className="container mt-5">
+      <h1 className="text-center text-primary mb-4">Therapist Application Form</h1>
 
-      <form onSubmit={handleSubmit}>
-        {[
-          { label: "Name", type: "text", name: "name" },
-          { label: "Email", type: "email", name: "email" },
-          { label: "Phone", type: "text", name: "phone" },
-          { label: "Specialization", type: "text", name: "specialization" },
-          { label: "Experience (Years)", type: "number", name: "experience" },
-          { label: "Qualifications", type: "text", name: "qualifications" },
-        ].map(field => (
-          <label key={field.name} style={{ display: "block", marginBottom: "12px" }}>
-            {field.label}:
-            <input
-              type={field.type}
-              name={field.name}
-              value={formData[field.name]}
-              onChange={handleChange}
-              required={field.name !== "qualifications"}
-              style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "4px", border: "1px solid #ccc" }}
-            />
-          </label>
-        ))}
+      {error && <div className="alert alert-danger">{error}</div>}
+      {message && <div className="alert alert-success">{message}</div>}
 
-        <button type="submit" style={{ padding: "10px 25px", border: "none", borderRadius: "4px", backgroundColor: "#007BFF", color: "#fff", cursor: "pointer", fontSize: "16px" }}>
-          Submit
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="mb-3">
+          <label className="form-label">Name *</label>
+          <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} required />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Email *</label>
+          <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} required />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Phone *</label>
+          <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} required />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Specialization *</label>
+          <input type="text" className="form-control" name="specialization" value={formData.specialization} onChange={handleChange} required />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Experience (Years) *</label>
+          <input type="number" className="form-control" name="experience" value={formData.experience} onChange={handleChange} required min="0" />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Qualifications</label>
+          <input type="text" className="form-control" name="qualifications" value={formData.qualifications} onChange={handleChange} />
+        </div>
+
+        <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
+          {submitting ? "Submitting..." : "Submit"}
         </button>
       </form>
 
-      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
-      {error && <p style={{ marginTop: "15px", color: "red" }}>{error}</p>}
-
-      <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
-        <hr style={{ margin: "20px 0" }} />
-        <p>
-          <Link to="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</Link>
-          <Link to="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</Link>
-        </p>
+      <footer className="text-center mt-5">
+        <hr />
+        <Link to="/admin" className="me-3 btn btn-link">Admin Dashboard</Link>
+        <Link to="/talk-to-counselor" className="btn btn-link">Talk to Counselor</Link>
       </footer>
     </div>
   );
