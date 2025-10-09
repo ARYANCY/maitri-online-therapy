@@ -72,7 +72,7 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const requireLogin = require("./middleware/authMiddleware");
-const therapistRoutes = require("./routes/therapis");
+const therapistRoutes = require("./routes/therapisRoutes");
 app.use("/auth", authRoutes);
 app.use("/api/chatbot", requireLogin, chatbotRoutes);
 app.use("/api/dashboard", requireLogin, dashboardRoutes);
