@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
 
 export default function CounselorList() {
@@ -44,6 +45,12 @@ export default function CounselorList() {
           ))}
         </ul>
       )}
+
+      <footer style={{ marginTop: "30px", textAlign: "center", fontSize: "14px" }}>
+        <hr style={{ margin: "20px 0" }} />
+        <Link to="/therapist-form" style={{ marginRight: "20px", color: "#007BFF" }}>Therapist Form</Link>
+        <Link to="/admin" style={{ color: "#007BFF" }}>Admin Dashboard</Link>
+      </footer>
     </div>
   );
 }
