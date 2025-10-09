@@ -1,3 +1,4 @@
+/* ===== General Container ===== */
 .counselor-container.light-version {
   max-width: 900px;
   margin: 40px auto;
@@ -6,18 +7,21 @@
   background-color: #fff;
   color: #111;
   line-height: 1.6;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border-radius: 15px;
 }
 
+/* ===== Header Section ===== */
 .counselor-header {
   text-align: center;
   margin-bottom: 30px;
 }
 
 .counselor-header h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #222;
+  color: #007BFF;
 }
 
 .counselor-header p {
@@ -25,51 +29,119 @@
   color: #555;
 }
 
-.error-msg {
-  color: red;
+/* ===== Messages ===== */
+.error-msg, .loading-msg, .no-counselors {
   text-align: center;
   margin-bottom: 20px;
 }
 
-.loading-msg {
-  text-align: center;
-  color: #555;
-  margin-bottom: 20px;
-}
+.error-msg { color: red; font-weight: 500; }
+.loading-msg, .no-counselors { color: #555; font-style: italic; }
 
-.no-counselors {
-  text-align: center;
-  color: #666;
-  margin-top: 20px;
-}
-
+/* ===== Counselor List Flex/Grid Container ===== */
 .counselor-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
+/* ===== Individual Counselor Card ===== */
 .counselor-card {
-  padding: 15px 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #fafafa;
-  transition: all 0.2s ease;
+  padding: 20px 25px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .counselor-card:hover {
-  background-color: #f0f0f0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 
 .counselor-card h3 {
-  margin: 0 0 10px;
-  font-size: 1.2rem;
-  color: #222;
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+  color: #007BFF;
+  font-weight: 700;
 }
 
 .counselor-card p {
-  margin: 4px 0;
+  margin: 6px 0;
   font-size: 0.95rem;
   color: #333;
+}
+
+/* ===== Call Button ===== */
+.counselor-card .btn-primary {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.counselor-card .btn-primary:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* ===== Responsive Grid for Medium/Large Screens ===== */
+@media (min-width: 768px) {
+  .counselor-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .counselor-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Smaller Screens ===== */
+@media (max-width: 600px) {
+  .counselor-container.light-version { padding: 20px; }
+  .counselor-header h1 { font-size: 1.8rem; }
+  .counselor-card { padding: 15px 20px; }
+  .counselor-card h3 { font-size: 1.15rem; }
+  .counselor-card p, .counselor-card .btn-primary { font-size: 0.9rem; }
+}
+
+@media (max-width: 500px) {
+  .counselor-container.light-version { padding: 15px; margin: 20px auto; }
+  .counselor-header h1 { font-size: 1.6rem; }
+  .counselor-card { padding: 12px 15px; }
+  .counselor-card h3 { font-size: 1.1rem; }
+  .counselor-card p, .counselor-card .btn-primary { font-size: 0.85rem; }
+}
+
+@media (max-width: 400px) {
+  .counselor-container.light-version { padding: 10px; margin: 15px auto; }
+  .counselor-header h1 { font-size: 1.4rem; }
+  .counselor-header p { font-size: 0.9rem; }
+  .counselor-card { padding: 10px 12px; }
+  .counselor-card h3 { font-size: 1rem; }
+  .counselor-card p, .counselor-card .btn-primary { font-size: 0.8rem; padding: 8px 12px; }
+}
+
+/* ===== Smooth transitions ===== */
+.counselor-card,
+.counselor-card h3,
+.counselor-card p,
+.counselor-card .btn-primary {
+  transition: all 0.3s ease-in-out;
 }
