@@ -26,47 +26,109 @@ export default function Admin() {
     fetchTherapists();
   }, []);
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>Therapist Applications</h1>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ borderBottom: "1px solid #ddd" }}>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Specialization</th>
-            <th>Experience</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {therapists.map((t) => (
-            <tr key={t._id} style={{ borderBottom: "1px solid #eee" }}>
-              <td>{t.name}</td>
-              <td>{t.email}</td>
-              <td>{t.specialization}</td>
-              <td>{t.experience} yrs</td>
-              <td>{t.status}</td>
-              <td>
-                {["accepted", "rejected", "pending"].map((s) => (
-                  <button key={s} onClick={() => updateStatus(t._id, s)} style={{ marginRight: "5px" }}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
-                ))}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  const containerStyle = {
+    maxWidth: "1000px",
+    margin: "40px auto",
+    padding: "20px",
+    background: "#f7f7f7",
+    borderRadius: "10px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  };
 
-      <footer style={{ marginTop: "40px", textAlign: "center" }}>
-        <hr style={{ margin: "20px 0" }} />
-        <p>
-          <a href="/talk-to-counselor" style={{ marginRight: "20px" }}>Talk to Counselor</a>
-          <a href="/therapist-form">Therapist Form</a>
-        </p>
-      </footer>
+  const tableStyle = {
+    width: "100%",
+    borderCollapse: "collapse",
+  };
+
+  const thTdStyle = {
+    borderBottom: "1px solid #ddd",
+    padding: "10px",
+    textAlign: "left",
+  };
+
+  const statusButtonStyle = {
+    padding: "6px 10px",
+    marginRight: "5px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "bold",
+  };
+
+  const getButtonColor = (status) => {
+    if (status === "accepted") return "#4CAF50";
+    if (status === "rejected") return "#f44336";
+    return "#FFC107"; // pending
+  };
+
+  const footerStyle = {
+    marginTop: "40px",
+    textAlign: "center",
+    fontSize: "14px",
+  };
+
+  const linkStyle = {
+    marginRight: "20px",
+    color: "#007BFF",
+    textDecoration: "none",
+  };
+
+  return (
+    <div style={{ fontFamily: "Arial, sans-serif", background: "#e9ecef", minHeight: "100vh" }}>
+      <div style={containerStyle}>
+        <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#333" }}>Therapist Applications</h1>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              {["Name", "Email", "Specialization", "Experience", "Status", "Actions"].map((h) => (
+                <th key={h} style={thTdStyle}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {therapists.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: "center", padding: "20px", color: "#777" }}>
+                  No applications yet.
+                </td>
+              </tr>
+            ) : (
+              therapists.map((t) => (
+                <tr key={t._id}>
+                  <td style={thTdStyle}>{t.name}</td>
+                  <td style={thTdStyle}>{t.email}</td>
+                  <td style={thTdStyle}>{t.specialization}</td>
+                  <td style={thTdStyle}>{t.experience} yrs</td>
+                  <td style={thTdStyle}>{t.status}</td>
+                  <td style={thTdStyle}>
+                    {["accepted", "rejected", "pending"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateStatus(t._id, s)}
+                        style={{ 
+                          ...statusButtonStyle, 
+                          backgroundColor: getButtonColor(s),
+                          color: "white"
+                        }}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    ))}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        <footer style={footerStyle}>
+          <hr style={{ margin: "20px 0" }} />
+          <p>
+            <a href="/talk-to-counselor" style={linkStyle}>Talk to Counselor</a>
+            <a href="/therapist-form" style={linkStyle}>Therapist Form</a>
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
