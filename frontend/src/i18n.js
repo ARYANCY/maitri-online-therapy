@@ -91,39 +91,22 @@ const resources = {
         googleLogin: "Continue with Google",
         loading: "Loading, please wait...",
       },
-      counselor: {
+       talk: {
         title: "Talk to a Counselor",
-        description:
-          "Need guidance or someone to listen? Connect with our professional counselor for a safe, confidential, and empathetic conversation.",
-        name: "Dr. Dhritam Tapatkam Dehi",
-        namePlaceholder: "Enter your name",
+        subtitle: "Our verified counselors are ready to assist you professionally.",
+        loading: "Loading counselors...",
+        noCounselors: "No counselors available right now.",
         email: "Email",
-        emailPlaceholder: "Enter your email",
-        message: "Message",
-        messagePlaceholder: "Share your concerns here...",
-        requestSession: "Request a Session",
-        requestSubmitted:
-          "Your request has been received. Our counselor will contact you soon!",
-        qualifications: "Qualifications",
-        qualificationsDetails:
-          "M.A. in Clinical Psychology, Certified CBT Practitioner",
+        phone: "Phone",
+        specialization: "Specialization",
         experience: "Experience",
-        experienceDetails:
-          "7+ years in mental health counseling, specializing in anxiety, depression, and stress management",
-        languages: "Languages",
-        languagesDetails: "English, Hindi, Assamese",
-        availability: "Availability",
-        availabilityDetails: "Mon–Fri, 10:00 AM – 6:00 PM",
-        callButton: "Call: 9999999999",
-        form: {
-          submit: "Submit Request",
-          name: "Name",
-          namePlaceholder: "Enter your name",
-          email: "Email",
-          emailPlaceholder: "Enter your email",
-          message: "Message",
-          messagePlaceholder: "Share your concerns here...",
-        },
+        years: "yrs",
+        qualifications: "Qualifications",
+        callNow: "Call Now",
+        footer: "Empowering mental wellness",
+        therapistForm: "Therapist Form",
+        adminDashboard: "Admin Dashboard",
+        errorFetching: "Error fetching counselors"
       },
       aboutMaitri: {
         heroTitle: "About Maitri",
@@ -294,40 +277,23 @@ hi: {
       googleLogin: "Google से जारी रखें",
       loading: "लोड हो रहा है, कृपया प्रतीक्षा करें..."
     },
-    counselor: {
-      title: "काउंसलर से संवाद करें",
-      description:
-        "यदि आप मार्गदर्शन या किसी से बात करने की आवश्यकता महसूस करते हैं, तो हमारे अनुभवी काउंसलर से संपर्क करें — गोपनीय और सहानुभूति-पूर्ण संवाद के लिए।",
-      name: "Dr. Dhritam Tapatkam Dehi",
-      namePlaceholder: "आपका नाम",
-      email: "ईमेल",
-      emailPlaceholder: "आपका ईमेल",
-      message: "संदेश",
-      messagePlaceholder: "अपनी बात यहाँ लिखें...",
-      requestSession: "सत्र का अनुरोध करें",
-      requestSubmitted:
-        "आपका अनुरोध प्राप्त कर लिया गया है। हमारी टीम शीघ्र ही आपसे संपर्क करेगी।",
-      qualifications: "योग्यता",
-      qualificationsDetails:
-        "Ph.D. (Clinical Psychology), मान्यता प्राप्त CBT प्रशिक्षक",
-      experience: "अनुभव",
-      experienceDetails:
-        "मानसिक स्वास्थ्य पर 10+ वर्षों का व्यावसायिक परामर्श अनुभव—एंग्जाइटी, अवसाद और तनाव प्रबंधन में विशेषज्ञता",
-      languages: "भाषाएँ",
-      languagesDetails: "हिन्दी, अंग्रेज़ी, पंजाबी",
-      availability: "उपलब्धता",
-      availabilityDetails: "सोमवार – शुक्रवार, 09:00 AM – 05:00 PM",
-      callButton: "कॉल करें +91 9999999999",
-      form: {
-        submit: "अनुरोध भेजें",
-        name: "नाम",
-        namePlaceholder: "अपना पूरा नाम लिखें",
+    talk: {
+        title: "सलाहकार से बात करें",
+        subtitle: "हमारे सत्यापित सलाहकार पेशेवर रूप से आपकी मदद करने के लिए तैयार हैं।",
+        loading: "सलाहकार लोड हो रहे हैं...",
+        noCounselors: "अभी कोई सलाहकार उपलब्ध नहीं है।",
         email: "ईमेल",
-        emailPlaceholder: "इमेल पता लिखें",
-        message: "संदेश",
-        messagePlaceholder: "आपकी चिंताएँ या प्रश्न यहाँ लिखें"
-      }
-    },
+        phone: "फोन",
+        specialization: "विशेषता",
+        experience: "अनुभव",
+        years: "वर्ष",
+        qualifications: "योग्यताएँ",
+        callNow: "अब कॉल करें",
+        footer: "मानसिक स्वास्थ्य को सशक्त बनाना",
+        therapistForm: "थेरपिस्ट फॉर्म",
+        adminDashboard: "एडमिन डैशबोर्ड",
+        errorFetching: "सलाहकार लाने में त्रुटि"
+      },
       aboutMaitri: {
     heroTitle: "मैत्री के बारे में",
     heroDescription:
@@ -497,40 +463,23 @@ as: {
       googleLogin: "Google ৰ জৰিয়তে আগবাঢ়ক",
       loading: "লোড হৈ আছে, অপেক্ষা কৰক..."
     },
-    counselor: {
-      title: "কাউন্সেলৰৰ সৈতে কথা-বাৰ্তা",
-      description:
-        "যদি আপুনি দিশনির্দেশনা বা সহানুভূতি-পূৰ্ণ আলোচনাৰ প্ৰয়োজন বোধ কৰে, তেন্তে আমাৰ অভিজ্ঞ কাউন্সেলৰৰ সৈতে যোগাযোগ কৰক — গোপনীয় আৰু বুজাবুজিৰ সৈতে।",
-      name: "Dr. Dhritam Tapatkam Dehi",
-      namePlaceholder: "আপোনাৰ নাম",
-      email: "ইমেইল",
-      emailPlaceholder: "আপোনাৰ ইমেইল",
-      message: "বাৰ্তা",
-      messagePlaceholder: "আপোনাৰ কথা ইয়াত লিখক...",
-      requestSession: "ছেছনৰ অনুৰোধ কৰক",
-      requestSubmitted:
-        "আপোনাৰ অনুৰোধ লাভ কৰা হৈছে। অতি সোনকালে আমাৰ দল আপোনাৰ সৈতে যোগাযোগ কৰিব।",
-      qualifications: "যোগ্যতা",
-      qualificationsDetails:
-        "Ph.D. (Clinical Psychology), মান্যতাপ্ৰাপ্ত CBT প্ৰশিক্ষক",
-      experience: "অভিজ্ঞতা",
-      experienceDetails:
-        "মানসিক স্বাস্থ্য আৰু পৰামৰ্শক্ষেত্ৰত ১০ বছৰৰ অধিক অভিজ্ঞতা — উৎকণ্ঠা, বিষন্নতা আৰু চাপ পৰিচালনাত বিশেষজ্ঞ",
-      languages: "ভাষা",
-      languagesDetails: "অসমীয়া, হিন্দী, ইংৰাজী",
-      availability: "উপলব্ধতা",
-      availabilityDetails: "সোমবাৰ – শুক্ৰবাৰ, ০৯:০০ AM – ০৫:০০ PM",
-      callButton: "কল কৰক +91 9999999999",
-      form: {
-        submit: "অনুৰোধ পঠিয়াওক",
-        name: "নাম",
-        namePlaceholder: "আপোনাৰ পূৰ্ণ নাম লিখক",
-        email: "ইমেইল",
-        emailPlaceholder: "আপোনাৰ ইমেইল ঠিকনা লিখক",
-        message: "বাৰ্তা",
-        messagePlaceholder: "আপোনাৰ চিন্তা বা প্ৰশ্ন ইয়াত লিখক"
-      }
-    },
+     talk: {
+        title: "একজন পৰামৰ্শদাতাৰ সৈতে কথা কৰক",
+        subtitle: "আমাৰ প্ৰমাণিত পৰামৰ্শদাতাসকলে আপোনাক পেচাদাৰীভাৱে সহায় কৰিবলৈ সাজু।",
+        loading: "পৰামৰ্শদাতাসকল লোড হৈ আছে...",
+        noCounselors: "বৰ্তমান কোনো পৰামৰ্শদাতা উপলব্ধ নাই।",
+        email: "ই-মেইল",
+        phone: "ফোন",
+        specialization: "বিশেষত্ব",
+        experience: "অভিজ্ঞতা",
+        years: "বছৰ",
+        qualifications: "যোগ্যতা",
+        callNow: "এতিয়া কল কৰক",
+        footer: "মানসিক সু-স্বাস্থ্যক শক্তিশালী কৰা",
+        therapistForm: "থেৰাপিষ্ট ফৰ্ম",
+        adminDashboard: "প্ৰশাসক ডেছব’ৰ্ড",
+        errorFetching: "পৰামৰ্শদাতা আনি ত্ৰুটি ঘটিল"
+      },
 aboutMaitri: {
   heroTitle: "মৈত্ৰী সম্বন্ধে",
   heroDescription:
