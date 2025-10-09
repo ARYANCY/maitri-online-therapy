@@ -6,6 +6,7 @@ const express = require("express");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const mongoose = require("mongoose");
+import therapisRoutes from "./routes/therapisRoutes.js";
 
 const cors = require("cors");
 const flash = require("connect-flash");
@@ -75,6 +76,7 @@ app.use("/auth", authRoutes);
 app.use("/api/chatbot", requireLogin, chatbotRoutes);
 app.use("/api/dashboard", requireLogin, dashboardRoutes);
 app.use("/api/reminders", requireLogin, reminderRoutes);
+app.use("/api/therapis", therapisRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
   res.json({ user: req.user || null });
