@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "../css/CounselorList.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function CounselorList() {
   const [counselors, setCounselors] = useState([]);
@@ -26,43 +26,49 @@ export default function CounselorList() {
   }, []);
 
   return (
-    <div className="counselor-container">
+    <div className="container mt-5">
       {/* Landing Section */}
-      <header className="counselor-header">
-        <h1>Talk to a Counselor</h1>
+      <div className="text-center mb-4">
+        <h1 className="text-primary">Talk to a Counselor</h1>
         <p>Our verified counselors are ready to assist you professionally.</p>
-      </header>
+      </div>
 
       {/* Error & Loading */}
-      {error && <p className="error-msg">{error}</p>}
-      {loading && <p className="loading-msg">Loading counselors...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+      {loading && <div className="text-center">Loading counselors...</div>}
 
       {/* No counselors available */}
       {!loading && counselors.length === 0 && (
-        <p className="no-counselors">No counselors available right now.</p>
+        <div className="alert alert-warning text-center">No counselors available right now.</div>
       )}
 
       {/* Counselor List */}
-      <div className="counselor-list">
-        {!loading && counselors.map(c => (
-          <div className="counselor-card" key={c._id}>
-            <div className="counselor-info">
-              <h3>{c.name}</h3>
-              <p><strong>Email:</strong> {c.email}</p>
-              <p><strong>Specialization:</strong> {c.specialization}</p>
-              <p><strong>Experience:</strong> {c.experience} yrs</p>
-              {c.qualifications && <p><strong>Qualifications:</strong> {c.qualifications}</p>}
-              <p><strong>Phone:</strong> {c.phone}</p>
+      <div className="row">
+        {!loading &&
+          counselors.map((c) => (
+            <div className="col-md-6 mb-4" key={c._id}>
+              <div className="card h-100 shadow-sm">
+                <div className="card-body">
+                  <h5 className="card-title">{c.name}</h5>
+                  <p className="card-text"><strong>Email:</strong> {c.email}</p>
+                  <p className="card-text"><strong>Phone:</strong> {c.phone}</p>
+                  <p className="card-text"><strong>Specialization:</strong> {c.specialization}</p>
+                  <p className="card-text"><strong>Experience:</strong> {c.experience} yrs</p>
+                  {c.qualifications && <p className="card-text"><strong>Qualifications:</strong> {c.qualifications}</p>}
+                </div>
+                <div className="card-footer text-center">
+                  <a href={`tel:${c.phone}`} className="btn btn-success w-100">Call Now</a>
+                </div>
+              </div>
             </div>
-            <a href={`tel:${c.phone}`} className="call-button">Call Now</a>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Footer Links */}
-      <footer className="counselor-footer">
-        <Link to="/therapist-form" className="footer-link">Therapist Form</Link>
-        <Link to="/admin" className="footer-link">Admin Dashboard</Link>
+      <footer className="text-center mt-5">
+        <hr />
+        <Link to="/therapist-form" className="btn btn-link me-3">Therapist Form</Link>
+        <Link to="/admin" className="btn btn-link">Admin Dashboard</Link>
       </footer>
     </div>
   );
