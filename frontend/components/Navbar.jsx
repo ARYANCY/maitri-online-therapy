@@ -62,13 +62,13 @@ export default function Navbar({ user, downloadReport }) {
           <button onClick={handleLogout} className="navbar-link">
             {t("navbar.logout", "Logout")}
           </button>
-          <Link to="/dashboard" className="navbar-link">
+          <Link to="/dashboard" className="navbar-link ww">
             {t("navbar.dashboard", "Dashboard")}
           </Link>
-          <Link to="/about-maitri" className="navbar-link">
+          <Link to="/about-maitri" className="navbar-link ww">
             {t("navbar.about", "About Maitri")}
           </Link>
-          <Link to="/talk-to-counselor" className="navbar-link">
+          <Link to="/talk-to-counselor" className="navbar-link ww">
             {t("navbar.talkToCounselor", "Talk to Counselor")}
           </Link>
           <a

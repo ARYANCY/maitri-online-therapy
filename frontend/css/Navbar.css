@@ -14,7 +14,9 @@
   gap: 0.4rem;
   transition: all 0.3s ease;
 }
-
+.ww{
+  color: white !important;
+}
 .navbar-top {
   display: flex;
   justify-content: space-between;
