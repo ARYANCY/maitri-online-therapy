@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "./CounselorList.css";
+import "../css/CounselorList.css";
 
 export default function CounselorList() {
   const [counselors, setCounselors] = useState([]);

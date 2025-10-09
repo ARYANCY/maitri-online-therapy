@@ -1,57 +1,35 @@
-import React, { useState } from "react";
-import API from "../utils/axiosClient";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "react-toastify/dist/ReactToastify.css";
+import API from "../utils/axiosClient";
+
+// Validation schema
+const schema = yup.object().shape({
+  name: yup.string().required("Name is required").min(3, "Name must be at least 3 characters"),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  phone: yup.string().matches(/^\d{10}$/, "Phone number must be 10 digits").required("Phone is required"),
+  specialization: yup.string().required("Specialization is required"),
+  experience: yup.number().min(0, "Experience cannot be negative").required("Experience is required"),
+  qualifications: yup.string().optional(),
+});
 
 export default function TherapistForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    specialization: "",
-    experience: "",
-    qualifications: "",
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: yupResolver(schema),
   });
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = e => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setMessage("");
-    setError("");
-
-    // Bootstrap-friendly client-side validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.specialization || !formData.experience) {
-      setError("Please fill in all required fields.");
-      return;
-    }
-
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError("Phone number must be 10 digits");
-      return;
-    }
-
-    setSubmitting(true);
+  const onSubmit = async (data) => {
     try {
-      await API.therapist.apply(formData);
-      setMessage("Form submitted successfully!");
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        specialization: "",
-        experience: "",
-        qualifications: "",
-      });
+      await API.therapist.apply(data);
+      toast.success("Form submitted successfully!");
+      reset();
     } catch (err) {
-      setError(err.message || "Error submitting form");
-    } finally {
-      setSubmitting(false);
+      toast.error(err.message || "Error submitting form");
     }
   };
 
@@ -59,42 +37,44 @@ export default function TherapistForm() {
     <div className="container mt-5">
       <h1 className="text-center text-primary mb-4">Therapist Application Form</h1>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="mb-3">
           <label className="form-label">Name *</label>
-          <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} required />
+          <input className={`form-control ${errors.name ? "is-invalid" : ""}`} {...register("name")} />
+          {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
         </div>
 
         <div className="mb-3">
           <label className="form-label">Email *</label>
-          <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} required />
+          <input className={`form-control ${errors.email ? "is-invalid" : ""}`} {...register("email")} />
+          {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
         </div>
 
         <div className="mb-3">
           <label className="form-label">Phone *</label>
-          <input type="text" className="form-control" name="phone" value={formData.phone} onChange={handleChange} required />
+          <input className={`form-control ${errors.phone ? "is-invalid" : ""}`} {...register("phone")} />
+          {errors.phone && <div className="invalid-feedback">{errors.phone.message}</div>}
         </div>
 
         <div className="mb-3">
           <label className="form-label">Specialization *</label>
-          <input type="text" className="form-control" name="specialization" value={formData.specialization} onChange={handleChange} required />
+          <input className={`form-control ${errors.specialization ? "is-invalid" : ""}`} {...register("specialization")} />
+          {errors.specialization && <div className="invalid-feedback">{errors.specialization.message}</div>}
         </div>
 
         <div className="mb-3">
           <label className="form-label">Experience (Years) *</label>
-          <input type="number" className="form-control" name="experience" value={formData.experience} onChange={handleChange} required min="0" />
+          <input type="number" className={`form-control ${errors.experience ? "is-invalid" : ""}`} {...register("experience")} />
+          {errors.experience && <div className="invalid-feedback">{errors.experience.message}</div>}
         </div>
 
         <div className="mb-3">
           <label className="form-label">Qualifications</label>
-          <input type="text" className="form-control" name="qualifications" value={formData.qualifications} onChange={handleChange} />
+          <input className="form-control" {...register("qualifications")} />
         </div>
 
-        <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
-          {submitting ? "Submitting..." : "Submit"}
+        <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit"}
         </button>
       </form>
 
@@ -103,6 +83,8 @@ export default function TherapistForm() {
         <Link to="/admin" className="me-3 btn btn-link">Admin Dashboard</Link>
         <Link to="/talk-to-counselor" className="btn btn-link">Talk to Counselor</Link>
       </footer>
+
+      <ToastContainer position="top-center" />
     </div>
   );
 }

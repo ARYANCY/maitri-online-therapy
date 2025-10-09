@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "./Admin.css";
+import "../css/Admin.css";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
