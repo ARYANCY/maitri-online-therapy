@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Navbar from "../components/Navbar";
 import API from "../utils/axiosClient";
+import { Link } from "react-router-dom";
 
 export default function TherapistForm() {
   const [formData, setFormData] = useState({
@@ -35,20 +35,12 @@ export default function TherapistForm() {
         qualifications: "",
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Error submitting form");
     }
   };
 
   return (
-    <div style={{
-      padding: "20px",
-      maxWidth: "600px",
-      margin: "0 auto",
-      fontFamily: "Arial, sans-serif",
-      lineHeight: "1.5"
-    }}>
-      <Navbar />
-
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
       <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Application Form</h1>
 
       <form onSubmit={handleSubmit}>
@@ -68,26 +60,12 @@ export default function TherapistForm() {
               value={formData[field.name]}
               onChange={handleChange}
               required={field.name !== "qualifications"}
-              style={{
-                width: "100%",
-                padding: "8px",
-                marginTop: "4px",
-                borderRadius: "4px",
-                border: "1px solid #ccc"
-              }}
+              style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "4px", border: "1px solid #ccc" }}
             />
           </label>
         ))}
 
-        <button type="submit" style={{
-          padding: "10px 25px",
-          border: "none",
-          borderRadius: "4px",
-          backgroundColor: "#007BFF",
-          color: "#fff",
-          cursor: "pointer",
-          fontSize: "16px"
-        }}>
+        <button type="submit" style={{ padding: "10px 25px", border: "none", borderRadius: "4px", backgroundColor: "#007BFF", color: "#fff", cursor: "pointer", fontSize: "16px" }}>
           Submit
         </button>
       </form>
@@ -98,8 +76,8 @@ export default function TherapistForm() {
       <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
         <hr style={{ margin: "20px 0" }} />
         <p>
-          <a href="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</a>
-          <a href="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</a>
+          <Link to="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</Link>
+          <Link to="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</Link>
         </p>
       </footer>
     </div>
