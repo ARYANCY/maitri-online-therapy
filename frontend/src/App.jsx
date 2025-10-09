@@ -19,6 +19,7 @@ export default function App() {
         <Route path="/talk-to-counselor" element={<TalkToCounselor />} />
         <Route path="/therapist-form" element={<TherapistForm />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<Home />} />
       </Routes>
     </Router>
   );

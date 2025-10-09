@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API from "../utils/axiosClient";
+import { Link } from "react-router-dom";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
@@ -33,11 +34,7 @@ export default function Admin() {
     background: "#f7f7f7",
     borderRadius: "10px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-  };
-
-  const tableStyle = {
-    width: "100%",
-    borderCollapse: "collapse",
+    fontFamily: "Arial, sans-serif",
   };
 
   const thTdStyle = {
@@ -53,34 +50,26 @@ export default function Admin() {
     border: "none",
     cursor: "pointer",
     fontWeight: "bold",
+    color: "white",
   };
 
   const getButtonColor = (status) => {
     if (status === "accepted") return "#4CAF50";
     if (status === "rejected") return "#f44336";
-    return "#FFC107"; // pending
+    return "#FFC107";
   };
 
-  const footerStyle = {
-    marginTop: "40px",
-    textAlign: "center",
-    fontSize: "14px",
-  };
-
-  const linkStyle = {
-    marginRight: "20px",
-    color: "#007BFF",
-    textDecoration: "none",
-  };
+  const footerStyle = { marginTop: "40px", textAlign: "center", fontSize: "14px" };
+  const linkStyle = { marginRight: "20px", color: "#007BFF", textDecoration: "none" };
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", background: "#e9ecef", minHeight: "100vh" }}>
+    <div style={{ background: "#e9ecef", minHeight: "100vh" }}>
       <div style={containerStyle}>
-        <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#333" }}>Therapist Applications</h1>
-        <table style={tableStyle}>
+        <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Therapist Applications</h1>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              {["Name", "Email", "Specialization", "Experience", "Status", "Actions"].map((h) => (
+              {["Name","Email","Specialization","Experience","Status","Actions"].map((h) => (
                 <th key={h} style={thTdStyle}>{h}</th>
               ))}
             </tr>
@@ -101,15 +90,11 @@ export default function Admin() {
                   <td style={thTdStyle}>{t.experience} yrs</td>
                   <td style={thTdStyle}>{t.status}</td>
                   <td style={thTdStyle}>
-                    {["accepted", "rejected", "pending"].map((s) => (
+                    {["accepted","rejected","pending"].map((s) => (
                       <button
                         key={s}
                         onClick={() => updateStatus(t._id, s)}
-                        style={{ 
-                          ...statusButtonStyle, 
-                          backgroundColor: getButtonColor(s),
-                          color: "white"
-                        }}
+                        style={{ ...statusButtonStyle, backgroundColor: getButtonColor(s) }}
                       >
                         {s.charAt(0).toUpperCase() + s.slice(1)}
                       </button>
@@ -120,13 +105,10 @@ export default function Admin() {
             )}
           </tbody>
         </table>
-
         <footer style={footerStyle}>
           <hr style={{ margin: "20px 0" }} />
-          <p>
-            <a href="/talk-to-counselor" style={linkStyle}>Talk to Counselor</a>
-            <a href="/therapist-form" style={linkStyle}>Therapist Form</a>
-          </p>
+          <Link to="/talk-to-counselor" style={linkStyle}>Talk to Counselor</Link>
+          <Link to="/therapist-form" style={linkStyle}>Therapist Form</Link>
         </footer>
       </div>
     </div>
