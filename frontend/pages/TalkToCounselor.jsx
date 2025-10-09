@@ -51,6 +51,19 @@ export default function TalkToCounselor() {
             ))
           )}
         </section>
+
+        {/* Footer with links */}
+        <footer className="talk-footer" style={{ marginTop: "40px", textAlign: "center" }}>
+          <hr style={{ margin: "20px 0" }} />
+          <p>
+            <a href="/admin" style={{ marginRight: "20px", color: "#007bff", textDecoration: "underline" }}>
+              Admin Dashboard
+            </a>
+            <a href="/therapist-form" style={{ color: "#007bff", textDecoration: "underline" }}>
+              Therapist Form
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );
