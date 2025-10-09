@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import API from "../utils/axiosClient";
 import { Link } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function TherapistForm() {
   const [formData, setFormData] = useState({
@@ -13,15 +14,26 @@ export default function TherapistForm() {
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [validated, setValidated] = useState(false);
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
     setError("");
+
+    const form = e.currentTarget;
+    if (form.checkValidity() === false || !/^\d{10}$/.test(formData.phone)) {
+      e.stopPropagation();
+      setValidated(true);
+      if (!/^\d{10}$/.test(formData.phone)) setError("Phone number must be 10 digits.");
+      return;
+    }
+
+    setValidated(true);
 
     try {
       await API.therapist.apply(formData);
@@ -34,52 +46,71 @@ export default function TherapistForm() {
         experience: "",
         qualifications: "",
       });
+      setValidated(false);
     } catch (err) {
-      setError(err.message || "Error submitting form");
+      setError(err.response?.data?.message || err.message || "Error submitting form");
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Application Form</h1>
+    <div
+      className="d-flex justify-content-center align-items-center min-vh-100"
+      style={{ backgroundColor: "#f4f4f4" }}
+    >
+      <div
+        className="p-5 rounded shadow-lg"
+        style={{
+          width: "100%",
+          maxWidth: "600px",
+          background: "rgba(255, 255, 255, 0.85)",
+          backdropFilter: "blur(10px)",
+          borderRadius: "15px",
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        <h1 className="text-center mb-4 text-primary">Therapist Application Form</h1>
 
-      <form onSubmit={handleSubmit}>
-        {[
-          { label: "Name", type: "text", name: "name" },
-          { label: "Email", type: "email", name: "email" },
-          { label: "Phone", type: "text", name: "phone" },
-          { label: "Specialization", type: "text", name: "specialization" },
-          { label: "Experience (Years)", type: "number", name: "experience" },
-          { label: "Qualifications", type: "text", name: "qualifications" },
-        ].map(field => (
-          <label key={field.name} style={{ display: "block", marginBottom: "12px" }}>
-            {field.label}:
-            <input
-              type={field.type}
-              name={field.name}
-              value={formData[field.name]}
-              onChange={handleChange}
-              required={field.name !== "qualifications"}
-              style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "4px", border: "1px solid #ccc" }}
-            />
-          </label>
-        ))}
+        {error && <div className="alert alert-danger">{error}</div>}
+        {message && <div className="alert alert-success">{message}</div>}
 
-        <button type="submit" style={{ padding: "10px 25px", border: "none", borderRadius: "4px", backgroundColor: "#007BFF", color: "#fff", cursor: "pointer", fontSize: "16px" }}>
-          Submit
-        </button>
-      </form>
+        <form noValidate className={validated ? "was-validated" : ""} onSubmit={handleSubmit}>
+          {[
+            { label: "Name", type: "text", name: "name" },
+            { label: "Email", type: "email", name: "email" },
+            { label: "Phone", type: "text", name: "phone" },
+            { label: "Specialization", type: "text", name: "specialization" },
+            { label: "Experience (Years)", type: "number", name: "experience" },
+            { label: "Qualifications", type: "text", name: "qualifications" },
+          ].map((field) => (
+            <div className="mb-3" key={field.name}>
+              <label className="form-label">{field.label}{field.name !== "qualifications" && " *"}</label>
+              <input
+                type={field.type}
+                className="form-control"
+                name={field.name}
+                value={formData[field.name]}
+                onChange={handleChange}
+                required={field.name !== "qualifications"}
+              />
+              <div className="invalid-feedback">
+                {field.name === "phone"
+                  ? "Please enter a valid 10-digit phone number."
+                  : `Please provide your ${field.label.toLowerCase()}.`}
+              </div>
+            </div>
+          ))}
 
-      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
-      {error && <p style={{ marginTop: "15px", color: "red" }}>{error}</p>}
+          <button type="submit" className="btn btn-primary w-100">
+            Submit
+          </button>
+        </form>
 
-      <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
-        <hr style={{ margin: "20px 0" }} />
-        <p>
-          <Link to="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</Link>
-          <Link to="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</Link>
-        </p>
-      </footer>
+        <footer className="text-center mt-4">
+          <hr />
+          <Link to="/admin" className="me-3 btn btn-link">Admin Dashboard</Link>
+          <Link to="/talk-to-counselor" className="btn btn-link">Talk to Counselor</Link>
+        </footer>
+      </div>
     </div>
   );
 }
