@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import Navbar from "../components/Navbar";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function TherapistForm() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,9 +15,35 @@ export default function TherapistForm() {
     experience: "",
     qualifications: "",
   });
+
+  const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [validated, setValidated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const data = await API.auth.checkSession();
+      if (!data?.user) {
+        navigate("/login");
+        return;
+      }
+      setUser(data.user);
+      setFormData(prev => ({
+        ...prev,
+        name: data.user.name || "",
+        email: data.user.email || "",
+      }));
+    } catch (err) {
+      console.error("Session check failed:", err);
+      navigate("/login");
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => { fetchUser(); }, [fetchUser]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -40,8 +68,8 @@ export default function TherapistForm() {
       await API.therapist.apply(formData);
       setMessage("Form submitted successfully!");
       setFormData({
-        name: "",
-        email: "",
+        name: user?.name || "",
+        email: user?.email || "",
         phone: "",
         specialization: "",
         experience: "",
@@ -53,20 +81,19 @@ export default function TherapistForm() {
     }
   };
 
+  if (loading) return <p className="text-center mt-5">Loading...</p>;
+
   return (
     <>
-      <Navbar />
+      <Navbar user={user} />
       <div className="bg-light min-vh-100 d-flex flex-column align-items-center">
-        {/* ===== Intro Section ===== */}
         <div className="text-center p-4 my-4" style={{ maxWidth: "800px" }}>
           <h1 className="display-6 text-primary">Make a Difference, Save Lives</h1>
           <p className="lead text-secondary">
-            By becoming a verified therapist with our platform, you can provide guidance, support, and hope
-            to people who need it the most. Take a step forward and fill out the application form below.
+            Join our network of mental health professionals. Fill out the form to apply as a therapist.
           </p>
         </div>
 
-        {/* ===== Form Section ===== */}
         <div
           className="p-4 rounded shadow-lg"
           style={{
