@@ -14,21 +14,46 @@ export default function Admin() {
     setError("");
     try {
       const data = await API.therapist.getAll();
-      setTherapists(data);
+      setTherapists(
+        data.map(t => ({
+          ...t,
+          status: t.status || "pending", // Ensure all new ones default to pending
+        }))
+      );
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || err.message || "Error fetching therapist applications");
     }
   };
 
-  const updateStatus = async (id, status) => {
-    setError("");
+  const handleReject = async (id) => {
     try {
-      await API.therapist.updateStatus(id, status);
+      await API.therapist.updateStatus(id, "rejected");
+      fetchTherapists();
+
+      // Schedule deletion after 2 hours
+      setTimeout(async () => {
+        try {
+          await API.therapist.delete(id);
+          console.log(`Therapist ${id} auto-deleted after rejection.`);
+          fetchTherapists();
+        } catch (err) {
+          console.error("Auto-delete failed:", err);
+        }
+      }, 2 * 60 * 60 * 1000); // 2 hours in ms
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || err.message || "Error rejecting therapist");
+    }
+  };
+
+  const handleAccept = async (id) => {
+    try {
+      await API.therapist.updateStatus(id, "accepted");
       fetchTherapists();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || err.message || "Error updating status");
+      setError(err.response?.data?.message || err.message || "Error accepting therapist");
     }
   };
 
@@ -40,12 +65,11 @@ export default function Admin() {
     <>
       <Navbar />
       <div className="admin-container light-version container my-5 p-4">
-        {/* ===== Intro Section ===== */}
         <div className="text-center mb-4 intro-section">
           <h1 className="text-primary fw-bold">Therapist Applications</h1>
           <p className="text-muted lead">
             Manage and review therapist applications submitted by professionals.
-            Approve trusted therapists, help patients connect faster, and maintain the highest quality of mental health support.
+            Approve trusted therapists to connect faster, or reject unverified entries for quality assurance.
           </p>
 
           <button
@@ -56,10 +80,8 @@ export default function Admin() {
           </button>
         </div>
 
-        {/* ===== Error Message ===== */}
         {error && <div className="alert alert-danger text-center">{error}</div>}
 
-        {/* ===== Table Section ===== */}
         <div className="table-responsive shadow-sm glass-card p-3 rounded">
           <table className="table table-hover align-middle text-center admin-table">
             <thead className="table-light">
@@ -87,15 +109,20 @@ export default function Admin() {
                       {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
                     </td>
                     <td className="action-buttons">
-                      {["accepted", "rejected", "pending"].map(s => (
-                        <button
-                          key={s}
-                          onClick={() => updateStatus(t._id, s)}
-                          className={`btn btn-sm mx-1 status-btn ${s}`}
-                        >
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                        </button>
-                      ))}
+                      <button
+                        onClick={() => handleAccept(t._id)}
+                        className="btn btn-sm mx-1 status-btn accepted"
+                        disabled={t.status === "accepted"}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleReject(t._id)}
+                        className="btn btn-sm mx-1 status-btn rejected"
+                        disabled={t.status === "rejected"}
+                      >
+                        Reject
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -104,7 +131,6 @@ export default function Admin() {
           </table>
         </div>
 
-        {/* ===== Footer ===== */}
         <footer className="text-center mt-5">
           <hr />
           <Link to="/talk-to-counselor" className="btn btn-link me-3">Talk to Counselor</Link>
