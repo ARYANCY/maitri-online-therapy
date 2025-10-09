@@ -72,12 +72,12 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const requireLogin = require("./middleware/authMiddleware");
-const therapistRoutes = require("./routes/therapisRoutes");
+const therapistRoutes = require("./routes/therapistRoutes");
 app.use("/auth", authRoutes);
 app.use("/api/chatbot", requireLogin, chatbotRoutes);
 app.use("/api/dashboard", requireLogin, dashboardRoutes);
 app.use("/api/reminders", requireLogin, reminderRoutes);
-app.use("/therapis", therapisRoutes);
+app.use("/therapis", therapistRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
   res.json({ user: req.user || null });
