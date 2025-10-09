@@ -27,52 +27,46 @@ export default function Admin() {
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Therapist Applications</h1>
-
-      <table className="w-full border">
+    <div style={{ padding: "20px" }}>
+      <h1>Therapist Applications</h1>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="p-2 border">Name</th>
-            <th className="p-2 border">Email</th>
-            <th className="p-2 border">Specialization</th>
-            <th className="p-2 border">Experience</th>
-            <th className="p-2 border">Status</th>
-            <th className="p-2 border">Actions</th>
+          <tr style={{ borderBottom: "1px solid #ddd" }}>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Specialization</th>
+            <th>Experience</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {therapists.map((t) => (
-            <tr key={t._id}>
-              <td className="p-2 border">{t.name}</td>
-              <td className="p-2 border">{t.email}</td>
-              <td className="p-2 border">{t.specialization}</td>
-              <td className="p-2 border">{t.experience} yrs</td>
-              <td className="p-2 border font-semibold">{t.status}</td>
-              <td className="p-2 border space-x-2">
-                <button
-                  onClick={() => updateStatus(t._id, "accepted")}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => updateStatus(t._id, "rejected")}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => updateStatus(t._id, "pending")}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded"
-                >
-                  Pending
-                </button>
+            <tr key={t._id} style={{ borderBottom: "1px solid #eee" }}>
+              <td>{t.name}</td>
+              <td>{t.email}</td>
+              <td>{t.specialization}</td>
+              <td>{t.experience} yrs</td>
+              <td>{t.status}</td>
+              <td>
+                {["accepted", "rejected", "pending"].map((s) => (
+                  <button key={s} onClick={() => updateStatus(t._id, s)} style={{ marginRight: "5px" }}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <footer style={{ marginTop: "40px", textAlign: "center" }}>
+        <hr style={{ margin: "20px 0" }} />
+        <p>
+          <a href="/talk-to-counselor" style={{ marginRight: "20px" }}>Talk to Counselor</a>
+          <a href="/therapist-form">Therapist Form</a>
+        </p>
+      </footer>
     </div>
   );
 }

@@ -1,20 +1,22 @@
-const therapist = require("../models/therapist");
+const Therapist = require("../models/therapist");
 
 // Therapist submits form
 exports.createTherapist = async (req, res) => {
   try {
-    const form = new therapist(req.body);
+    const form = new Therapist(req.body);
     await form.save();
     res.status(201).json({ message: "Form submitted successfully", form });
   } catch (error) {
-    res.status(400).json({ message: "Error submitting form", error });
+    let errMsg = error.message;
+    if (error.code === 11000) errMsg = "Email already exists";
+    res.status(400).json({ message: "Error submitting form", error: errMsg });
   }
 };
 
 // Admin: get all therapist forms
 exports.getAllTherapists = async (req, res) => {
   try {
-    const forms = await therapist.find().sort({ createdAt: -1 });
+    const forms = await Therapist.find().sort({ createdAt: -1 });
     res.status(200).json(forms);
   } catch (error) {
     res.status(500).json({ message: "Error fetching therapists", error });
@@ -31,7 +33,7 @@ exports.updateTherapistStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
-    const updated = await therapist.findByIdAndUpdate(
+    const updated = await Therapist.findByIdAndUpdate(
       id,
       { status },
       { new: true }
@@ -50,7 +52,7 @@ exports.updateTherapistStatus = async (req, res) => {
 // Public: get accepted therapists
 exports.getAcceptedTherapists = async (req, res) => {
   try {
-    const accepted = await therapist.find({ status: "accepted" }).sort({ createdAt: -1 });
+    const accepted = await Therapist.find({ status: "accepted" }).sort({ createdAt: -1 });
     res.status(200).json(accepted);
   } catch (error) {
     res.status(500).json({ message: "Error fetching accepted therapists", error });
