@@ -1,6 +1,6 @@
 .about-maitri-page {
   font-family: 'Poppins', sans-serif;
-  background: url('bg.jpg') no-repeat center center fixed;
+  background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85));
   background-size: cover;
   color: #1e1e1e;
   min-height: 100vh;
