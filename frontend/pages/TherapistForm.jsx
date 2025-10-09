@@ -12,12 +12,13 @@ export default function TherapistForm() {
     experience: "",
     qualifications: "",
   });
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -26,12 +27,13 @@ export default function TherapistForm() {
     setError("");
 
     // Client-side validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.specialization || !formData.experience) {
+    const { name, email, phone, specialization, experience } = formData;
+    if (!name || !email || !phone || !specialization || !experience) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
+    if (!/^\d{10}$/.test(phone)) {
       setError("Phone number must be 10 digits.");
       return;
     }
@@ -49,7 +51,7 @@ export default function TherapistForm() {
         qualifications: "",
       });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error submitting form");
+      setError(err.response?.data?.message || err.message || "Error submitting form.");
     } finally {
       setSubmitting(false);
     }
@@ -63,79 +65,35 @@ export default function TherapistForm() {
       {message && <div className="alert alert-success">{message}</div>}
 
       <form onSubmit={handleSubmit} noValidate>
-        <div className="mb-3">
-          <label className="form-label">Name *</label>
-          <input
-            type="text"
-            className="form-control"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        {[
+          { label: "Name", name: "name", type: "text", required: true },
+          { label: "Email", name: "email", type: "email", required: true },
+          { label: "Phone", name: "phone", type: "text", required: true },
+          { label: "Specialization", name: "specialization", type: "text", required: true },
+          { label: "Experience (Years)", name: "experience", type: "number", required: true, min: 0 },
+          { label: "Qualifications", name: "qualifications", type: "text", required: false },
+        ].map((field) => (
+          <div className="mb-3" key={field.name}>
+            <label className="form-label">
+              {field.label} {field.required && "*"}
+            </label>
+            <input
+              type={field.type}
+              className="form-control"
+              name={field.name}
+              value={formData[field.name]}
+              onChange={handleChange}
+              required={field.required}
+              min={field.min}
+            />
+          </div>
+        ))}
 
-        <div className="mb-3">
-          <label className="form-label">Email *</label>
-          <input
-            type="email"
-            className="form-control"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Phone *</label>
-          <input
-            type="text"
-            className="form-control"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Specialization *</label>
-          <input
-            type="text"
-            className="form-control"
-            name="specialization"
-            value={formData.specialization}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Experience (Years) *</label>
-          <input
-            type="number"
-            className="form-control"
-            name="experience"
-            value={formData.experience}
-            onChange={handleChange}
-            required
-            min="0"
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Qualifications</label>
-          <input
-            type="text"
-            className="form-control"
-            name="qualifications"
-            value={formData.qualifications}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn btn-primary w-100"
+          disabled={submitting}
+        >
           {submitting ? "Submitting..." : "Submit"}
         </button>
       </form>

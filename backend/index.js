@@ -77,7 +77,7 @@ app.use("/auth", authRoutes);
 app.use("/api/chatbot", requireLogin, chatbotRoutes);
 app.use("/api/dashboard", requireLogin, dashboardRoutes);
 app.use("/api/reminders", requireLogin, reminderRoutes);
-app.use("/therapis", therapistRoutes);
+app.use("/therapists", therapistRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
   res.json({ user: req.user || null });

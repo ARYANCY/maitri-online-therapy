@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "bootstrap/dist/css/bootstrap.min.css";
 
-export default function CounselorList() {
+export default function TalkToCounselor() {
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -17,7 +16,7 @@ export default function CounselorList() {
         setCounselors(data);
       } catch (err) {
         console.error(err);
-        setError("Error fetching counselors");
+        setError("Error fetching counselors.");
       } finally {
         setLoading(false);
       }
@@ -27,44 +26,35 @@ export default function CounselorList() {
 
   return (
     <div className="container mt-5">
-      {/* Landing Section */}
-      <div className="text-center mb-4">
-        <h1 className="text-primary">Talk to a Counselor</h1>
-        <p>Our verified counselors are ready to assist you professionally.</p>
-      </div>
+      <h1 className="text-center mb-3">Talk to a Counselor</h1>
+      <p className="text-center">Our verified counselors are ready to assist you professionally.</p>
 
-      {/* Error & Loading */}
-      {error && <div className="alert alert-danger">{error}</div>}
-      {loading && <div className="text-center">Loading counselors...</div>}
+      {error && <div className="alert alert-danger text-center">{error}</div>}
+      {loading && <p className="text-center">Loading counselors...</p>}
 
-      {/* No counselors available */}
       {!loading && counselors.length === 0 && (
-        <div className="alert alert-warning text-center">No counselors available right now.</div>
+        <p className="text-center">No counselors available at the moment.</p>
       )}
 
-      {/* Counselor List */}
       <div className="row">
         {!loading &&
-          counselors.map((c) => (
-            <div className="col-md-6 mb-4" key={c._id}>
+          counselors.map(c => (
+            <div key={c._id} className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
                 <div className="card-body">
                   <h5 className="card-title">{c.name}</h5>
-                  <p className="card-text"><strong>Email:</strong> {c.email}</p>
-                  <p className="card-text"><strong>Phone:</strong> {c.phone}</p>
                   <p className="card-text"><strong>Specialization:</strong> {c.specialization}</p>
                   <p className="card-text"><strong>Experience:</strong> {c.experience} yrs</p>
                   {c.qualifications && <p className="card-text"><strong>Qualifications:</strong> {c.qualifications}</p>}
-                </div>
-                <div className="card-footer text-center">
-                  <a href={`tel:${c.phone}`} className="btn btn-success w-100">Call Now</a>
+                  <p className="card-text"><strong>Email:</strong> {c.email}</p>
+                  <p className="card-text"><strong>Phone:</strong> {c.phone}</p>
+                  <a href={`tel:${c.phone}`} className="btn btn-primary w-100">Call Now</a>
                 </div>
               </div>
             </div>
           ))}
       </div>
 
-      {/* Footer Links */}
       <footer className="text-center mt-5">
         <hr />
         <Link to="/therapist-form" className="btn btn-link me-3">Therapist Form</Link>
