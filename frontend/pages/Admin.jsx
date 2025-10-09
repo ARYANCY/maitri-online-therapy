@@ -4,35 +4,27 @@ import API from "../utils/axiosClient";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatingId, setUpdatingId] = useState(null);
 
   const fetchTherapists = async () => {
-    setLoading(true);
     setError("");
     try {
       const data = await API.therapist.getAll();
       setTherapists(data);
     } catch (err) {
       console.error(err);
-      setError("Error fetching applications.");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Error fetching therapist applications");
     }
   };
 
   const updateStatus = async (id, status) => {
     setError("");
-    setUpdatingId(id);
     try {
       await API.therapist.updateStatus(id, status);
-      await fetchTherapists();
+      fetchTherapists();
     } catch (err) {
       console.error(err);
-      setError(err.message || "Error updating status.");
-    } finally {
-      setUpdatingId(null);
+      setError(err.message || "Error updating status");
     }
   };
 
@@ -40,70 +32,64 @@ export default function Admin() {
     fetchTherapists();
   }, []);
 
-  const statusColor = status => {
-    if (status === "accepted") return "success";
-    if (status === "rejected") return "danger";
-    return "warning";
-  };
+  const tableStyle = { width: "100%", borderCollapse: "collapse", marginTop: "20px" };
+  const thTdStyle = { border: "1px solid #ddd", padding: "8px", textAlign: "left" };
+  const buttonStyle = { marginRight: "5px", padding: "5px 10px", borderRadius: "5px", border: "none", cursor: "pointer" };
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-4">Therapist Applications</h1>
+    <div style={{ padding: "20px", maxWidth: "1000px", margin: "auto", fontFamily: "Arial, sans-serif" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Applications</h1>
 
-      {error && <div className="alert alert-danger text-center">{error}</div>}
-      {loading ? (
-        <p className="text-center">Loading applications...</p>
-      ) : (
-        <div className="table-responsive">
-          <table className="table table-striped table-bordered">
-            <thead className="table-dark">
-              <tr>
-                {["Name", "Email", "Specialization", "Experience", "Status", "Actions"].map(h => (
-                  <th key={h}>{h}</th>
-                ))}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+
+      <table style={tableStyle}>
+        <thead style={{ backgroundColor: "#f2f2f2" }}>
+          <tr>
+            {["Name", "Email", "Specialization", "Experience", "Status", "Actions"].map(h => (
+              <th key={h} style={thTdStyle}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {therapists.length === 0 ? (
+            <tr>
+              <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>No applications found.</td>
+            </tr>
+          ) : (
+            therapists.map(t => (
+              <tr key={t._id}>
+                <td style={thTdStyle}>{t.name}</td>
+                <td style={thTdStyle}>{t.email}</td>
+                <td style={thTdStyle}>{t.specialization}</td>
+                <td style={thTdStyle}>{t.experience} yrs</td>
+                <td style={thTdStyle}>{t.status}</td>
+                <td style={thTdStyle}>
+                  {["accepted", "rejected", "pending"].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(t._id, s)}
+                      style={{
+                        ...buttonStyle,
+                        backgroundColor:
+                          s === "accepted" ? "#4CAF50" :
+                          s === "rejected" ? "#f44336" : "#FFC107",
+                        color: "#fff"
+                      }}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {therapists.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center">No applications found.</td>
-                </tr>
-              ) : (
-                therapists.map(t => (
-                  <tr key={t._id}>
-                    <td>{t.name}</td>
-                    <td>{t.email}</td>
-                    <td>{t.specialization}</td>
-                    <td>{t.experience} yrs</td>
-                    <td>
-                      <span className={`badge bg-${statusColor(t.status)}`}>
-                        {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
-                      </span>
-                    </td>
-                    <td>
-                      {["accepted", "rejected", "pending"].map(s => (
-                        <button
-                          key={s}
-                          className={`btn btn-sm btn-${statusColor(s)} me-1 mb-1`}
-                          disabled={updatingId === t._id}
-                          onClick={() => updateStatus(t._id, s)}
-                        >
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                        </button>
-                      ))}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))
+          )}
+        </tbody>
+      </table>
 
-      <footer className="text-center mt-4">
-        <hr />
-        <Link to="/talk-to-counselor" className="btn btn-link me-3">Talk to Counselor</Link>
-        <Link to="/therapist-form" className="btn btn-link">Therapist Form</Link>
+      <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
+        <hr style={{ margin: "20px 0" }} />
+        <Link to="/talk-to-counselor" style={{ marginRight: "20px", color: "#007BFF" }}>Talk to Counselor</Link>
+        <Link to="/therapist-form" style={{ color: "#007BFF" }}>Therapist Form</Link>
       </footer>
     </div>
   );

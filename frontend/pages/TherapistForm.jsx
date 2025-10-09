@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { Link } from "react-router-dom";
 
 export default function TherapistForm() {
   const [formData, setFormData] = useState({
@@ -12,33 +11,18 @@ export default function TherapistForm() {
     experience: "",
     qualifications: "",
   });
-
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setMessage("");
     setError("");
 
-    // Client-side validation
-    const { name, email, phone, specialization, experience } = formData;
-    if (!name || !email || !phone || !specialization || !experience) {
-      setError("Please fill in all required fields.");
-      return;
-    }
-
-    if (!/^\d{10}$/.test(phone)) {
-      setError("Phone number must be 10 digits.");
-      return;
-    }
-
-    setSubmitting(true);
     try {
       await API.therapist.apply(formData);
       setMessage("Form submitted successfully!");
@@ -51,57 +35,50 @@ export default function TherapistForm() {
         qualifications: "",
       });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error submitting form.");
-    } finally {
-      setSubmitting(false);
+      setError(err.message || "Error submitting form");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center text-primary mb-4">Therapist Application Form</h1>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Application Form</h1>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit}>
         {[
-          { label: "Name", name: "name", type: "text", required: true },
-          { label: "Email", name: "email", type: "email", required: true },
-          { label: "Phone", name: "phone", type: "text", required: true },
-          { label: "Specialization", name: "specialization", type: "text", required: true },
-          { label: "Experience (Years)", name: "experience", type: "number", required: true, min: 0 },
-          { label: "Qualifications", name: "qualifications", type: "text", required: false },
-        ].map((field) => (
-          <div className="mb-3" key={field.name}>
-            <label className="form-label">
-              {field.label} {field.required && "*"}
-            </label>
+          { label: "Name", type: "text", name: "name" },
+          { label: "Email", type: "email", name: "email" },
+          { label: "Phone", type: "text", name: "phone" },
+          { label: "Specialization", type: "text", name: "specialization" },
+          { label: "Experience (Years)", type: "number", name: "experience" },
+          { label: "Qualifications", type: "text", name: "qualifications" },
+        ].map(field => (
+          <label key={field.name} style={{ display: "block", marginBottom: "12px" }}>
+            {field.label}:
             <input
               type={field.type}
-              className="form-control"
               name={field.name}
               value={formData[field.name]}
               onChange={handleChange}
-              required={field.required}
-              min={field.min}
+              required={field.name !== "qualifications"}
+              style={{ width: "100%", padding: "8px", marginTop: "4px", borderRadius: "4px", border: "1px solid #ccc" }}
             />
-          </div>
+          </label>
         ))}
 
-        <button
-          type="submit"
-          className="btn btn-primary w-100"
-          disabled={submitting}
-        >
-          {submitting ? "Submitting..." : "Submit"}
+        <button type="submit" style={{ padding: "10px 25px", border: "none", borderRadius: "4px", backgroundColor: "#007BFF", color: "#fff", cursor: "pointer", fontSize: "16px" }}>
+          Submit
         </button>
       </form>
 
-      <footer className="text-center mt-5">
-        <hr />
-        <Link to="/admin" className="me-3 btn btn-link">Admin Dashboard</Link>
-        <Link to="/talk-to-counselor" className="btn btn-link">Talk to Counselor</Link>
+      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
+      {error && <p style={{ marginTop: "15px", color: "red" }}>{error}</p>}
+
+      <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
+        <hr style={{ margin: "20px 0" }} />
+        <p>
+          <Link to="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</Link>
+          <Link to="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</Link>
+        </p>
       </footer>
     </div>
   );

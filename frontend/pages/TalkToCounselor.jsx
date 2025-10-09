@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import API from "../utils/axiosClient";
 
-export default function TalkToCounselor() {
+export default function CounselorList() {
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,7 +15,7 @@ export default function TalkToCounselor() {
         setCounselors(data);
       } catch (err) {
         console.error(err);
-        setError("Error fetching counselors.");
+        setError("Error fetching counselors");
       } finally {
         setLoading(false);
       }
@@ -25,41 +24,26 @@ export default function TalkToCounselor() {
   }, []);
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-3">Talk to a Counselor</h1>
-      <p className="text-center">Our verified counselors are ready to assist you professionally.</p>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "sans-serif" }}>
+      
+      {/* Landing Section */}
+      <h1>Talk to a Counselor</h1>
+      <p>Our verified counselors are ready to assist you.</p>
 
-      {error && <div className="alert alert-danger text-center">{error}</div>}
-      {loading && <p className="text-center">Loading counselors...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && <p>Loading counselors...</p>}
 
-      {!loading && counselors.length === 0 && (
-        <p className="text-center">No counselors available at the moment.</p>
-      )}
+      {!loading && counselors.length === 0 && <p>No counselors available right now.</p>}
 
-      <div className="row">
-        {!loading &&
-          counselors.map(c => (
-            <div key={c._id} className="col-md-6 col-lg-4 mb-4">
-              <div className="card h-100 shadow-sm">
-                <div className="card-body">
-                  <h5 className="card-title">{c.name}</h5>
-                  <p className="card-text"><strong>Specialization:</strong> {c.specialization}</p>
-                  <p className="card-text"><strong>Experience:</strong> {c.experience} yrs</p>
-                  {c.qualifications && <p className="card-text"><strong>Qualifications:</strong> {c.qualifications}</p>}
-                  <p className="card-text"><strong>Email:</strong> {c.email}</p>
-                  <p className="card-text"><strong>Phone:</strong> {c.phone}</p>
-                  <a href={`tel:${c.phone}`} className="btn btn-primary w-100">Call Now</a>
-                </div>
-              </div>
-            </div>
+      {!loading && counselors.length > 0 && (
+        <ul style={{ paddingLeft: "0" }}>
+          {counselors.map(c => (
+            <li key={c._id} style={{ listStyle: "none", marginBottom: "10px", borderBottom: "1px solid #ccc", paddingBottom: "8px" }}>
+              <strong>{c.name}</strong> - {c.specialization} ({c.experience} yrs)
+            </li>
           ))}
-      </div>
-
-      <footer className="text-center mt-5">
-        <hr />
-        <Link to="/therapist-form" className="btn btn-link me-3">Therapist Form</Link>
-        <Link to="/admin" className="btn btn-link">Admin Dashboard</Link>
-      </footer>
+        </ul>
+      )}
     </div>
   );
 }
