@@ -12,13 +12,17 @@ export default function TherapistForm() {
     qualifications: "",
   });
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setMessage("");
+    setError("");
+
     try {
       await API.therapist.apply(formData);
       setMessage("Form submitted successfully!");
@@ -31,37 +35,71 @@ export default function TherapistForm() {
         qualifications: "",
       });
     } catch (err) {
-      setMessage(err.message);
+      setError(err.message);
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+    <div style={{
+      padding: "20px",
+      maxWidth: "600px",
+      margin: "0 auto",
+      fontFamily: "Arial, sans-serif",
+      lineHeight: "1.5"
+    }}>
       <Navbar />
-      <h1>Therapist Application Form</h1>
+
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Therapist Application Form</h1>
+
       <form onSubmit={handleSubmit}>
-        {["name", "email", "phone", "specialization", "experience", "qualifications"].map(field => (
-          <label key={field} style={{ display: "block", marginBottom: "10px" }}>
-            {field.charAt(0).toUpperCase() + field.slice(1)}:
+        {[
+          { label: "Name", type: "text", name: "name" },
+          { label: "Email", type: "email", name: "email" },
+          { label: "Phone", type: "text", name: "phone" },
+          { label: "Specialization", type: "text", name: "specialization" },
+          { label: "Experience (Years)", type: "number", name: "experience" },
+          { label: "Qualifications", type: "text", name: "qualifications" },
+        ].map(field => (
+          <label key={field.name} style={{ display: "block", marginBottom: "12px" }}>
+            {field.label}:
             <input
-              type={field === "email" ? "email" : field === "experience" ? "number" : "text"}
-              name={field}
-              value={formData[field]}
+              type={field.type}
+              name={field.name}
+              value={formData[field.name]}
               onChange={handleChange}
-              required={field !== "qualifications"}
-              style={{ width: "100%", padding: "5px", marginTop: "3px" }}
+              required={field.name !== "qualifications"}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginTop: "4px",
+                borderRadius: "4px",
+                border: "1px solid #ccc"
+              }}
             />
           </label>
         ))}
-        <button type="submit" style={{ marginTop: "10px", padding: "10px 20px" }}>Submit</button>
-      </form>
-      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
 
-      <footer style={{ marginTop: "40px", textAlign: "center" }}>
-        <hr />
+        <button type="submit" style={{
+          padding: "10px 25px",
+          border: "none",
+          borderRadius: "4px",
+          backgroundColor: "#007BFF",
+          color: "#fff",
+          cursor: "pointer",
+          fontSize: "16px"
+        }}>
+          Submit
+        </button>
+      </form>
+
+      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
+      {error && <p style={{ marginTop: "15px", color: "red" }}>{error}</p>}
+
+      <footer style={{ marginTop: "40px", textAlign: "center", fontSize: "14px" }}>
+        <hr style={{ margin: "20px 0" }} />
         <p>
-          <a href="/admin" style={{ marginRight: "20px" }}>Admin Dashboard</a>
-          <a href="/talk-to-counselor">Talk to Counselor</a>
+          <a href="/admin" style={{ marginRight: "20px", color: "#007BFF" }}>Admin Dashboard</a>
+          <a href="/talk-to-counselor" style={{ color: "#007BFF" }}>Talk to Counselor</a>
         </p>
       </footer>
     </div>
