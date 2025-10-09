@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import API from "../utils/axiosClient";
 
@@ -36,61 +35,35 @@ export default function TherapistForm() {
     }
   };
 
-  const containerStyle = {
-    maxWidth: "600px",
-    margin: "40px auto",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    backgroundColor: "#f9f9f9",
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    margin: "5px 0 15px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  };
-
-  const buttonStyle = {
-    padding: "10px 20px",
-    border: "none",
-    borderRadius: "5px",
-    backgroundColor: "#4CAF50",
-    color: "white",
-    cursor: "pointer",
-  };
-
   return (
-    <div>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <Navbar />
-      <div style={containerStyle}>
-        <h1>Therapist Application Form</h1>
-        <form onSubmit={handleSubmit}>
-          {["name", "email", "phone", "specialization", "experience", "qualifications"].map(field => (
-            <label key={field}>
-              {field.charAt(0).toUpperCase() + field.slice(1)}
-              <input
-                type={field === "email" ? "email" : field === "experience" ? "number" : "text"}
-                name={field}
-                value={formData[field]}
-                onChange={handleChange}
-                required={field !== "qualifications"}
-                style={inputStyle}
-              />
-            </label>
-          ))}
-          <button type="submit" style={buttonStyle}>Submit</button>
-        </form>
-        {message && <p style={{ marginTop: "10px" }}>{message}</p>}
+      <h1>Therapist Application Form</h1>
+      <form onSubmit={handleSubmit}>
+        {["name", "email", "phone", "specialization", "experience", "qualifications"].map(field => (
+          <label key={field} style={{ display: "block", marginBottom: "10px" }}>
+            {field.charAt(0).toUpperCase() + field.slice(1)}:
+            <input
+              type={field === "email" ? "email" : field === "experience" ? "number" : "text"}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              required={field !== "qualifications"}
+              style={{ width: "100%", padding: "5px", marginTop: "3px" }}
+            />
+          </label>
+        ))}
+        <button type="submit" style={{ marginTop: "10px", padding: "10px 20px" }}>Submit</button>
+      </form>
+      {message && <p style={{ marginTop: "15px", color: "green" }}>{message}</p>}
 
-        <footer style={{ marginTop: "40px", textAlign: "center" }}>
-          <hr style={{ margin: "20px 0" }} />
-          <Link to="/admin" style={{ marginRight: "20px" }}>Admin Dashboard</Link>
-          <Link to="/talk-to-counselor">Talk to Counselor</Link>
-        </footer>
-      </div>
+      <footer style={{ marginTop: "40px", textAlign: "center" }}>
+        <hr />
+        <p>
+          <a href="/admin" style={{ marginRight: "20px" }}>Admin Dashboard</a>
+          <a href="/talk-to-counselor">Talk to Counselor</a>
+        </p>
+      </footer>
     </div>
   );
 }

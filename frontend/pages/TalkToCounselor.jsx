@@ -1,80 +1,72 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import React, { useEffect, useState } from "react";
 import API from "../utils/axiosClient";
 
-export default function TalkToCounselor() {
+export default function Admin() {
   const [therapists, setTherapists] = useState([]);
 
+  const fetchAll = async () => {
+    try {
+      const data = await API.therapist.getAll();
+      setTherapists(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const updateStatus = async (id, status) => {
+    try {
+      await API.therapist.updateStatus(id, status);
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetchAccepted = async () => {
-      try {
-        const data = await API.therapist.getAccepted();
-        setTherapists(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchAccepted();
+    fetchAll();
   }, []);
 
-  const profileStyle = {
-    display: "flex",
-    alignItems: "center",
-    border: "1px solid #ddd",
-    padding: "15px",
-    marginBottom: "15px",
-    borderRadius: "8px",
-    backgroundColor: "#fefefe",
-  };
-
-  const imgStyle = {
-    width: "80px",
-    height: "80px",
-    borderRadius: "50%",
-    marginRight: "20px",
-    objectFit: "cover",
-  };
-
-  const buttonStyle = {
-    padding: "5px 10px",
-    borderRadius: "5px",
-    border: "none",
-    backgroundColor: "#2196F3",
-    color: "white",
-    cursor: "pointer",
-  };
-
   return (
-    <div>
-      <Navbar />
-      <div style={{ maxWidth: "800px", margin: "40px auto" }}>
-        <h1>Talk to a Counselor</h1>
-        <p>Our qualified therapists are ready to help you.</p>
+    <div style={{ padding: "20px" }}>
+      <h1>Therapist Applications</h1>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Specialization</th>
+            <th>Experience</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {therapists.map(t => (
+            <tr key={t._id}>
+              <td>{t.name}</td>
+              <td>{t.email}</td>
+              <td>{t.specialization}</td>
+              <td>{t.experience}</td>
+              <td>{t.status}</td>
+              <td>
+                {["accepted","rejected","pending"].map(s => (
+                  <button key={s} onClick={() => updateStatus(t._id, s)} style={{ marginRight: "5px" }}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-        {therapists.length === 0 ? (
-          <p>No counselors available yet.</p>
-        ) : (
-          therapists.map(t => (
-            <div key={t._id} style={profileStyle}>
-              <img src="/default-counselor.jpg" alt={t.name} style={imgStyle} />
-              <div>
-                <h3>{t.name}</h3>
-                <p><strong>Specialization:</strong> {t.specialization}</p>
-                <p><strong>Experience:</strong> {t.experience} yrs</p>
-                <p><strong>Qualifications:</strong> {t.qualifications || "N/A"}</p>
-                <a href={`mailto:${t.email}`} style={buttonStyle}>Contact</a>
-              </div>
-            </div>
-          ))
-        )}
-
-        <footer style={{ marginTop: "40px", textAlign: "center" }}>
-          <hr style={{ margin: "20px 0" }} />
-          <Link to="/admin" style={{ marginRight: "20px" }}>Admin Dashboard</Link>
-          <Link to="/therapist-form">Therapist Form</Link>
-        </footer>
-      </div>
+      <footer style={{ marginTop: "40px", textAlign: "center" }}>
+        <hr />
+        <p>
+          <a href="/talk-to-counselor" style={{ marginRight: "20px" }}>Talk to Counselor</a>
+          <a href="/therapist-form">Therapist Form</a>
+        </p>
+      </footer>
     </div>
   );
 }

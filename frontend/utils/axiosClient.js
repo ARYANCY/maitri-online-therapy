@@ -39,10 +39,10 @@ API.dashboard = {
 
 // ===== New Therapist Endpoints =====
 API.therapist = {
-  apply: data => API.post("/api/therapist/apply", data),
-  getAll: () => API.get("/api/therapist/all"),
-  updateStatus: (id, status) => API.patch(`/api/therapist/${id}/status`, { status }),
-  getAccepted: () => API.get("/api/therapist/accepted"),
+  apply: data => API.post("/therapis/apply", data),
+  getAll: () => API.get("/therapis/all"),
+  getAccepted: () => API.get("/therapis/accepted"),
+  updateStatus: (id, status) => API.patch(`/therapis/${id}/status`, { status }),
 };
 
 export default API;
