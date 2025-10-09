@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const therapistSchema = new mongoose.Schema(
   {
@@ -17,6 +17,4 @@ const therapistSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const therapist = mongoose.model("therapist", therapistSchema);
-
-export default therapist;
+module.exports = mongoose.model("therapist", therapistSchema);

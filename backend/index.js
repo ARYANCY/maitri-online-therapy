@@ -6,7 +6,7 @@ const express = require("express");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const mongoose = require("mongoose");
-import therapisRoutes from "./routes/therapisRoutes.js";
+const therapisRoutes=require("./routes/therapisRoutes.js");
 
 const cors = require("cors");
 const flash = require("connect-flash");

@@ -1,10 +1,10 @@
-import express from "express";
-import {
+const express = require("express");
+const {
   createTherapist,
   getAllTherapists,
   updateTherapistStatus,
   getAcceptedTherapists,
-} from "../controllers/therapisController.js";
+} = require("../controllers/therapisController");
 
 const router = express.Router();
 
@@ -13,4 +13,4 @@ router.get("/all", getAllTherapists);
 router.patch("/:id/status", updateTherapistStatus);
 router.get("/accepted", getAcceptedTherapists);
 
-export default router;
+module.exports = router;

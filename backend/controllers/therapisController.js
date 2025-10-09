@@ -1,7 +1,7 @@
-import therapist from "../models/therapist.js";
+const therapist = require("../models/therapist");
 
 // Therapist submits form
-export const createTherapist = async (req, res) => {
+exports.createTherapist = async (req, res) => {
   try {
     const form = new therapist(req.body);
     await form.save();
@@ -12,7 +12,7 @@ export const createTherapist = async (req, res) => {
 };
 
 // Admin: get all therapist forms
-export const getAllTherapists = async (req, res) => {
+exports.getAllTherapists = async (req, res) => {
   try {
     const forms = await therapist.find().sort({ createdAt: -1 });
     res.status(200).json(forms);
@@ -22,7 +22,7 @@ export const getAllTherapists = async (req, res) => {
 };
 
 // Admin: update therapist status
-export const updateTherapistStatus = async (req, res) => {
+exports.updateTherapistStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -48,7 +48,7 @@ export const updateTherapistStatus = async (req, res) => {
 };
 
 // Public: get accepted therapists
-export const getAcceptedTherapists = async (req, res) => {
+exports.getAcceptedTherapists = async (req, res) => {
   try {
     const accepted = await therapist.find({ status: "accepted" }).sort({ createdAt: -1 });
     res.status(200).json(accepted);
