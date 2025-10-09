@@ -5,6 +5,8 @@ import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
 import AboutMaitri from "../pages/AboutMaitri";
 import TalkToCounselor from "../pages/TalkToCounselor";
+import TherapistForm from "../pages/TherapistForm";
+import Admin from "../pages/Admin";
 
 export default function App() {
   return (
@@ -15,6 +17,8 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about-maitri" element={<AboutMaitri />} />
         <Route path="/talk-to-counselor" element={<TalkToCounselor />} />
+        <Route path="/therapist-form" element={<TherapistForm />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );
