@@ -39,12 +39,13 @@ API.dashboard = {
 
 // Therapist endpoints
 API.therapist = {
-  apply: data => API.post("/api/therapists/apply", data),       // public
-  getAll: () => API.get("/api/therapists"),                    // admin only
-  getAccepted: () => API.get("/api/therapists/accepted"),      // public
-  updateStatus: (id, status) => API.patch(`/api/therapists/${id}/status`, { status }), // admin only
-  delete: id => API.delete(`/api/therapists/${id}`),          // admin only
+  apply: data => API.post("/api/therapists/apply", data),
+  getAccepted: () => API.get("/api/therapists/accepted"),
+  getAll: () => API.get("/api/therapists"),
+  updateStatus: (id, status) => API.patch(`/api/therapists/${id}/status`, { status }),
+  delete: id => API.delete(`/api/therapists/${id}`),
 };
+
 
 // Reminder endpoints
 API.reminder = {
