@@ -12,21 +12,31 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   // --- Initialize attempts and redirect if already logged in
-  useEffect(() => {
-    const blocked = localStorage.getItem("adminBlocked") === "true";
-    const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-
-    if (isAdmin) {
-      navigate("/admin", { replace: true });
-      return;
+useEffect(() => {
+  const checkExistingSession = async () => {
+    setLoading(true);
+    try {
+      const session = await API.auth.checkSession();
+      if (session?.user?.isAdmin) {
+        localStorage.setItem("isAdmin", "true");
+        navigate("/admin", { replace: true });
+      }
+    } catch {
+      localStorage.removeItem("isAdmin");
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
     }
+  };
 
-    if (blocked) setAttemptsLeft(0);
-    else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+  checkExistingSession();
 
-    inputRef.current?.focus();
-  }, [navigate]);
+  const blocked = localStorage.getItem("adminBlocked") === "true";
+  const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
+  if (blocked) setAttemptsLeft(0);
+  else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+}, [navigate]);
+
 
   // --- Handle input change
   const handleChange = (e) => {

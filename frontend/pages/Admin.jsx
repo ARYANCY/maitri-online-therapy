@@ -14,26 +14,24 @@ export default function Admin() {
   const navigate = useNavigate();
 
   // --- Verify admin session
-  const checkAdmin = useCallback(async () => {
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    if (!isAdmin) {
-      try {
-        const session = await API.auth.checkSession();
-        if (!session?.user?.isAdmin) {
-          localStorage.removeItem("isAdmin");
-          navigate("/admin-login", { replace: true });
-          return false;
-        }
-        localStorage.setItem("isAdmin", "true");
-      } catch {
-        localStorage.removeItem("isAdmin");
-        navigate("/admin-login", { replace: true });
-        return false;
-      }
+const checkAdmin = useCallback(async () => {
+  setCheckingAdmin(true);
+  try {
+    const session = await API.auth.checkSession();
+    if (!session?.user?.isAdmin) {
+      localStorage.removeItem("isAdmin");
+      navigate("/admin-login", { replace: true });
+      return false;
     }
+    localStorage.setItem("isAdmin", "true");
     setCheckingAdmin(false);
     return true;
-  }, [navigate]);
+  } catch {
+    localStorage.removeItem("isAdmin");
+    navigate("/admin-login", { replace: true });
+    return false;
+  }
+}, [navigate]);
 
   // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
