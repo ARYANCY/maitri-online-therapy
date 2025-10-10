@@ -82,28 +82,12 @@ app.use("/api/therapists", requireLogin,therapistRoutes);
 app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
-  if (req.user) {
-    return res.json({
-      success: true,
-      user: {
-        _id: req.user._id,
-        isAdmin: req.user.isAdmin || false,
-      },
-    });
-  }
-
-  if (req.session?.userId) {
-    return res.json({
-      success: true,
-      user: {
-        _id: req.session.userId,
-        isAdmin: req.session.isAdmin || false,
-      },
-    });
-  }
-
-  return res.json({ success: false, user: null });
+  res.json({
+    success: !!req.user || !!req.session?.userId,
+    user: req.user || (req.session?.userId ? { _id: req.session.userId, isAdmin: req.session.isAdmin || false } : null)
+  });
 });
+
 
 app.get("/", (req, res) => {
   res.json({ message: "API is running", user: req.user || null });
