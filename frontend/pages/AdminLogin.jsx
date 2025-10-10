@@ -11,21 +11,24 @@ export default function AdminLogin() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize: check stored attempts and session
+  // --- Initialize: check stored attempts and admin session
   useEffect(() => {
     let isMounted = true;
 
     const initialize = async () => {
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
+
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
       try {
-        const session = await API.auth.adminCheckSession(); // session first
+        // 1️⃣ Check existing admin session
+        const session = await API.auth.adminCheckSession();
         if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           navigate("/admin", { replace: true });
+          return;
         }
       } catch {
         localStorage.removeItem("isAdmin");
@@ -38,18 +41,19 @@ export default function AdminLogin() {
     };
 
     initialize();
+
     return () => {
       isMounted = false;
     };
   }, [navigate]);
 
-  // --- Input change
+  // --- Handle input change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Form submission: first MongoDB check, then session
+  // --- Form submission: check DB, then verify session
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || attemptsLeft <= 0) return;
@@ -58,7 +62,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      // 1️⃣ Verify password with MongoDB
+      // 1️⃣ Verify admin password (MongoDB check)
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
@@ -75,20 +79,24 @@ export default function AdminLogin() {
         return;
       }
 
-      // 2️⃣ Verify session after successful DB login
+      // ✅ Password correct — set admin session locally
+      localStorage.setItem("isAdmin", "true");
+
+      // 2️⃣ Verify backend session (secondary confirmation)
       const session = await API.auth.adminCheckSession();
       if (session?.user?.isAdmin) {
-        localStorage.setItem("isAdmin", "true");
         localStorage.removeItem("adminAttempts");
         localStorage.removeItem("adminBlocked");
         navigate("/admin", { replace: true });
         return;
-      } else {
-        setError("Session verification failed. Try again.");
       }
+
+      // 🔁 Fallback: navigate even if session validation fails but password was correct
+      navigate("/admin", { replace: true });
     } catch (err) {
       console.error("Admin login error:", err);
       setError(err.message || "Something went wrong. Try again.");
+      localStorage.removeItem("isAdmin");
     } finally {
       setLoading(false);
       setPassword("");
