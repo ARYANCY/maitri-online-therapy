@@ -43,27 +43,32 @@ export default function Admin() {
     }
   }, []);
 
-  // --- Handle therapist actions
+  // --- Handle therapist actions: accept, reject, delete
   const handleAction = async (id, action) => {
     setActionLoading(id);
     try {
-      if (action === "accept") await API.adminTherapist.updateStatus(id, "accepted");
-      if (action === "reject") {
-        await API.adminTherapist.updateStatus(id, "rejected");
-
-        // Auto-delete after 2 hours
-        setTimeout(async () => {
-          try {
-            await API.adminTherapist.delete(id);
-            fetchTherapists();
-          } catch (err) {
-            console.error("Auto-delete failed:", err);
-          }
-        }, 2 * 60 * 60 * 1000);
+      switch (action) {
+        case "accept":
+          await API.adminTherapist.updateStatus(id, "accepted");
+          break;
+        case "reject":
+          await API.adminTherapist.updateStatus(id, "rejected");
+          // Auto-delete after 2 hours
+          setTimeout(async () => {
+            try {
+              await API.adminTherapist.delete(id);
+              fetchTherapists();
+            } catch (err) {
+              console.error("Auto-delete failed:", err);
+            }
+          }, 2 * 60 * 60 * 1000);
+          break;
+        case "delete":
+          await API.adminTherapist.delete(id);
+          break;
+        default:
+          break;
       }
-      if (action === "delete") await API.adminTherapist.delete(id);
-
-      // Refresh after any action
       fetchTherapists();
     } catch (err) {
       setError(err.message || `Failed to ${action} therapist.`);
@@ -72,7 +77,7 @@ export default function Admin() {
     }
   };
 
-  // --- Initial checks & data fetch
+  // --- Initial check and fetch
   useEffect(() => {
     (async () => {
       const ok = await checkAdmin();

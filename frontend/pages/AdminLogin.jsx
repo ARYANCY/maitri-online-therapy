@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import "../css/AdminLogin.css";
@@ -11,41 +11,48 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  // Initialize attempts
-  React.useEffect(() => {
+  // Initialize attempts and blocked state
+  useEffect(() => {
     const blocked = localStorage.getItem("adminBlocked") === "true";
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
+
     if (blocked) setAttemptsLeft(0);
     else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+
     inputRef.current?.focus();
   }, []);
 
+  // Handle password input change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
 
     setLoading(true);
+    setError("");
 
     try {
+      // Send admin login request
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        // After login, verify session immediately
+        // Immediately check session to confirm admin
         const session = await API.auth.checkSession();
         if (session?.user?.isAdmin) {
           // Clear attempts and redirect
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");
-          navigate("/admin");
+          navigate("/admin", { replace: true }); // replace prevents back-navigation
         } else {
-          setError("Session failed. Please try again.");
+          setError("Session verification failed. Please try again.");
         }
       } else {
+        // Handle incorrect password
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
         localStorage.setItem("adminAttempts", newAttempts);
@@ -82,6 +89,7 @@ export default function AdminLogin() {
           className="form-control"
           ref={inputRef}
           disabled={loading || attemptsLeft <= 0}
+          autoFocus
         />
 
         <button

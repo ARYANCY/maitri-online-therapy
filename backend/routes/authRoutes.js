@@ -66,19 +66,27 @@ router.post("/admin-login", (req, res) => {
   if (!password) return res.status(400).json({ success: false, message: "Password required" });
 
   if (password === process.env.ADMIN_PASSWORD) {
-    req.session.userId = "admin123";
+    const adminUser = {
+      _id: "admin123",
+      email: "admin@example.com",
+      name: "Admin",
+      isAdmin: true,
+    };
+    req.session.userId = adminUser._id;
     req.session.isAdmin = true;
     req.session.save(err => {
       if (err) return res.status(500).json({ success: false, message: "Session save failed" });
-      return res.json({
-        success: true,
-        user: { _id: req.session.userId, isAdmin: true },
-      });
+      return res.json({ success: true, user: adminUser });
     });
   } else {
     return res.json({ success: false });
   }
 });
 
+// Check session
+router.get("/session-check", (req, res) => {
+  if (!req.session?.userId) return res.json({ user: null });
+  return res.json({ user: { _id: req.session.userId, isAdmin: req.session.isAdmin || false } });
+});
 
 module.exports = router;
