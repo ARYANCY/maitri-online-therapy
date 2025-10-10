@@ -62,44 +62,46 @@ router.get("/logout", (req, res, next) => {
 });
 
 
-router.post("/admin-login", (req, res) => {
-  const { password } = req.body;
+router.post("/admin-login", async (req, res) => {
+  try {
+    const { password } = req.body;
 
-  if (password === process.env.ADMIN_PASSWORD) {
-    // Create or fetch admin user in DB if not exists
-    User.findOne({ isAdmin: true }).then(async adminUser => {
-      if (!adminUser) {
-        // First-time setup: create admin user in DB
-        const newAdmin = new User({
-          name: "Admin",
-          email: process.env.ADMIN_EMAILS?.split(",")[0] || "admin@example.com",
-          password: await bcrypt.hash(password, 10),
-          isAdmin: true
-        });
-        await newAdmin.save();
-        req.session.userId = newAdmin._id;
-        req.session.isAdmin = true;
-        req.session.save(err => {
-          if (err) return res.status(500).json({ success: false, message: "Session save failed" });
-          return res.json({ success: true });
-        });
-      } else {
-        // Admin already exists, just set session
-        req.session.userId = adminUser._id;
-        req.session.isAdmin = true;
-        req.session.save(err => {
-          if (err) return res.status(500).json({ success: false, message: "Session save failed" });
-          return res.json({ success: true });
-        });
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.json({ success: false });
+    }
+
+    // Find admin user
+    let adminUser = await User.findOne({ isAdmin: true }).select("+password");
+
+    if (!adminUser) {
+      // First-time setup: create admin user
+      const hashedPassword = await bcrypt.hash(password, 10);
+      adminUser = new User({
+        name: "Admin",
+        email: process.env.ADMIN_EMAILS?.split(",")[0] || "admin@example.com",
+        password: hashedPassword,
+        isAdmin: true,
+      });
+      await adminUser.save();
+    }
+
+    // Set session
+    req.session.userId = adminUser._id;
+    req.session.isAdmin = true;
+
+    req.session.save(err => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ success: false, message: "Session save failed" });
       }
-    }).catch(err => {
-      console.error(err);
-      return res.status(500).json({ success: false, message: "Login failed" });
+      return res.json({ success: true });
     });
-  } else {
-    return res.json({ success: false });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    return res.status(500).json({ success: false, message: "Login failed" });
   }
 });
+
 
 // Session check route
 router.get("/session-check", (req, res) => {
