@@ -12,6 +12,7 @@ export default function Admin() {
   const [actionLoading, setActionLoading] = useState(null);
   const navigate = useNavigate();
 
+  // --- Fetch therapists
   const fetchTherapists = async () => {
     setError("");
     setLoading(true);
@@ -20,7 +21,7 @@ export default function Admin() {
       setTherapists(
         data.map((t) => ({
           ...t,
-          status: t.status || "pending", // Default to pending if not set
+          status: t.status || "pending",
         }))
       );
     } catch (err) {
@@ -30,6 +31,7 @@ export default function Admin() {
     }
   };
 
+  // --- Accept therapist
   const handleAccept = async (id) => {
     setActionLoading(id);
     try {
@@ -42,22 +44,23 @@ export default function Admin() {
     }
   };
 
+  // --- Reject therapist
   const handleReject = async (id) => {
+    if (!window.confirm("Are you sure you want to reject this therapist?")) return;
     setActionLoading(id);
     try {
       await API.therapist.updateStatus(id, "rejected");
       fetchTherapists();
 
-      // Schedule auto-deletion after 2 hours
+      // Auto-delete after 2 hours
       setTimeout(async () => {
         try {
           await API.therapist.delete(id);
-          console.log(`Therapist ${id} auto-deleted after rejection.`);
           fetchTherapists();
         } catch (err) {
           console.error("Auto-delete failed:", err);
         }
-      }, 2 * 60 * 60 * 1000); // 2 hours
+      }, 2 * 60 * 60 * 1000);
     } catch (err) {
       setError(err.message || "Error rejecting therapist");
     } finally {
@@ -65,8 +68,9 @@ export default function Admin() {
     }
   };
 
+  // --- Delete therapist
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this therapist?")) return;
+    if (!window.confirm("Are you sure you want to permanently delete this therapist?")) return;
     setActionLoading(id);
     try {
       await API.therapist.delete(id);
@@ -78,6 +82,7 @@ export default function Admin() {
     }
   };
 
+  // --- Initial fetch
   useEffect(() => {
     fetchTherapists();
   }, []);
@@ -89,8 +94,7 @@ export default function Admin() {
         <div className="text-center mb-4 intro-section">
           <h1 className="text-primary fw-bold">Therapist Applications</h1>
           <p className="text-muted lead">
-            Manage and review therapist applications submitted by professionals.
-            Approve trusted therapists to connect faster, or reject unverified entries for quality assurance.
+            Review therapist applications. Approve trusted professionals to connect faster, or reject unverified entries for quality assurance.
           </p>
 
           <button
@@ -101,37 +105,35 @@ export default function Admin() {
           </button>
         </div>
 
+        {/* Error */}
         {error && <div className="alert alert-danger text-center">{error}</div>}
-        {loading && <div className="text-center my-3">Loading...</div>}
 
-        <div className="table-responsive shadow-sm glass-card p-3 rounded">
-          <table className="table table-hover align-middle text-center admin-table">
-            <thead className="table-light">
-              <tr>
-                {[
-                  "Name",
-                  "Email",
-                  "Phone",
-                  "Specialization",
-                  "Experience",
-                  "Qualifications",
-                  "Status",
-                  "Actions",
-                ].map((h) => (
-                  <th key={h}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {therapists.length === 0 ? (
+        {/* Loading */}
+        {loading && <div className="text-center my-3">Loading therapists...</div>}
+
+        {/* Therapist Table */}
+        {!loading && therapists.length > 0 && (
+          <div className="table-responsive shadow-sm glass-card p-3 rounded">
+            <table className="table table-hover align-middle text-center admin-table">
+              <thead className="table-light">
                 <tr>
-                  <td colSpan="8" className="text-muted py-4">
-                    No applications found.
-                  </td>
+                  {[
+                    "Name",
+                    "Email",
+                    "Phone",
+                    "Specialization",
+                    "Experience",
+                    "Qualifications",
+                    "Status",
+                    "Actions",
+                  ].map((h) => (
+                    <th key={h}>{h}</th>
+                  ))}
                 </tr>
-              ) : (
-                therapists.map((t) => (
-                  <tr key={t._id}>
+              </thead>
+              <tbody>
+                {therapists.map((t) => (
+                  <tr key={t._id} className="therapist-row">
                     <td>{t.name}</td>
                     <td>{t.email}</td>
                     <td>{t.phone}</td>
@@ -147,14 +149,14 @@ export default function Admin() {
                         className="btn btn-sm mx-1 status-btn accepted"
                         disabled={t.status === "accepted" || actionLoading === t._id}
                       >
-                        Accept
+                        {actionLoading === t._id && t.status !== "accepted" ? "..." : "Accept"}
                       </button>
                       <button
                         onClick={() => handleReject(t._id)}
                         className="btn btn-sm mx-1 status-btn rejected"
                         disabled={t.status === "rejected" || actionLoading === t._id}
                       >
-                        Reject
+                        {actionLoading === t._id && t.status !== "rejected" ? "..." : "Reject"}
                       </button>
                       <button
                         onClick={() => handleDelete(t._id)}
@@ -165,11 +167,15 @@ export default function Admin() {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {!loading && therapists.length === 0 && (
+          <div className="text-center py-4 text-muted">No therapist applications found.</div>
+        )}
 
         <footer className="text-center mt-5">
           <hr />

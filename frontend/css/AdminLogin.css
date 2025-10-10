@@ -1,0 +1,79 @@
+.admin-login-container {
+  max-width: 400px;
+  margin: 80px auto;
+  padding: 40px 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.admin-login-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 15px;
+}
+
+.admin-login-warning {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  background: #f0f4ff;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.admin-login-form input.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.admin-login-form input.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+}
+
+.admin-login-form button.btn {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.admin-login-form button.btn:hover:enabled {
+  background-color: #0056b3;
+  border-color: #0056b3;
+  cursor: pointer;
+}
+
+.text-danger {
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+@media (max-width: 500px) {
+  .admin-login-container {
+    margin: 50px 15px;
+    padding: 30px 20px;
+  }
+
+  .admin-login-title {
+    font-size: 1.5rem;
+  }
+
+  .admin-login-warning {
+    font-size: 0.9rem;
+  }
+}
