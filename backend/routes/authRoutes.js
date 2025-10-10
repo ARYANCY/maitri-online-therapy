@@ -2,10 +2,13 @@ const express = require("express");
 const router = express.Router();
 const passport = require("../config/passport");
 
-// Initiate Google login
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+// --- Initiate Google login
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
-// Google callback – place your admin session logic here
+// --- Google callback
 router.get(
   "/google/callback",
   passport.authenticate("google", {
@@ -19,28 +22,31 @@ router.get(
         return res.redirect(`${process.env.CLIENT_URL}/login`);
       }
 
-      // Set session
+      // Save session
       req.session.userId = req.user._id;
 
-      // Only allow admin emails
-      const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
-      const isAdmin = adminEmails.includes(req.user.email);
+      // Determine if user is admin
+      const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+      const isAdmin = adminEmails.includes(req.user.email?.toLowerCase());
       req.session.isAdmin = isAdmin;
 
+      // Persist admin status in DB if needed
       if (isAdmin) {
         req.user.isAdmin = true;
-        await req.user.save(); // persist in DB
+        await req.user.save();
       }
 
+      // Save session and redirect
       req.session.save(err => {
         if (err) {
           console.error("Session save error:", err);
           return res.redirect(`${process.env.CLIENT_URL}/login`);
         }
 
-        // Redirect admin or normal user
-        if (isAdmin) return res.redirect(`${process.env.CLIENT_URL}/splash`);
-        return res.redirect(`${process.env.CLIENT_URL}/home`);
+        const redirectUrl = isAdmin
+          ? `${process.env.CLIENT_URL}/splash`  // Admin landing
+          : `${process.env.CLIENT_URL}/home`;   // Normal user landing
+        return res.redirect(redirectUrl);
       });
     } catch (err) {
       console.error("Google login callback error:", err);
@@ -49,20 +55,23 @@ router.get(
   }
 );
 
-// Logout route remains the same
+// --- Logout route
 router.get("/logout", (req, res, next) => {
   if (req.user) {
     req.logout(err => {
       if (err) return next(err);
       req.session.destroy(err => {
-        if (err) return res.status(500).json({ error: "Logout failed" });
+        if (err) {
+          console.error("Session destroy error:", err);
+          return res.status(500).json({ error: "Logout failed" });
+        }
         res.clearCookie("connect.sid", { path: "/" });
-        res.redirect(`${process.env.CLIENT_URL}/login`);
+        return res.redirect(`${process.env.CLIENT_URL}/login`);
       });
     });
   } else {
     res.clearCookie("connect.sid", { path: "/" });
-    res.redirect(`${process.env.CLIENT_URL}/login`);
+    return res.redirect(`${process.env.CLIENT_URL}/login`);
   }
 });
 
