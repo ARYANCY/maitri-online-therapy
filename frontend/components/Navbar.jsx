@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
+import GULogo from "../images/gu-logo.svg";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/Navbar.css";
 
@@ -25,6 +26,7 @@ export default function Navbar({ user, downloadReport }) {
     <nav className="navbar glass">
       {/* Top section */}
       <div className="navbar-top">
+        <img src={GULogo} alt="GU Logo" className="gu-logo" />
         <h1 className="navbar-title">{t("navbar.title")}</h1>
 
         <div className="lang-switcher">

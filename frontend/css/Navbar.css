@@ -111,6 +111,16 @@
   align-items: center;
   justify-content: center;
 }
+.navbar-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem; /* spacing between GU logo and Maitri text */
+}
+
+.gu-logo {
+  height: 2rem; /* same as your navbar title height */
+  width: auto;
+}
 
 .navbar-link {
   color: #333;
