@@ -6,37 +6,40 @@ import "../css/AdminLogin.css";
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // initially true to block UI until session check
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize attempts and redirect if already logged in
-useEffect(() => {
-  const checkExistingSession = async () => {
-    setLoading(true);
-    try {
-      const session = await API.auth.checkSession();
-      if (session?.user?.isAdmin) {
-        localStorage.setItem("isAdmin", "true");
-        navigate("/admin", { replace: true });
+  // --- Initialize attempts and check session on mount
+  useEffect(() => {
+    const initialize = async () => {
+      setError("");
+
+      // Fetch attempts info from localStorage
+      const blocked = localStorage.getItem("adminBlocked") === "true";
+      const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
+      if (blocked) setAttemptsLeft(0);
+      else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+
+      // Check backend session
+      try {
+        const session = await API.auth.checkSession();
+        if (session?.user?.isAdmin) {
+          localStorage.setItem("isAdmin", "true");
+          navigate("/admin", { replace: true });
+          return;
+        }
+      } catch {
+        localStorage.removeItem("isAdmin");
+      } finally {
+        setLoading(false);
+        inputRef.current?.focus();
       }
-    } catch {
-      localStorage.removeItem("isAdmin");
-    } finally {
-      setLoading(false);
-      inputRef.current?.focus();
-    }
-  };
+    };
 
-  checkExistingSession();
-
-  const blocked = localStorage.getItem("adminBlocked") === "true";
-  const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-  if (blocked) setAttemptsLeft(0);
-  else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
-}, [navigate]);
-
+    initialize();
+  }, [navigate]);
 
   // --- Handle input change
   const handleChange = (e) => {
@@ -56,19 +59,18 @@ useEffect(() => {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
+        // Verify backend session after login
         const session = await API.auth.checkSession();
-
         if (session?.user?.isAdmin) {
-          // Store session info
           localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");
-
           navigate("/admin", { replace: true });
         } else {
           setError("Session verification failed. Please try again.");
         }
       } else {
+        // Reduce attempts for wrong password
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
         localStorage.setItem("adminAttempts", newAttempts);

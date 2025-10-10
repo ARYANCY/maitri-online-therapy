@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import Navbar from "../components/Navbar";
@@ -7,31 +7,32 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
+  const autoDeleteTimers = useRef({});
 
   // --- Verify admin session
-const checkAdmin = useCallback(async () => {
-  setCheckingAdmin(true);
-  try {
-    const session = await API.auth.checkSession();
-    if (!session?.user?.isAdmin) {
+  const checkAdmin = useCallback(async () => {
+    setCheckingAdmin(true);
+    try {
+      const session = await API.auth.checkSession();
+      if (!session?.user?.isAdmin) {
+        localStorage.removeItem("isAdmin");
+        navigate("/admin-login", { replace: true });
+        return false;
+      }
+      localStorage.setItem("isAdmin", "true");
+      setCheckingAdmin(false);
+      return true;
+    } catch {
       localStorage.removeItem("isAdmin");
       navigate("/admin-login", { replace: true });
       return false;
     }
-    localStorage.setItem("isAdmin", "true");
-    setCheckingAdmin(false);
-    return true;
-  } catch {
-    localStorage.removeItem("isAdmin");
-    navigate("/admin-login", { replace: true });
-    return false;
-  }
-}, [navigate]);
+  }, [navigate]);
 
   // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
@@ -49,7 +50,9 @@ const checkAdmin = useCallback(async () => {
 
   // --- Handle therapist actions
   const handleAction = async (id, action) => {
+    if (!id || !action) return;
     setActionLoading(id);
+
     try {
       switch (action) {
         case "accept":
@@ -57,11 +60,14 @@ const checkAdmin = useCallback(async () => {
           break;
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
-          // Schedule auto-delete in 2 hours
-          setTimeout(async () => {
+
+          // Schedule auto-delete in 2 hours, store timer reference for cleanup
+          if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
+          autoDeleteTimers.current[id] = setTimeout(async () => {
             try {
               await API.adminTherapist.delete(id);
               fetchTherapists();
+              delete autoDeleteTimers.current[id];
             } catch (err) {
               console.error("Auto-delete failed:", err);
             }
@@ -83,10 +89,19 @@ const checkAdmin = useCallback(async () => {
 
   // --- Initialize: check admin and fetch therapists
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
       const ok = await checkAdmin();
-      if (ok) fetchTherapists();
+      if (ok && isMounted) fetchTherapists();
     })();
+
+    return () => {
+      isMounted = false;
+      // Clear all pending auto-delete timers on unmount
+      Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
+      autoDeleteTimers.current = {};
+    };
   }, [checkAdmin, fetchTherapists]);
 
   if (checkingAdmin)
