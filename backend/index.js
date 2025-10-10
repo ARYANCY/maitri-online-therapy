@@ -73,11 +73,13 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const {requireLogin} = require("./middleware/authMiddleware");
 const therapistRoutes = require("./routes/therapistRoutes");
+const therapistAdminRoutes = require("./routes/admin/therapistAdminRoutes");
 app.use("/auth", authRoutes);
 app.use("/api/chatbot", requireLogin, chatbotRoutes);
 app.use("/api/dashboard", requireLogin, dashboardRoutes);
 app.use("/api/reminders", requireLogin, reminderRoutes);
 app.use("/api/therapists", requireLogin,therapistRoutes);
+app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
   res.json({ user: req.user || null });

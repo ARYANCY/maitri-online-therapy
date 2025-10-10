@@ -38,15 +38,18 @@ API.dashboard = {
   },
 };
 
-// Therapist endpoints
+// Public therapist endpoints
 API.therapist = {
   apply: data => API.post("/api/therapists/apply", data),
   getAccepted: () => API.get("/api/therapists/accepted"),
-  getAll: () => API.get("/api/therapists"),
-  updateStatus: (id, status) => API.patch(`/api/therapists/${id}/status`, { status }),
-  delete: id => API.delete(`/api/therapists/${id}`),
 };
 
+// Admin therapist endpoints
+API.adminTherapist = {
+  getAll: () => API.get("/api/admin/therapists"),
+  updateStatus: (id, status) => API.patch(`/api/admin/therapists/${id}/status`, { status }),
+  delete: id => API.delete(`/api/admin/therapists/${id}`),
+};
 
 // Reminder endpoints
 API.reminder = {

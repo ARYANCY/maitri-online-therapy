@@ -15,11 +15,9 @@ exports.requireLogin = (req, res, next) => {
 // --- Require admin (only for /admin routes)
 exports.requireAdmin = (req, res, next) => {
   if (!req.session.userId || !req.session.isAdmin) {
-    return res.status(403).json({ error: "Forbidden: Admins only" });
+    return res.status(403).json({ error: "Admin access only" });
   }
-  req.user = {
-    _id: req.session.userId,
-    isAdmin: true,
-  };
+  req.user = { _id: req.session.userId, isAdmin: true };
   next();
 };
+

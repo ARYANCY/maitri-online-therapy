@@ -13,7 +13,6 @@ export default function Admin() {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
 
-  // --- Check admin session first
   const checkAdmin = async () => {
     try {
       const data = await API.auth.checkSession();
@@ -29,12 +28,11 @@ export default function Admin() {
     }
   };
 
-  // --- Fetch therapists
   const fetchTherapists = async () => {
     setError("");
     setLoading(true);
     try {
-      const data = await API.therapist.getAll();
+      const data = await API.adminTherapist.getAll(); // <-- Use admin endpoint
       setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
     } catch (err) {
       setError(err.message || "Error fetching therapist applications");
@@ -43,11 +41,10 @@ export default function Admin() {
     }
   };
 
-  // --- Accept therapist
   const handleAccept = async (id) => {
     setActionLoading(id);
     try {
-      await API.therapist.updateStatus(id, "accepted");
+      await API.adminTherapist.updateStatus(id, "accepted"); // <-- Admin endpoint
       fetchTherapists();
     } catch (err) {
       setError(err.message || "Error accepting therapist");
@@ -56,18 +53,16 @@ export default function Admin() {
     }
   };
 
-  // --- Reject therapist
   const handleReject = async (id) => {
     if (!window.confirm("Are you sure you want to reject this therapist?")) return;
     setActionLoading(id);
     try {
-      await API.therapist.updateStatus(id, "rejected");
+      await API.adminTherapist.updateStatus(id, "rejected"); // <-- Admin endpoint
       fetchTherapists();
 
-      // Auto-delete after 2 hours
       setTimeout(async () => {
         try {
-          await API.therapist.delete(id);
+          await API.adminTherapist.delete(id); // <-- Admin endpoint
           fetchTherapists();
         } catch (err) {
           console.error("Auto-delete failed:", err);
@@ -80,12 +75,11 @@ export default function Admin() {
     }
   };
 
-  // --- Delete therapist
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this therapist?")) return;
     setActionLoading(id);
     try {
-      await API.therapist.delete(id);
+      await API.adminTherapist.delete(id); // <-- Admin endpoint
       fetchTherapists();
     } catch (err) {
       setError(err.message || "Error deleting therapist");
@@ -94,7 +88,6 @@ export default function Admin() {
     }
   };
 
-  // --- Initial checks & fetch
   useEffect(() => {
     (async () => {
       const ok = await checkAdmin();
