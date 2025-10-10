@@ -3,16 +3,19 @@ const router = express.Router();
 const requireLogin = require("../middleware/authMiddleware");
 const { checkAdmin } = require("../middleware/checkAdmin");
 const {
-  getAllTherapists,
+  createTherapist,
   getAcceptedTherapists,
+  getAllTherapists,
   updateTherapistStatus,
   deleteTherapist,
 } = require("../controllers/therapistController");
 
+// Public routes
+router.post("/apply", createTherapist);
 router.get("/accepted", getAcceptedTherapists);
 
-router.use(requireLogin);
-
+// Admin routes (protected)
+router.use(requireLogin); // All below require login
 router.get("/", checkAdmin, getAllTherapists);
 router.patch("/:id/status", checkAdmin, updateTherapistStatus);
 router.delete("/:id", checkAdmin, deleteTherapist);

@@ -11,24 +11,22 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  // --- Check blocked status and previous attempts
   useEffect(() => {
+    // Check blocked status
     const blocked = localStorage.getItem("adminBlocked") === "true";
     if (blocked) setAttemptsLeft(0);
 
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-    if (!isNaN(storedAttempts) && storedAttempts > 0) setAttemptsLeft(storedAttempts);
+    if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
     if (inputRef.current) inputRef.current.focus();
   }, []);
 
-  // --- Handle input change
   const handleChange = (e) => {
     setPassword(e.target.value);
-    if (error) setError(""); // reset error on typing
+    if (error) setError("");
   };
 
-  // --- Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0) return;
@@ -83,18 +81,12 @@ export default function AdminLogin() {
           autoFocus
         />
 
-        <button
-          type="submit"
-          className="btn btn-primary w-100 mt-3"
-          disabled={loading || attemptsLeft <= 0}
-        >
+        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading || attemptsLeft <= 0}>
           {loading ? "Logging in..." : "Login"}
         </button>
 
         {attemptsLeft > 0 && !error && (
-          <div className="text-muted mt-2 text-center">
-            Attempts remaining: {attemptsLeft}
-          </div>
+          <div className="text-muted mt-2 text-center">Attempts remaining: {attemptsLeft}</div>
         )}
 
         {error && <div className="text-danger mt-2 text-center">{error}</div>}

@@ -13,17 +13,19 @@ export default function Admin() {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
 
-  // --- Check admin session
+  // --- Check admin session first
   const checkAdmin = async () => {
     try {
-      const user = await API.auth.checkSession(); // should return { isAdmin: true/false }
-      if (!user?.isAdmin) {
-        navigate("/admin-login"); // redirect if not admin
-      } else {
-        setCheckingAdmin(false);
+      const data = await API.auth.checkSession();
+      if (!data?.user?.isAdmin) {
+        navigate("/admin-login");
+        return false;
       }
-    } catch (err) {
-      navigate("/admin-login"); // redirect if session invalid
+      setCheckingAdmin(false);
+      return true;
+    } catch {
+      navigate("/admin-login");
+      return false;
     }
   };
 
@@ -33,12 +35,7 @@ export default function Admin() {
     setLoading(true);
     try {
       const data = await API.therapist.getAll();
-      setTherapists(
-        data.map((t) => ({
-          ...t,
-          status: t.status || "pending",
-        }))
-      );
+      setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
     } catch (err) {
       setError(err.message || "Error fetching therapist applications");
     } finally {
@@ -99,13 +96,13 @@ export default function Admin() {
 
   // --- Initial checks & fetch
   useEffect(() => {
-    checkAdmin(); // redirect if not admin
-    fetchTherapists();
+    (async () => {
+      const ok = await checkAdmin();
+      if (ok) fetchTherapists();
+    })();
   }, []);
 
-  if (checkingAdmin) {
-    return <div className="text-center py-5">Checking admin privileges...</div>;
-  }
+  if (checkingAdmin) return <div className="text-center py-5">Checking admin privileges...</div>;
 
   return (
     <>
@@ -114,19 +111,14 @@ export default function Admin() {
         <div className="text-center mb-4 intro-section">
           <h1 className="text-primary fw-bold">Therapist Applications</h1>
           <p className="text-muted lead">
-            Review therapist applications. Approve trusted professionals to connect faster, or reject unverified entries for quality assurance.
+            Review therapist applications. Approve trusted professionals or reject unverified entries.
           </p>
-
-          <button
-            className="btn btn-outline-primary mt-3"
-            onClick={() => navigate("/dashboard")}
-          >
+          <button className="btn btn-outline-primary mt-3" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </button>
         </div>
 
         {error && <div className="alert alert-danger text-center">{error}</div>}
-
         {loading && <div className="text-center my-3">Loading therapists...</div>}
 
         {!loading && therapists.length > 0 && (
@@ -134,22 +126,13 @@ export default function Admin() {
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
                 <tr>
-                  {[
-                    "Name",
-                    "Email",
-                    "Phone",
-                    "Specialization",
-                    "Experience",
-                    "Qualifications",
-                    "Status",
-                    "Actions",
-                  ].map((h) => (
+                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(h => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {therapists.map((t) => (
+                {therapists.map(t => (
                   <tr key={t._id} className="therapist-row">
                     <td>{t.name}</td>
                     <td>{t.email}</td>
@@ -157,29 +140,15 @@ export default function Admin() {
                     <td>{t.specialization}</td>
                     <td>{t.experience} yrs</td>
                     <td>{t.qualifications || "N/A"}</td>
-                    <td className={`status ${t.status}`}>
-                      {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
-                    </td>
+                    <td className={`status ${t.status}`}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</td>
                     <td className="action-buttons">
-                      <button
-                        onClick={() => handleAccept(t._id)}
-                        className="btn btn-sm mx-1 status-btn accepted"
-                        disabled={t.status === "accepted" || actionLoading === t._id}
-                      >
+                      <button onClick={() => handleAccept(t._id)} className="btn btn-sm mx-1 status-btn accepted" disabled={t.status === "accepted" || actionLoading === t._id}>
                         {actionLoading === t._id && t.status !== "accepted" ? "..." : "Accept"}
                       </button>
-                      <button
-                        onClick={() => handleReject(t._id)}
-                        className="btn btn-sm mx-1 status-btn rejected"
-                        disabled={t.status === "rejected" || actionLoading === t._id}
-                      >
+                      <button onClick={() => handleReject(t._id)} className="btn btn-sm mx-1 status-btn rejected" disabled={t.status === "rejected" || actionLoading === t._id}>
                         {actionLoading === t._id && t.status !== "rejected" ? "..." : "Reject"}
                       </button>
-                      <button
-                        onClick={() => handleDelete(t._id)}
-                        className="btn btn-sm mx-1 status-btn deleted"
-                        disabled={actionLoading === t._id}
-                      >
+                      <button onClick={() => handleDelete(t._id)} className="btn btn-sm mx-1 status-btn deleted" disabled={actionLoading === t._id}>
                         Delete
                       </button>
                     </td>
@@ -190,18 +159,12 @@ export default function Admin() {
           </div>
         )}
 
-        {!loading && therapists.length === 0 && (
-          <div className="text-center py-4 text-muted">No therapist applications found.</div>
-        )}
+        {!loading && therapists.length === 0 && <div className="text-center py-4 text-muted">No therapist applications found.</div>}
 
         <footer className="text-center mt-5">
           <hr />
-          <Link to="/talk-to-counselor" className="btn btn-link me-3">
-            Talk to Counselor
-          </Link>
-          <Link to="/therapist-form" className="btn btn-link">
-            Therapist Form
-          </Link>
+          <Link to="/talk-to-counselor" className="btn btn-link me-3">Talk to Counselor</Link>
+          <Link to="/therapist-form" className="btn btn-link">Therapist Form</Link>
         </footer>
       </div>
     </>

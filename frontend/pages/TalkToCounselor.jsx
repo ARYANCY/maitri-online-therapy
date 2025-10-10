@@ -39,7 +39,7 @@ export default function TalkToCounselor() {
     } catch (err) {
       setError(prev => ({
         ...prev,
-        list: err.response?.data?.message || err.message || t("talk.errorFetching", "Error fetching counselors")
+        list: err.message || t("talk.errorFetching", "Error fetching counselors")
       }));
     } finally {
       setLoading(prev => ({ ...prev, list: false }));
@@ -57,7 +57,6 @@ export default function TalkToCounselor() {
   return (
     <div className="talk-page light-version">
       <Navbar user={user} />
-
       <main className="talk-content container py-5">
         <header className="talk-header text-center mb-5">
           <h1 className="talk-title fw-bold text-primary">
@@ -80,32 +79,16 @@ export default function TalkToCounselor() {
           </p>
         ) : (
           <div className="counselor-grid">
-            {counselors.map((c) => (
+            {counselors.map(c => (
               <div key={c._id} className="counselor-card glass-hover">
                 <div className="counselor-card-body">
                   <h5 className="counselor-name card-title">{c.name || t("talk.unknownName", "Unknown")}</h5>
-                  <p className="counselor-info">
-                    <strong>{t("talk.email", "Email")}:</strong> {c.email || t("talk.notProvided", "N/A")}
-                  </p>
-                  <p className="counselor-info">
-                    <strong>{t("talk.phone", "Phone")}:</strong> {c.phone || t("talk.notProvided", "N/A")}
-                  </p>
-                  <p className="counselor-info">
-                    <strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization || t("talk.notProvided", "N/A")}
-                  </p>
-                  <p className="counselor-info">
-                    <strong>{t("talk.experience", "Experience")}:</strong> {c.experience || 0} {t("talk.years", "yrs")}
-                  </p>
-                  {c.qualifications && (
-                    <p className="counselor-info">
-                      <strong>{t("talk.qualifications", "Qualifications")}:</strong> {c.qualifications}
-                    </p>
-                  )}
-                  {c.phone && (
-                    <a href={`tel:${c.phone}`} className="btn-call">
-                      {t("talk.callNow", "Call Now")}
-                    </a>
-                  )}
+                  <p><strong>{t("talk.email", "Email")}:</strong> {c.email || t("talk.notProvided", "N/A")}</p>
+                  <p><strong>{t("talk.phone", "Phone")}:</strong> {c.phone || t("talk.notProvided", "N/A")}</p>
+                  <p><strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization || t("talk.notProvided", "N/A")}</p>
+                  <p><strong>{t("talk.experience", "Experience")}:</strong> {c.experience || 0} {t("talk.years", "yrs")}</p>
+                  {c.qualifications && <p><strong>{t("talk.qualifications", "Qualifications")}:</strong> {c.qualifications}</p>}
+                  {c.phone && <a href={`tel:${c.phone}`} className="btn-call">{t("talk.callNow", "Call Now")}</a>}
                 </div>
               </div>
             ))}
@@ -121,16 +104,10 @@ export default function TalkToCounselor() {
               {t("talk.footerLine", "Your safe space for mindful conversations and healing connections.")}
             </p>
             <div className="footer-links">
-              <Link to="/therapist-form" className="footer-link">
-                {t("talk.therapistForm", "Therapist Form")}
-              </Link>
-              <Link to="/admin" className="footer-link">
-                {t("talk.adminDashboard", "Admin Dashboard")}
-              </Link>
+              <Link to="/therapist-form" className="footer-link">{t("talk.therapistForm", "Therapist Form")}</Link>
+              <Link to="/admin" className="footer-link">{t("talk.adminDashboard", "Admin Dashboard")}</Link>
             </div>
-            <p className="footer-copy">
-              © 2025 Maitri — {t("talk.footer", "Empowering mental wellness")}
-            </p>
+            <p className="footer-copy">© 2025 Maitri — {t("talk.footer", "Empowering mental wellness")}</p>
           </div>
         </div>
       </footer>
