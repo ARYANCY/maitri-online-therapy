@@ -35,11 +35,11 @@ export default function TalkToCounselor() {
     setError(prev => ({ ...prev, list: "" }));
     try {
       const data = await API.therapist.getAccepted();
-      setCounselors(data);
+      setCounselors(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(prev => ({
         ...prev,
-        list: err.response?.data?.message || err.message || t("talk.errorFetching", "Error fetching counselors"),
+        list: err.response?.data?.message || err.message || t("talk.errorFetching", "Error fetching counselors")
       }));
     } finally {
       setLoading(prev => ({ ...prev, list: false }));
@@ -68,44 +68,49 @@ export default function TalkToCounselor() {
           </p>
         </header>
 
-        {error.list && <div className="alert alert-danger text-center talk-error">{error.list}</div>}
-        {loading.list && <p className="talk-loading text-center">{t("talk.loading", "Loading counselors...")}</p>}
-        {!loading.list && counselors.length === 0 && (
+        {error.list && (
+          <div className="alert alert-danger text-center talk-error">{error.list}</div>
+        )}
+
+        {loading.list ? (
+          <div className="text-center my-3">{t("talk.loading", "Loading counselors...")}</div>
+        ) : counselors.length === 0 ? (
           <p className="talk-empty text-center text-muted">
             {t("talk.noCounselors", "No counselors available right now.")}
           </p>
-        )}
-
-        <div className="counselor-grid">
-          {!loading.list &&
-            counselors.map((c) => (
+        ) : (
+          <div className="counselor-grid">
+            {counselors.map((c) => (
               <div key={c._id} className="counselor-card glass-hover">
                 <div className="counselor-card-body">
-                  <h5 className="counselor-name card-title">{c.name}</h5>
+                  <h5 className="counselor-name card-title">{c.name || t("talk.unknownName", "Unknown")}</h5>
                   <p className="counselor-info">
-                    <strong>{t("talk.email", "Email")}:</strong> {c.email}
+                    <strong>{t("talk.email", "Email")}:</strong> {c.email || t("talk.notProvided", "N/A")}
                   </p>
                   <p className="counselor-info">
-                    <strong>{t("talk.phone", "Phone")}:</strong> {c.phone}
+                    <strong>{t("talk.phone", "Phone")}:</strong> {c.phone || t("talk.notProvided", "N/A")}
                   </p>
                   <p className="counselor-info">
-                    <strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization}
+                    <strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization || t("talk.notProvided", "N/A")}
                   </p>
                   <p className="counselor-info">
-                    <strong>{t("talk.experience", "Experience")}:</strong> {c.experience} {t("talk.years", "yrs")}
+                    <strong>{t("talk.experience", "Experience")}:</strong> {c.experience || 0} {t("talk.years", "yrs")}
                   </p>
                   {c.qualifications && (
                     <p className="counselor-info">
                       <strong>{t("talk.qualifications", "Qualifications")}:</strong> {c.qualifications}
                     </p>
                   )}
-                  <a href={`tel:${c.phone}`} className="btn-call">
-                    {t("talk.callNow", "Call Now")}
-                  </a>
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} className="btn-call">
+                      {t("talk.callNow", "Call Now")}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </main>
 
       <footer className="footer-section">
