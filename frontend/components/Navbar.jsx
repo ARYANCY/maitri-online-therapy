@@ -27,7 +27,9 @@ export default function Navbar({ user, downloadReport }) {
       {/* Top section */}
       <div className="navbar-top">
         <div className="navbar-title-container">
-            <img src={GULogo} alt="GU Logo" className="gu-logo" />
+            <a href="https://gauhati.ac.in" target="_blank" rel="noopener noreferrer">
+              <img src={GULogo} alt="GU Logo" className="gu-logo" />
+            </a>
             <h1 className="navbar-title">{t("navbar.title")}</h1>
         </div>
         
