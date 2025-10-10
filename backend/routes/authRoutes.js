@@ -83,10 +83,4 @@ router.post("/admin-login", (req, res) => {
   }
 });
 
-// Check session
-router.get("/session-check", (req, res) => {
-  if (!req.session?.userId) return res.json({ user: null });
-  return res.json({ user: { _id: req.session.userId, isAdmin: req.session.isAdmin || false } });
-});
-
 module.exports = router;
