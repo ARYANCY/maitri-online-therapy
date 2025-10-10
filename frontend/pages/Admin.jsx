@@ -13,17 +13,29 @@ export default function Admin() {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
 
-  // --- Check admin session
+  // --- Check admin session with localStorage fallback
   const checkAdmin = useCallback(async () => {
     try {
+      const isAdminStored = localStorage.getItem("isAdmin") === "true";
+      if (isAdminStored) {
+        setCheckingAdmin(false);
+        return true;
+      }
+
+      // fallback to backend session check
       const session = await API.auth.checkSession();
       if (!session?.user?.isAdmin) {
+        localStorage.removeItem("isAdmin");
         navigate("/admin-login", { replace: true });
         return false;
       }
+
+      // store session
+      localStorage.setItem("isAdmin", "true");
       setCheckingAdmin(false);
       return true;
     } catch {
+      localStorage.removeItem("isAdmin");
       navigate("/admin-login", { replace: true });
       return false;
     }
