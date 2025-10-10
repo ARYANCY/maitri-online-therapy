@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { requireLogin, requireAdmin } = require("../../middleware/authMiddleware");
+const { requireLogin, requireAdmin } = require("../middleware/authMiddleware");
 const {
   getAllTherapists,
   updateTherapistStatus,
