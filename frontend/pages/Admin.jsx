@@ -18,7 +18,6 @@ export default function Admin() {
   const checkAdmin = useCallback(async () => {
     setCheckingAdmin(true);
 
-    // If already verified in localStorage, skip API call
     if (localStorage.getItem("isAdmin") === "true") {
       setCheckingAdmin(false);
       return true;
@@ -69,7 +68,6 @@ export default function Admin() {
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
 
-          // Schedule auto-delete in 2 hours
           if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
           autoDeleteTimers.current[id] = setTimeout(async () => {
             try {
@@ -83,8 +81,6 @@ export default function Admin() {
           break;
         case "delete":
           await API.adminTherapist.delete(id);
-          break;
-        default:
           break;
       }
       await fetchTherapists();
@@ -148,9 +144,7 @@ export default function Admin() {
                     "Qualifications",
                     "Status",
                     "Actions",
-                  ].map(h => (
-                    <th key={h}>{h}</th>
-                  ))}
+                  ].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>

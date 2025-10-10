@@ -3,43 +3,57 @@ const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// --- Email/password login
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
+    // Determine admin rights
     let isAdmin = false;
-    if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) isAdmin = true;
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
 
-    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
-    if (adminEmails.includes(email)) isAdmin = true;
+    if ((process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) || adminEmails.includes(email.toLowerCase())) {
+      isAdmin = true;
+    }
 
+    // Update MongoDB if user becomes admin
     if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
     }
 
+    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ error: "Session save failed" });
+
       res.json({
         success: true,
-        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
+        user: {
+          _id: user._id,
+          email: user.email,
+          name: user.name,
+          isAdmin
+        }
       });
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
   }
 };
 
+// --- Google OAuth login
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
@@ -50,21 +64,25 @@ exports.googleLogin = async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID
     });
     const payload = ticket.getPayload();
-    const email = payload.email;
+    const email = payload.email.toLowerCase();
+    const name = payload.name || "Unknown User";
+    const avatar = payload.picture || "";
 
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({
         email,
-        name: payload.name,
+        name,
         googleId: payload.sub,
-        avatar: payload.picture,
+        avatar,
+        password: "",
         isAdmin: false
       });
       await user.save();
     }
 
-    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
+    // Determine admin rights
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
     const isAdmin = adminEmails.includes(email);
 
     if (isAdmin && !user.isAdmin) {
@@ -72,35 +90,45 @@ exports.googleLogin = async (req, res) => {
       await user.save();
     }
 
+    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ message: "Session save failed" });
+
       res.json({
         success: true,
-        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
+        user: {
+          _id: user._id,
+          email: user.email,
+          name: user.name,
+          isAdmin
+        }
       });
     });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Google login failed", error });
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(500).json({ message: "Google login failed", error: err.message });
   }
 };
 
+// --- Middleware: require login
 exports.requireLogin = (req, res, next) => {
-  if (!req.session.userId) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
   req.user = { _id: req.session.userId, isAdmin: req.session.isAdmin || false };
   next();
 };
 
+// --- Middleware: require admin
 exports.requireAdmin = (req, res, next) => {
-  if (!req.session.userId || !req.session.isAdmin) return res.status(403).json({ error: "Admin access only" });
+  if (!req.session?.userId || !req.session.isAdmin) return res.status(403).json({ error: "Admin access only" });
   req.user = { _id: req.session.userId, isAdmin: true };
   next();
 };
 
+// --- Logout
 exports.logoutUser = (req, res) => {
   try {
     if (req.session) {
@@ -113,7 +141,7 @@ exports.logoutUser = (req, res) => {
       return res.json({ success: true, message: "Logged out successfully" });
     }
   } catch (err) {
-    console.error(err);
+    console.error("Logout error:", err);
     return res.status(500).json({ success: false, message: "Logout failed due to server error" });
   }
 };

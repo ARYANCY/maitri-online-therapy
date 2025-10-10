@@ -2,6 +2,15 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
 
+// Helper: determine if user is admin
+const isAdminUser = (email) => {
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+  return adminEmails.includes(email?.toLowerCase());
+};
+
+// Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -11,7 +20,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log("Google profile received:", profile);
         const email = profile.emails?.[0]?.value?.toLowerCase();
         const avatar = profile.photos?.[0]?.value || "";
 
@@ -19,6 +27,7 @@ passport.use(
           return done(new Error("Google account does not provide email"), null);
         }
 
+        // Find existing user
         let user = await User.findOne({ email });
 
         if (!user) {
@@ -26,16 +35,24 @@ passport.use(
             name: profile.displayName || "Unknown User",
             email,
             googleId: profile.id,
-            avatar,      
-            password: "",
+            avatar,
+            password: "", // empty since Google OAuth
+            isAdmin: isAdminUser(email),
           });
-          console.log("New user created:", user._id);
+          console.log("New user created:", user._id, "isAdmin:", user.isAdmin);
         } else {
+          // Update avatar if missing
           if (!user.avatar && avatar) {
             user.avatar = avatar;
-            await user.save();
           }
-          console.log("Existing user found:", user._id);
+
+          // Ensure isAdmin is correct
+          if (!user.isAdmin && isAdminUser(email)) {
+            user.isAdmin = true;
+          }
+
+          await user.save();
+          console.log("Existing user found:", user._id, "isAdmin:", user.isAdmin);
         }
 
         return done(null, user);
@@ -46,22 +63,27 @@ passport.use(
     }
   )
 );
+
+// Serialize user to session (store id + isAdmin)
 passport.serializeUser((user, done) => {
   if (!user?._id) {
     console.error("serializeUser: user or _id missing", user);
     return done(new Error("User or _id missing in serializeUser"));
   }
-  console.log("serializeUser:", user._id);
-  done(null, user._id);
+  done(null, { id: user._id, isAdmin: user.isAdmin });
 });
-passport.deserializeUser(async (id, done) => {
+
+// Deserialize user from session
+passport.deserializeUser(async (obj, done) => {
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(obj.id);
     if (!user) {
-      console.error("deserializeUser: No user found for id", id);
+      console.error("deserializeUser: No user found for id", obj.id);
       return done(null, false);
     }
-    console.log("deserializeUser:", user._id);
+
+    // Attach isAdmin from session to ensure persistence
+    user.isAdmin = obj.isAdmin || user.isAdmin;
     done(null, user);
   } catch (err) {
     console.error("Error in deserializeUser:", err);

@@ -6,7 +6,7 @@ import "../css/AdminLogin.css";
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true); // block UI until session check
+  const [loading, setLoading] = useState(true);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
@@ -16,13 +16,11 @@ export default function AdminLogin() {
     let isMounted = true;
 
     const initialize = async () => {
-      // Load attempts from localStorage
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
-      // Check backend session
       try {
         const session = await API.auth.checkSession();
         if (isMounted && session?.user?.isAdmin) {
@@ -52,7 +50,7 @@ export default function AdminLogin() {
     if (error) setError("");
   };
 
-  // --- Handle login submit
+  // --- Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
@@ -64,13 +62,13 @@ export default function AdminLogin() {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        // Verify backend session
         const session = await API.auth.checkSession();
         if (session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");
           navigate("/admin", { replace: true });
+          return;
         } else {
           setError("Session verification failed. Please try again.");
         }
@@ -87,6 +85,7 @@ export default function AdminLogin() {
         }
       }
     } catch (err) {
+      console.error(err);
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
