@@ -60,4 +60,28 @@ router.get("/logout", (req, res, next) => {
   }
 });
 
+// backend/routes/authRoutes.js
+router.post("/admin-login", async (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ success: false, message: "Password required" });
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    // Create a dummy admin user object or fetch actual admin user
+    const adminUser = {
+      _id: "admin123",
+      email: "admin@example.com",
+      name: "Admin",
+      isAdmin: true
+    };
+    req.session.userId = adminUser._id;
+    req.session.isAdmin = true;
+    req.session.save(err => {
+      if (err) return res.status(500).json({ success: false, message: "Session save failed" });
+      return res.json({ success: true, user: adminUser });
+    });
+  } else {
+    return res.json({ success: false });
+  }
+});
+
 module.exports = router;
