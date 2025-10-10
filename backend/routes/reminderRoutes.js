@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const requireLogin = require("../middleware/authMiddleware");
+const {requireLogin} = require("../middleware/authMiddleware");
 const { createReminder, listReminders, cancelReminder } = require("../controllers/reminderController");
 router.post("/", requireLogin, createReminder);
 router.get("/", requireLogin, listReminders);
