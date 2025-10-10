@@ -5,7 +5,7 @@ const {
   getAllTherapists,
   updateTherapistStatus,
   deleteTherapist
-} = require("../../controllers/therapistController");
+} = require("../controllers/therapistController");
 
 router.use(requireLogin, requireAdmin);
 
