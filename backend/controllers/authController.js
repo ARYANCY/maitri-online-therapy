@@ -13,6 +13,7 @@ exports.loginUser = async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
+    // Determine admin status
     let isAdmin = false;
     if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
       isAdmin = true;
@@ -26,7 +27,10 @@ exports.loginUser = async (req, res) => {
 
     req.session.save(err => {
       if (err) return res.status(500).json({ error: "Session save failed" });
-      res.json({ success: true, user: { _id: user._id, email: user.email, name: user.name, isAdmin } });
+      res.json({
+        success: true,
+        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
+      });
     });
 
   } catch (err) {
@@ -50,25 +54,35 @@ exports.googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email });
     if (!user) {
+      // Create new user
       user = new User({
         email,
         name: payload.name,
         googleId: payload.sub,
         avatar: payload.picture,
-        isAdmin: true // only admins allowed
+        isAdmin: false  // default: not admin
       });
       await user.save();
     }
 
-    if (!user.isAdmin) return res.status(403).json({ message: "Unauthorized: Admin only" });
+    // Optional: mark as admin if email matches admin list
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
+    const isAdmin = adminEmails.includes(email);
+    if (isAdmin && !user.isAdmin) {
+      user.isAdmin = true;
+      await user.save();
+    }
 
+    // Set session
     req.session.userId = user._id;
-    req.session.isAdmin = true;
+    req.session.isAdmin = isAdmin;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ message: "Session save failed" });
-      // Send JSON response so frontend can redirect
-      res.json({ success: true, user: { _id: user._id, email: user.email, name: user.name, isAdmin: true } });
+      res.json({
+        success: true,
+        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
+      });
     });
 
   } catch (error) {
