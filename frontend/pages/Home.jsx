@@ -32,7 +32,7 @@ export default function Home() {
 
           // Redirect based on role
           if (user.isAdmin) navigate("/admin");
-          else navigate("/home");
+          else navigate("/dashnoard");
 
           window.removeEventListener("message", onMessage);
           popup.close();
