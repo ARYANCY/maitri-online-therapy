@@ -26,8 +26,11 @@ export default function Navbar({ user, downloadReport }) {
     <nav className="navbar glass">
       {/* Top section */}
       <div className="navbar-top">
-        <img src={GULogo} alt="GU Logo" className="gu-logo" />
-        <h1 className="navbar-title">{t("navbar.title")}</h1>
+        <div className="navbar-title-container">
+            <img src={GULogo} alt="GU Logo" className="gu-logo" />
+            <h1 className="navbar-title">{t("navbar.title")}</h1>
+        </div>
+        
 
         <div className="lang-switcher">
           {["en", "hi", "as"].map((lng) => (
