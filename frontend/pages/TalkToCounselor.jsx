@@ -55,12 +55,14 @@ export default function TalkToCounselor() {
   }, [user, fetchCounselors]);
 
   return (
-    <div className="talk-container light-version" style={{ minHeight: "100vh", backgroundColor: "#f4f4f4" }}>
+    <div className="talk-container light-version" style={{ minHeight: "100vh", backgroundColor: "#f6f8fa" }}>
       <Navbar user={user} />
       <div className="container py-5">
         <header className="text-center mb-5">
           <h1 className="fw-bold text-primary">{t("talk.title", "Talk to a Counselor")}</h1>
-          <p className="lead text-muted">{t("talk.subtitle", "Our verified counselors are ready to assist you professionally.")}</p>
+          <p className="lead text-muted">
+            {t("talk.subtitle", "Our verified counselors are ready to assist you professionally.")}
+          </p>
         </header>
 
         {error.list && <div className="alert alert-danger text-center">{error.list}</div>}
@@ -69,36 +71,38 @@ export default function TalkToCounselor() {
           <p className="text-center text-muted">{t("talk.noCounselors", "No counselors available right now.")}</p>
         )}
 
-        <div className="row">
+        <div className="counselor-grid">
           {!loading.list &&
             counselors.map((c) => (
-              <div key={c._id} className="col-md-6 col-lg-4 mb-4">
-                <div className="card shadow-sm glass-card h-100 border-0">
-                  <div className="card-body">
-                    <h5 className="card-title text-dark">{c.name}</h5>
-                    <p className="card-text mb-1"><strong>{t("talk.email", "Email")}:</strong> {c.email}</p>
-                    <p className="card-text mb-1"><strong>{t("talk.phone", "Phone")}:</strong> {c.phone}</p>
-                    <p className="card-text mb-1"><strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization}</p>
-                    <p className="card-text mb-1"><strong>{t("talk.experience", "Experience")}:</strong> {c.experience} {t("talk.years", "yrs")}</p>
-                    {c.qualifications && (
-                      <p className="card-text mb-1"><strong>{t("talk.qualifications", "Qualifications")}:</strong> {c.qualifications}</p>
-                    )}
-                    <a href={`tel:${c.phone}`} className="btn btn-primary w-100 mt-3">
-                      {t("talk.callNow", "Call Now")}
-                    </a>
-                  </div>
-                </div>
+              <div key={c._id} className="counselor-card glass-hover">
+                <h5 className="card-title">{c.name}</h5>
+                <p><strong>{t("talk.email", "Email")}:</strong> {c.email}</p>
+                <p><strong>{t("talk.phone", "Phone")}:</strong> {c.phone}</p>
+                <p><strong>{t("talk.specialization", "Specialization")}:</strong> {c.specialization}</p>
+                <p><strong>{t("talk.experience", "Experience")}:</strong> {c.experience} {t("talk.years", "yrs")}</p>
+                {c.qualifications && (
+                  <p><strong>{t("talk.qualifications", "Qualifications")}:</strong> {c.qualifications}</p>
+                )}
+                <a href={`tel:${c.phone}`} className="btn-call">
+                  {t("talk.callNow", "Call Now")}
+                </a>
               </div>
             ))}
         </div>
       </div>
 
-      <footer className="text-center py-4 border-top bg-white">
-        <div className="container">
-          <p className="mb-2 text-muted">© 2025 MindConnect | {t("talk.footer", "Empowering mental wellness")}</p>
-          <div>
-            <Link to="/therapist-form" className="btn btn-link">{t("talk.therapistForm", "Therapist Form")}</Link>
-            <Link to="/admin" className="btn btn-link">{t("talk.adminDashboard", "Admin Dashboard")}</Link>
+      <footer className="footer-section">
+        <div className="footer-overlay">
+          <div className="footer-content container text-center">
+            <h2 className="footer-title">MindConnect</h2>
+            <p className="footer-subtitle">
+              {t("talk.footerLine", "Your safe space for mindful conversations and healing connections.")}
+            </p>
+            <div className="footer-links">
+              <Link to="/therapist-form" className="footer-link">{t("talk.therapistForm", "Therapist Form")}</Link>
+              <Link to="/admin" className="footer-link">{t("talk.adminDashboard", "Admin Dashboard")}</Link>
+            </div>
+            <p className="footer-copy">© 2025 MindConnect — {t("talk.footer", "Empowering mental wellness")}</p>
           </div>
         </div>
       </footer>

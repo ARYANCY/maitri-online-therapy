@@ -1,147 +1,140 @@
-/* ===== General Container ===== */
-.counselor-container.light-version {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 30px;
-  font-family: "Georgia", "Times New Roman", serif;
-  background-color: #fff;
-  color: #111;
-  line-height: 1.6;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  border-radius: 15px;
+/* TalkToCounselor.css */
+
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f4f4f4;
+  color: #222;
 }
 
-/* ===== Header Section ===== */
-.counselor-header {
-  text-align: center;
-  margin-bottom: 30px;
+.light-version {
+  background-color: #f4f4f4;
 }
 
-.counselor-header h1 {
+h1,
+h5 {
+  font-weight: 600;
+}
+
+header h1 {
   font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #007BFF;
+  color: #004aad;
 }
 
-.counselor-header p {
-  font-size: 1rem;
+header p {
+  font-size: 1.1rem;
   color: #555;
 }
 
-/* ===== Messages ===== */
-.error-msg, .loading-msg, .no-counselors {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.error-msg { color: red; font-weight: 500; }
-.loading-msg, .no-counselors { color: #555; font-style: italic; }
-
-/* ===== Counselor List Flex/Grid Container ===== */
-.counselor-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* ===== Individual Counselor Card ===== */
-.counselor-card {
-  padding: 20px 25px;
-  border-radius: 15px;
+.glass-card {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(200, 200, 200, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  border-radius: 18px;
+  transition: all 0.35s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
-.counselor-card:hover {
+.glass-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
   background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 
-.counselor-card h3 {
-  margin: 0 0 12px;
-  font-size: 1.3rem;
-  color: #007BFF;
-  font-weight: 700;
+.card-body {
+  padding: 1.5rem;
 }
 
-.counselor-card p {
-  margin: 6px 0;
-  font-size: 0.95rem;
-  color: #333;
+.card-title {
+  color: #002b6b;
+  font-size: 1.25rem;
 }
 
-/* ===== Call Button ===== */
-.counselor-card .btn-primary {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 10px 20px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: 50px;
-  transition: all 0.3s ease;
-  background-color: #007BFF;
-  color: #fff;
+.btn-primary {
+  background-color: #004aad;
   border: none;
-  cursor: pointer;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
-.counselor-card .btn-primary:hover {
-  background-color: #0056b3;
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+.btn-primary:hover {
+  background-color: #00347a;
 }
 
-/* ===== Responsive Grid for Medium/Large Screens ===== */
-@media (min-width: 768px) {
-  .counselor-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 25px;
+footer {
+  background-color: #ffffff;
+  border-top: 1px solid #ddd;
+  color: #444;
+  padding: 30px 0;
+}
+
+footer .footer-heading {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #004aad;
+  margin-bottom: 10px;
+}
+
+footer p {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+footer .footer-links a {
+  color: #004aad;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+footer .footer-links a:hover {
+  color: #002b6b;
+}
+
+footer .social-icons a {
+  margin: 0 8px;
+  color: #555;
+  font-size: 1.3rem;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+footer .social-icons a:hover {
+  color: #004aad;
+  transform: scale(1.15);
+}
+
+/* Responsive layout adjustments */
+@media (max-width: 992px) {
+  header h1 {
+    font-size: 1.9rem;
+  }
+  .glass-card {
+    margin-bottom: 1rem;
   }
 }
 
-@media (min-width: 1200px) {
-  .counselor-list {
-    grid-template-columns: repeat(3, 1fr);
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.7rem;
+  }
+  header p {
+    font-size: 1rem;
   }
 }
 
-/* ===== Smaller Screens ===== */
-@media (max-width: 600px) {
-  .counselor-container.light-version { padding: 20px; }
-  .counselor-header h1 { font-size: 1.8rem; }
-  .counselor-card { padding: 15px 20px; }
-  .counselor-card h3 { font-size: 1.15rem; }
-  .counselor-card p, .counselor-card .btn-primary { font-size: 0.9rem; }
-}
-
-@media (max-width: 500px) {
-  .counselor-container.light-version { padding: 15px; margin: 20px auto; }
-  .counselor-header h1 { font-size: 1.6rem; }
-  .counselor-card { padding: 12px 15px; }
-  .counselor-card h3 { font-size: 1.1rem; }
-  .counselor-card p, .counselor-card .btn-primary { font-size: 0.85rem; }
-}
-
-@media (max-width: 400px) {
-  .counselor-container.light-version { padding: 10px; margin: 15px auto; }
-  .counselor-header h1 { font-size: 1.4rem; }
-  .counselor-header p { font-size: 0.9rem; }
-  .counselor-card { padding: 10px 12px; }
-  .counselor-card h3 { font-size: 1rem; }
-  .counselor-card p, .counselor-card .btn-primary { font-size: 0.8rem; padding: 8px 12px; }
-}
-
-/* ===== Smooth transitions ===== */
-.counselor-card,
-.counselor-card h3,
-.counselor-card p,
-.counselor-card .btn-primary {
-  transition: all 0.3s ease-in-out;
+@media (max-width: 576px) {
+  header h1 {
+    font-size: 1.5rem;
+  }
+  .card-body {
+    padding: 1.2rem;
+  }
+  footer .footer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  footer .footer-links a {
+    margin: 5px 0;
+  }
 }
