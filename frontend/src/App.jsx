@@ -8,7 +8,7 @@ import TalkToCounselor from "../pages/TalkToCounselor";
 import TherapistForm from "../pages/TherapistForm";
 import Admin from "../pages/Admin";
 import AdminLogin from "../pages/AdminLogin";
-import PrivateAdminRoute from "./components/PrivateAdminRoute";
+import PrivateAdminRoute from "../components/PrivateAdminRoute";
 export default function App() {
   return (
     <Router>
