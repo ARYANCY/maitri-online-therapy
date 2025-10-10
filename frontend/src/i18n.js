@@ -14,21 +14,24 @@ const resources = {
         talkToCounselor: "Talk to a Counselor",
         logout: "Logout",
       },
-      dashboard: {
-        tab: {
-          chatbot: "Chatbot",
-          chart: "Progress",
-          todo: "To-Do",
-          notFound: "Tab not found",
-        },
-        loading: "Loading your space...",
-        error: {
-          generic: "Something went wrong. Please try again.",
-          sessionCheckFailed: "Session check failed:",
-          fetchFailed: "Could not load dashboard data:",
-          updateTodosFailed: "Unable to update your tasks:",
-        },
+    dashboard: {
+      tab: {
+        chatbot: "Chatbot",
+        chart: "Progress",
+        todo: "To-Do",
+        notFound: "Tab not found",
       },
+      loading: "Loading your space...",
+      error: {
+        generic: "Something went wrong. Please try again.",
+        sessionCheckFailed: "Session check failed:",
+        fetchFailed: "Could not load dashboard data:",
+        updateTodosFailed: "Unable to update your tasks:",
+      },
+      downloadReport: "Download Report",
+      downloading: "Generating Report..."
+    },
+
       todo: {
         title: "My To-Dos",
         placeholder: "Add a new task...",
@@ -246,8 +249,11 @@ hi: {
         sessionCheckFailed: "सेशन जांच विफल:",
         fetchFailed: "डैशबोर्ड डेटा लाने में त्रुटि:",
         updateTodosFailed: "टास्क अपडेट नहीं हो पाए:"
-      }
+      },
+      downloadReport: "रिपोर्ट डाउनलोड करें",
+      downloading: "रिपोर्ट बनाई जा रही है..."
     },
+
     todo: {
       title: "मेरे कार्य",
       placeholder: "नया कार्य जोड़ें...",
@@ -466,8 +472,11 @@ as: {
         sessionCheckFailed: "ছেছন পৰীক্ষা বিফল:",
         fetchFailed: "ডেশ্বব'ৰ্ডৰ তথ্য আহৰণ কৰোঁতে ত্ৰুটি:",
         updateTodosFailed: "কামবোৰ আপডেট কৰিব পৰা নগ'ল:"
-      }
+      },
+      downloadReport: "ৰিপোৰ্ট ডাউনলোড কৰক",
+      downloading: "ৰিপোৰ্ট প্ৰস্তুত কৰি আছে..."
     },
+
     todo: {
       title: "মোৰ কৰিবলগীয়া কাম",
       placeholder: "নতুন কাম যোগ কৰক...",
