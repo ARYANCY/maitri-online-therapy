@@ -253,7 +253,7 @@
   object-fit: contain;
   display: block;
 }
-/
+
 @media (max-width: 1024px) {
   .gu-logo {
     height: 2.6rem;
