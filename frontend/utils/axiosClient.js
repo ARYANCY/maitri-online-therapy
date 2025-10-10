@@ -25,6 +25,7 @@ API.auth = {
   logout: () => API.post("/auth/logout"),
   register: data => API.post("/auth/register", data),
   checkSession: () => API.get("/api/session-check"),
+  adminLogin: data => API.post("/auth/admin-login", data),
 };
 
 // Dashboard endpoints

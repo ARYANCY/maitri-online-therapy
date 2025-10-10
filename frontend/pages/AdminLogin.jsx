@@ -12,14 +12,13 @@ export default function AdminLogin() {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    // Check blocked status
     const blocked = localStorage.getItem("adminBlocked") === "true";
-    if (blocked) setAttemptsLeft(0);
-
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-    if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
-    if (inputRef.current) inputRef.current.focus();
+    if (blocked) setAttemptsLeft(0);
+    else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+
+    inputRef.current?.focus();
   }, []);
 
   const handleChange = (e) => {
@@ -29,12 +28,11 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (attemptsLeft <= 0) return;
+    if (attemptsLeft <= 0 || loading) return;
 
     setLoading(true);
-
     try {
-      const res = await API.post("/auth/admin-login", { password });
+      const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
         localStorage.setItem("isAdmin", "true");
@@ -58,7 +56,7 @@ export default function AdminLogin() {
     } finally {
       setLoading(false);
       setPassword("");
-      if (inputRef.current) inputRef.current.focus();
+      inputRef.current?.focus();
     }
   };
 
@@ -78,10 +76,13 @@ export default function AdminLogin() {
           className="form-control"
           ref={inputRef}
           disabled={loading || attemptsLeft <= 0}
-          autoFocus
         />
 
-        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading || attemptsLeft <= 0}>
+        <button
+          type="submit"
+          className="btn btn-primary w-100 mt-3"
+          disabled={loading || attemptsLeft <= 0}
+        >
           {loading ? "Logging in..." : "Login"}
         </button>
 
