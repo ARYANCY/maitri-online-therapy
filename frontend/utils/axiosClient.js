@@ -39,7 +39,7 @@ API.dashboard = {
 
 API.therapist = {
   apply: data => API.post("/therapists/apply", data),          // public
-  getAll: () => API.get("/therapists/all"),                   // admin only
+  getAll: () => API.get("/therapists"),                       // admin only
   getAccepted: () => API.get("/therapists/accepted"),         // public
   updateStatus: (id, status) => API.patch(`/therapists/${id}/status`, { status }), // admin only
   delete: id => API.delete(`/therapists/${id}`),             // admin only

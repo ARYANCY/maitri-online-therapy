@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    minlength: 0,
+    minlength: 6,
     select: false
   },
   googleId: {
@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -38,16 +42,20 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Hash password before saving
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password") || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
 userSchema.methods.comparePassword = async function(candidatePassword) {
   if (!candidatePassword || !this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
+
 userSchema.path("password").validate(function(value) {
   if (this.googleId) return true; 
   return value && value.length >= 6;

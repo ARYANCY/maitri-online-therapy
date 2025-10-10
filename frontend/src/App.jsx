@@ -8,6 +8,7 @@ import TalkToCounselor from "../pages/TalkToCounselor";
 import TherapistForm from "../pages/TherapistForm";
 import Admin from "../pages/Admin";
 import AdminLogin from "../pages/AdminLogin";
+import PrivateAdminRoute from "./components/PrivateAdminRoute";
 export default function App() {
   return (
     <Router>
@@ -19,7 +20,14 @@ export default function App() {
         <Route path="/talk-to-counselor" element={<TalkToCounselor />} />
         <Route path="/therapist-form" element={<TherapistForm />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route
+          path="/admin"
+          element={
+            <PrivateAdminRoute>
+              <Admin />
+            </PrivateAdminRoute>
+          }
+        />
         <Route path="*" element={<Home />} />
       </Routes>
     </Router>

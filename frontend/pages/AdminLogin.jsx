@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import "../css/AdminLogin.css";
@@ -9,33 +9,45 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const navigate = useNavigate();
+  const inputRef = useRef(null);
 
-  // Check localStorage for previous failed attempts
+  // --- Check blocked status and previous attempts
   useEffect(() => {
-    const blocked = localStorage.getItem("adminBlocked");
-    if (blocked === "true") setAttemptsLeft(0);
+    const blocked = localStorage.getItem("adminBlocked") === "true";
+    if (blocked) setAttemptsLeft(0);
 
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-    if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
+    if (!isNaN(storedAttempts) && storedAttempts > 0) setAttemptsLeft(storedAttempts);
+
+    if (inputRef.current) inputRef.current.focus();
   }, []);
 
+  // --- Handle input change
+  const handleChange = (e) => {
+    setPassword(e.target.value);
+    if (error) setError(""); // reset error on typing
+  };
+
+  // --- Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0) return;
 
-    setError("");
     setLoading(true);
 
     try {
       const res = await API.post("/auth/admin-login", { password });
+
       if (res.success) {
         localStorage.setItem("isAdmin", "true");
         localStorage.removeItem("adminAttempts");
+        localStorage.removeItem("adminBlocked");
         navigate("/admin");
       } else {
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
         localStorage.setItem("adminAttempts", newAttempts);
+
         if (newAttempts <= 0) {
           localStorage.setItem("adminBlocked", "true");
           setError("You have been blocked from further attempts.");
@@ -44,34 +56,48 @@ export default function AdminLogin() {
         }
       }
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
       setPassword("");
+      if (inputRef.current) inputRef.current.focus();
     }
   };
 
   return (
-    <div className="admin-login-container">
-      <h2 className="admin-login-title">Admin Login</h2>
-      <p className="admin-login-warning">
-        This section is restricted to authorized administrators only. If you are not an admin, please refrain from attempting access. Focus on positive intentions and let us carry out our administrative duties responsibly.
+    <div className="admin-login-container container my-5 p-4">
+      <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
+      <p className="admin-login-warning text-center text-muted mb-4">
+        Restricted to authorized administrators only. Unauthorized attempts will be blocked.
       </p>
 
-      <form onSubmit={handleSubmit} className="admin-login-form">
+      <form onSubmit={handleSubmit} className="admin-login-form mx-auto" style={{ maxWidth: "400px" }}>
         <input
           type="password"
           placeholder="Enter Admin Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+          onChange={handleChange}
           className="form-control"
-          disabled={attemptsLeft <= 0}
+          ref={inputRef}
+          disabled={loading || attemptsLeft <= 0}
+          autoFocus
         />
-        <button type="submit" className="btn btn-primary mt-3" disabled={loading || attemptsLeft <= 0}>
+
+        <button
+          type="submit"
+          className="btn btn-primary w-100 mt-3"
+          disabled={loading || attemptsLeft <= 0}
+        >
           {loading ? "Logging in..." : "Login"}
         </button>
-        {error && <div className="text-danger mt-2">{error}</div>}
+
+        {attemptsLeft > 0 && !error && (
+          <div className="text-muted mt-2 text-center">
+            Attempts remaining: {attemptsLeft}
+          </div>
+        )}
+
+        {error && <div className="text-danger mt-2 text-center">{error}</div>}
       </form>
     </div>
   );

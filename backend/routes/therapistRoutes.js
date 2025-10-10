@@ -1,16 +1,17 @@
 const express = require("express");
+const router = express.Router();
+const { requireLogin } = require("../controllers/authController");
+const { checkAdmin } = require("../middleware/checkAdmin");
 const {
-  createTherapist,
   getAllTherapists,
   updateTherapistStatus,
-  getAcceptedTherapists,
-} = require("../controllers/therapisController");
+  deleteTherapist
+} = require("../controllers/therapistController");
 
-const router = express.Router();
-
-router.post("/apply", createTherapist);          // POST /therapis/apply
-router.get("/all", getAllTherapists);            // GET /therapis/all
-router.patch("/:id/status", updateTherapistStatus);
-router.get("/accepted", getAcceptedTherapists);
+// Admin-only routes
+router.use(requireLogin);
+router.get("/therapists", checkAdmin, getAllTherapists);
+router.patch("/therapists/:id/status", checkAdmin, updateTherapistStatus);
+router.delete("/therapists/:id", checkAdmin, deleteTherapist);
 
 module.exports = router;

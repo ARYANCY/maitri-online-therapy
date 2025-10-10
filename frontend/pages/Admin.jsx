@@ -10,7 +10,22 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
+
+  // --- Check admin session
+  const checkAdmin = async () => {
+    try {
+      const user = await API.auth.checkSession(); // should return { isAdmin: true/false }
+      if (!user?.isAdmin) {
+        navigate("/admin-login"); // redirect if not admin
+      } else {
+        setCheckingAdmin(false);
+      }
+    } catch (err) {
+      navigate("/admin-login"); // redirect if session invalid
+    }
+  };
 
   // --- Fetch therapists
   const fetchTherapists = async () => {
@@ -82,10 +97,15 @@ export default function Admin() {
     }
   };
 
-  // --- Initial fetch
+  // --- Initial checks & fetch
   useEffect(() => {
+    checkAdmin(); // redirect if not admin
     fetchTherapists();
   }, []);
+
+  if (checkingAdmin) {
+    return <div className="text-center py-5">Checking admin privileges...</div>;
+  }
 
   return (
     <>
@@ -105,13 +125,10 @@ export default function Admin() {
           </button>
         </div>
 
-        {/* Error */}
         {error && <div className="alert alert-danger text-center">{error}</div>}
 
-        {/* Loading */}
         {loading && <div className="text-center my-3">Loading therapists...</div>}
 
-        {/* Therapist Table */}
         {!loading && therapists.length > 0 && (
           <div className="table-responsive shadow-sm glass-card p-3 rounded">
             <table className="table table-hover align-middle text-center admin-table">
