@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { requireLogin } = require("../controllers/authController");
+const requireLogin = require("../middleware/authMiddleware");
 const { checkAdmin } = require("../middleware/checkAdmin");
 const {
   getAllTherapists,
