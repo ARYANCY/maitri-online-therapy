@@ -11,7 +11,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  // --- Initialize attempts and check if already logged in
+  // --- Initialize attempts and redirect if already logged in
   useEffect(() => {
     const blocked = localStorage.getItem("adminBlocked") === "true";
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
@@ -28,13 +28,11 @@ export default function AdminLogin() {
     inputRef.current?.focus();
   }, [navigate]);
 
-  // --- Handle password input
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
@@ -49,7 +47,6 @@ export default function AdminLogin() {
         const session = await API.auth.checkSession();
 
         if (session?.user?.isAdmin) {
-          // Store session in localStorage
           localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");

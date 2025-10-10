@@ -13,35 +13,28 @@ export default function Admin() {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
 
-  // --- Check admin session with localStorage fallback
+  // --- Verify admin session
   const checkAdmin = useCallback(async () => {
-    try {
-      const isAdminStored = localStorage.getItem("isAdmin") === "true";
-      if (isAdminStored) {
-        setCheckingAdmin(false);
-        return true;
-      }
-
-      // fallback to backend session check
-      const session = await API.auth.checkSession();
-      if (!session?.user?.isAdmin) {
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    if (!isAdmin) {
+      try {
+        const session = await API.auth.checkSession();
+        if (!session?.user?.isAdmin) {
+          localStorage.removeItem("isAdmin");
+          navigate("/admin-login", { replace: true });
+          return false;
+        }
+      } catch {
         localStorage.removeItem("isAdmin");
         navigate("/admin-login", { replace: true });
         return false;
       }
-
-      // store session
-      localStorage.setItem("isAdmin", "true");
-      setCheckingAdmin(false);
-      return true;
-    } catch {
-      localStorage.removeItem("isAdmin");
-      navigate("/admin-login", { replace: true });
-      return false;
     }
+    setCheckingAdmin(false);
+    return true;
   }, [navigate]);
 
-  // --- Fetch therapist applications
+  // --- Fetch all therapist applications
   const fetchTherapists = useCallback(async () => {
     setError("");
     setLoading(true);
@@ -55,7 +48,7 @@ export default function Admin() {
     }
   }, []);
 
-  // --- Handle therapist actions: accept, reject, delete
+  // --- Handle therapist actions
   const handleAction = async (id, action) => {
     setActionLoading(id);
     try {
@@ -65,7 +58,6 @@ export default function Admin() {
           break;
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
-          // Auto-delete after 2 hours
           setTimeout(async () => {
             try {
               await API.adminTherapist.delete(id);
@@ -89,7 +81,6 @@ export default function Admin() {
     }
   };
 
-  // --- Initial check and fetch
   useEffect(() => {
     (async () => {
       const ok = await checkAdmin();
