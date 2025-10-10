@@ -81,7 +81,7 @@ app.use("/api/reminders", requireLogin, reminderRoutes);
 app.use("/api/therapists", requireLogin,therapistRoutes);
 app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
-router.get("/api/session-check", (req, res) => {
+api.get("/api/session-check", (req, res) => {
   if (req.user) {
     return res.json({
       success: true,
