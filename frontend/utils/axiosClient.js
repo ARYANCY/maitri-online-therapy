@@ -31,7 +31,7 @@ API.auth = {
     return res;
   }),
   register: (data) => API.post("/auth/register", data),
-  checkSession: () => API.get("/auth/session-check"),
+  checkSession: () => API.get("/api/session-check"),
   adminLogin: (data) => API.post("/auth/admin-login", data),
 };
 
