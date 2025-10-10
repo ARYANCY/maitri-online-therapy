@@ -14,10 +14,11 @@ export default function Admin() {
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
 
-  // --- Verify admin session only once
-  const checkAdmin = useCallback(async () => {
+  // --- Validate admin session
+  const validateAdminSession = useCallback(async () => {
     setCheckingAdmin(true);
 
+    // Check localStorage first
     if (localStorage.getItem("isAdmin") === "true") {
       setCheckingAdmin(false);
       return true;
@@ -68,6 +69,7 @@ export default function Admin() {
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
 
+          // Auto-delete after 2 hours
           if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
           autoDeleteTimers.current[id] = setTimeout(async () => {
             try {
@@ -91,13 +93,13 @@ export default function Admin() {
     }
   };
 
-  // --- Initialize: check admin and fetch therapists
+  // --- Initialize: validate session and fetch data
   useEffect(() => {
     let isMounted = true;
 
     (async () => {
-      const ok = await checkAdmin();
-      if (ok && isMounted) fetchTherapists();
+      const valid = await validateAdminSession();
+      if (valid && isMounted) fetchTherapists();
     })();
 
     return () => {
@@ -105,7 +107,7 @@ export default function Admin() {
       Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
       autoDeleteTimers.current = {};
     };
-  }, [checkAdmin, fetchTherapists]);
+  }, [validateAdminSession, fetchTherapists]);
 
   if (checkingAdmin)
     return <div className="text-center py-5">Verifying admin privileges...</div>;

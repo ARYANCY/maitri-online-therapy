@@ -11,20 +11,20 @@ export default function AdminLogin() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize attempts and verify session
+  // --- Initialize: load attempts and verify session
   useEffect(() => {
     let isMounted = true;
 
-    const init = async () => {
-      // Load attempts info
+    const initialize = async () => {
+      // Load attempt info
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
-      // Verify session
+      // Check session
       try {
-        const session = await API.auth.checkSession();
+        const session = await API.auth.adminCheckSession();
         if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           navigate("/admin", { replace: true });
@@ -39,20 +39,20 @@ export default function AdminLogin() {
       }
     };
 
-    init();
+    initialize();
 
     return () => {
       isMounted = false;
     };
   }, [navigate]);
 
-  // --- Handle input
+  // --- Handle input change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Handle submit
+  // --- Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || attemptsLeft <= 0) return;
@@ -64,6 +64,7 @@ export default function AdminLogin() {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
+        // Verify session immediately after login
         const session = await API.auth.adminCheckSession();
         if (session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
@@ -71,9 +72,11 @@ export default function AdminLogin() {
           localStorage.removeItem("adminBlocked");
           navigate("/admin", { replace: true });
           return;
+        } else {
+          setError("Session verification failed. Try again.");
         }
-        setError("Session verification failed. Please try again.");
       } else {
+        // Handle wrong password attempts
         const remaining = attemptsLeft - 1;
         setAttemptsLeft(remaining);
         localStorage.setItem("adminAttempts", remaining);
@@ -87,8 +90,7 @@ export default function AdminLogin() {
       }
     } catch (err) {
       console.error("Admin login error:", err);
-      const msg = err?.response?.data?.message || err?.message || "Something went wrong. Try again.";
-      setError(msg);
+      setError(err.message || "Something went wrong. Try again.");
     } finally {
       setLoading(false);
       setPassword("");
@@ -97,24 +99,24 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="admin-login-container container my-5 p-5 shadow rounded border border-light">
-      <h2 className="text-center mb-3">Admin Login</h2>
-      <p className="text-center text-muted mb-4">
-        Restricted to authorized administrators. Unauthorized attempts will be blocked.
+    <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
+      <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
+      <p className="admin-login-warning text-center text-muted mb-4">
+        Restricted to authorized administrators only. Unauthorized attempts will be blocked.
       </p>
 
       <form
         onSubmit={handleSubmit}
         className="admin-login-form mx-auto"
-        style={{ maxWidth: 400 }}
+        style={{ maxWidth: "400px" }}
       >
         <input
           type="password"
           placeholder="Enter Admin Password"
           value={password}
           onChange={handleChange}
+          className="form-control"
           ref={inputRef}
-          className="form-control form-control-lg"
           disabled={loading || attemptsLeft <= 0}
           autoFocus
         />
@@ -133,11 +135,7 @@ export default function AdminLogin() {
           </div>
         )}
 
-        {error && (
-          <div className="alert alert-danger mt-3 text-center p-2">
-            {error}
-          </div>
-        )}
+        {error && <div className="text-danger mt-2 text-center">{error}</div>}
       </form>
     </div>
   );
