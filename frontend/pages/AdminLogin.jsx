@@ -6,17 +6,17 @@ import "../css/AdminLogin.css";
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true); // initially true to block UI until session check
+  const [loading, setLoading] = useState(true); // block UI until session check
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize attempts and check session on mount
+  // --- Initialize attempts and check session
   useEffect(() => {
-    const initialize = async () => {
-      setError("");
+    let isMounted = true;
 
-      // Fetch attempts info from localStorage
+    const initialize = async () => {
+      // Load attempts from localStorage
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
@@ -25,20 +25,25 @@ export default function AdminLogin() {
       // Check backend session
       try {
         const session = await API.auth.checkSession();
-        if (session?.user?.isAdmin) {
+        if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           navigate("/admin", { replace: true });
-          return;
         }
       } catch {
         localStorage.removeItem("isAdmin");
       } finally {
-        setLoading(false);
-        inputRef.current?.focus();
+        if (isMounted) {
+          setLoading(false);
+          inputRef.current?.focus();
+        }
       }
     };
 
     initialize();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   // --- Handle input change
@@ -47,7 +52,7 @@ export default function AdminLogin() {
     if (error) setError("");
   };
 
-  // --- Handle form submission
+  // --- Handle login submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
@@ -59,7 +64,7 @@ export default function AdminLogin() {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        // Verify backend session after login
+        // Verify backend session
         const session = await API.auth.checkSession();
         if (session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
@@ -70,7 +75,6 @@ export default function AdminLogin() {
           setError("Session verification failed. Please try again.");
         }
       } else {
-        // Reduce attempts for wrong password
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
         localStorage.setItem("adminAttempts", newAttempts);
