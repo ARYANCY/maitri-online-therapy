@@ -14,12 +14,12 @@ export default function Admin() {
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
 
-  // --- Validate admin session
+  // --- Validate admin session first
   const validateAdminSession = useCallback(async () => {
     setCheckingAdmin(true);
 
-    // Check localStorage first
-    if (localStorage.getItem("isAdmin") === "true") {
+    const localAdmin = localStorage.getItem("isAdmin") === "true";
+    if (localAdmin) {
       setCheckingAdmin(false);
       return true;
     }
@@ -42,7 +42,7 @@ export default function Admin() {
     }
   }, [navigate]);
 
-  // --- Fetch therapist applications
+  // --- Fetch therapist applications from server
   const fetchTherapists = useCallback(async () => {
     setError("");
     setLoading(true);
@@ -69,7 +69,7 @@ export default function Admin() {
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
 
-          // Auto-delete after 2 hours
+          // Schedule auto-delete after 2 hours
           if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
           autoDeleteTimers.current[id] = setTimeout(async () => {
             try {
@@ -93,7 +93,7 @@ export default function Admin() {
     }
   };
 
-  // --- Initialize: validate session and fetch data
+  // --- Initialize: validate session then fetch therapists
   useEffect(() => {
     let isMounted = true;
 
@@ -137,16 +137,8 @@ export default function Admin() {
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
                 <tr>
-                  {[
-                    "Name",
-                    "Email",
-                    "Phone",
-                    "Specialization",
-                    "Experience",
-                    "Qualifications",
-                    "Status",
-                    "Actions",
-                  ].map(h => <th key={h}>{h}</th>)}
+                  {["Name","Email","Phone","Specialization","Experience","Qualifications","Status","Actions"]
+                    .map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -190,9 +182,7 @@ export default function Admin() {
             </table>
           </div>
         ) : (
-          !loading && (
-            <div className="text-center py-4 text-muted">No therapist applications found.</div>
-          )
+          !loading && <div className="text-center py-4 text-muted">No therapist applications found.</div>
         )}
 
         <footer className="text-center mt-5">

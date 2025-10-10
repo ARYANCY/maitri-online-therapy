@@ -2,12 +2,12 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
 
-// Helper: determine if user is admin
+// Helper: check if email belongs to an admin
 const isAdminUser = (email) => {
-  const adminEmails = (process.env.ADMIN_EMAILS || "")
+  return (process.env.ADMIN_EMAILS || "")
     .split(",")
-    .map(e => e.trim().toLowerCase());
-  return adminEmails.includes(email?.toLowerCase());
+    .map(e => e.trim().toLowerCase())
+    .includes(email?.toLowerCase());
 };
 
 // Google OAuth Strategy
@@ -21,55 +21,38 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const email = profile.emails?.[0]?.value?.toLowerCase();
+        if (!email) return done(new Error("Google account has no email"), null);
+
         const avatar = profile.photos?.[0]?.value || "";
-
-        if (!email) {
-          return done(new Error("Google account does not provide email"), null);
-        }
-
-        // Find existing user
         let user = await User.findOne({ email });
 
         if (!user) {
+          // Create new user
           user = await User.create({
             name: profile.displayName || "Unknown User",
             email,
             googleId: profile.id,
             avatar,
-            password: "", // empty since Google OAuth
+            password: "",
             isAdmin: isAdminUser(email),
           });
-          console.log("New user created:", user._id, "isAdmin:", user.isAdmin);
         } else {
-          // Update avatar if missing
-          if (!user.avatar && avatar) {
-            user.avatar = avatar;
-          }
-
-          // Ensure isAdmin is correct
-          if (!user.isAdmin && isAdminUser(email)) {
-            user.isAdmin = true;
-          }
-
+          // Update existing user
+          if (!user.avatar && avatar) user.avatar = avatar;
+          if (!user.isAdmin && isAdminUser(email)) user.isAdmin = true;
           await user.save();
-          console.log("Existing user found:", user._id, "isAdmin:", user.isAdmin);
         }
 
-        return done(null, user);
+        done(null, user);
       } catch (err) {
-        console.error("Error in GoogleStrategy:", err);
-        return done(err, null);
+        done(err, null);
       }
     }
   )
 );
 
-// Serialize user to session (store id + isAdmin)
+// Serialize user into session: store id + isAdmin
 passport.serializeUser((user, done) => {
-  if (!user?._id) {
-    console.error("serializeUser: user or _id missing", user);
-    return done(new Error("User or _id missing in serializeUser"));
-  }
   done(null, { id: user._id, isAdmin: user.isAdmin });
 });
 
@@ -77,16 +60,10 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (obj, done) => {
   try {
     const user = await User.findById(obj.id);
-    if (!user) {
-      console.error("deserializeUser: No user found for id", obj.id);
-      return done(null, false);
-    }
-
-    // Attach isAdmin from session to ensure persistence
+    if (!user) return done(null, false);
     user.isAdmin = obj.isAdmin || user.isAdmin;
     done(null, user);
   } catch (err) {
-    console.error("Error in deserializeUser:", err);
     done(err, null);
   }
 });

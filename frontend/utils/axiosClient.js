@@ -10,9 +10,8 @@ const API = axios.create({
 API.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    // Check if session expired or unauthorized
     if (error.response?.status === 401) {
-      localStorage.removeItem("isAdmin"); // Clear admin session if unauthorized
+      localStorage.removeItem("isAdmin");
     }
     const message =
       error.response?.data?.error ||
@@ -26,12 +25,12 @@ API.interceptors.response.use(
 // ---------------- Auth Endpoints ----------------
 API.auth = {
   login: (data) => API.post("/auth/login", data),
-  logout: () => API.post("/auth/logout").then(res => {
+  logout: async () => {
+    await API.post("/auth/logout");
     localStorage.removeItem("isAdmin");
-    return res;
-  }),
+  },
   register: (data) => API.post("/auth/register", data),
-  checkSession: () => API.get("/api/session-check"),
+  checkSession: () => API.get("/auth/session-check"), // consistent with server
   adminCheckSession: () => API.get("/auth/session-check"),
   adminLogin: (data) => API.post("/auth/admin-login", data),
 };
@@ -83,18 +82,18 @@ API.reminder = {
 // ---------------- Helper: Validate Admin Session ----------------
 async function validateAdminSession() {
   const isAdmin = localStorage.getItem("isAdmin") === "true";
-  if (!isAdmin) {
-    try {
-      const session = await API.auth.checkSession();
-      if (!session?.user?.isAdmin) {
-        localStorage.removeItem("isAdmin");
-        return Promise.reject(new Error("Admin session invalid or expired."));
-      }
-      localStorage.setItem("isAdmin", "true");
-    } catch {
+  if (isAdmin) return;
+
+  try {
+    const session = await API.auth.adminCheckSession();
+    if (!session?.user?.isAdmin) {
       localStorage.removeItem("isAdmin");
-      return Promise.reject(new Error("Admin session invalid or expired."));
+      throw new Error("Admin session invalid or expired");
     }
+    localStorage.setItem("isAdmin", "true");
+  } catch (err) {
+    localStorage.removeItem("isAdmin");
+    throw new Error("Admin session invalid or expired");
   }
 }
 

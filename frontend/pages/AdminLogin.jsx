@@ -11,20 +11,18 @@ export default function AdminLogin() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize: load attempts and verify session
+  // --- Initialize: check stored attempts and session
   useEffect(() => {
     let isMounted = true;
 
     const initialize = async () => {
-      // Load attempt info
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
-      // Check session
       try {
-        const session = await API.auth.adminCheckSession();
+        const session = await API.auth.adminCheckSession(); // session first
         if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           navigate("/admin", { replace: true });
@@ -40,19 +38,18 @@ export default function AdminLogin() {
     };
 
     initialize();
-
     return () => {
       isMounted = false;
     };
   }, [navigate]);
 
-  // --- Handle input change
+  // --- Input change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Handle form submission
+  // --- Form submission: first MongoDB check, then session
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || attemptsLeft <= 0) return;
@@ -61,22 +58,10 @@ export default function AdminLogin() {
     setError("");
 
     try {
+      // 1️⃣ Verify password with MongoDB
       const res = await API.auth.adminLogin({ password });
 
-      if (res.success) {
-        // Verify session immediately after login
-        const session = await API.auth.adminCheckSession();
-        if (session?.user?.isAdmin) {
-          localStorage.setItem("isAdmin", "true");
-          localStorage.removeItem("adminAttempts");
-          localStorage.removeItem("adminBlocked");
-          navigate("/admin", { replace: true });
-          return;
-        } else {
-          setError("Session verification failed. Try again.");
-        }
-      } else {
-        // Handle wrong password attempts
+      if (!res.success) {
         const remaining = attemptsLeft - 1;
         setAttemptsLeft(remaining);
         localStorage.setItem("adminAttempts", remaining);
@@ -87,6 +72,19 @@ export default function AdminLogin() {
         } else {
           setError(`Incorrect password. ${remaining} attempt(s) remaining.`);
         }
+        return;
+      }
+
+      // 2️⃣ Verify session after successful DB login
+      const session = await API.auth.adminCheckSession();
+      if (session?.user?.isAdmin) {
+        localStorage.setItem("isAdmin", "true");
+        localStorage.removeItem("adminAttempts");
+        localStorage.removeItem("adminBlocked");
+        navigate("/admin", { replace: true });
+        return;
+      } else {
+        setError("Session verification failed. Try again.");
       }
     } catch (err) {
       console.error("Admin login error:", err);

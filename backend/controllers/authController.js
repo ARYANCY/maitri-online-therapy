@@ -3,6 +3,14 @@ const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// --- Helper: determine if user is admin
+const isAdminEmail = (email) => {
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+  return adminEmails.includes(email?.toLowerCase());
+};
+
 // --- Email/password login
 exports.loginUser = async (req, res) => {
   try {
@@ -15,38 +23,23 @@ exports.loginUser = async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Determine admin rights
-    let isAdmin = false;
-    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+    const isAdmin = isAdminEmail(email) || (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD);
 
-    if ((process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) || adminEmails.includes(email.toLowerCase())) {
-      isAdmin = true;
-    }
-
-    // Update MongoDB if user becomes admin
     if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
     }
 
-    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ error: "Session save failed" });
-
       res.json({
         success: true,
-        user: {
-          _id: user._id,
-          email: user.email,
-          name: user.name,
-          isAdmin
-        }
+        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
       });
     });
-
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
@@ -63,6 +56,7 @@ exports.googleLogin = async (req, res) => {
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
+
     const payload = ticket.getPayload();
     const email = payload.email.toLowerCase();
     const name = payload.name || "Unknown User";
@@ -70,7 +64,7 @@ exports.googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email });
     if (!user) {
-      user = new User({
+      user = await User.create({
         email,
         name,
         googleId: payload.sub,
@@ -78,36 +72,24 @@ exports.googleLogin = async (req, res) => {
         password: "",
         isAdmin: false
       });
-      await user.save();
     }
 
-    // Determine admin rights
-    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
-    const isAdmin = adminEmails.includes(email);
-
+    const isAdmin = isAdminEmail(email);
     if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
     }
 
-    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ message: "Session save failed" });
-
       res.json({
         success: true,
-        user: {
-          _id: user._id,
-          email: user.email,
-          name: user.name,
-          isAdmin
-        }
+        user: { _id: user._id, email: user.email, name: user.name, isAdmin }
       });
     });
-
   } catch (err) {
     console.error("Google login error:", err);
     res.status(500).json({ message: "Google login failed", error: err.message });
@@ -130,18 +112,10 @@ exports.requireAdmin = (req, res, next) => {
 
 // --- Logout
 exports.logoutUser = (req, res) => {
-  try {
-    if (req.session) {
-      req.session.destroy(err => {
-        if (err) return res.status(500).json({ success: false, message: "Logout failed" });
-        res.clearCookie("connect.sid");
-        return res.json({ success: true, message: "Logged out successfully" });
-      });
-    } else {
-      return res.json({ success: true, message: "Logged out successfully" });
-    }
-  } catch (err) {
-    console.error("Logout error:", err);
-    return res.status(500).json({ success: false, message: "Logout failed due to server error" });
-  }
+  if (!req.session) return res.json({ success: true, message: "Logged out successfully" });
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ success: false, message: "Logout failed" });
+    res.clearCookie("connect.sid");
+    res.json({ success: true, message: "Logged out successfully" });
+  });
 };
