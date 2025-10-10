@@ -24,7 +24,7 @@ export default function Admin() {
     }
 
     try {
-      const session = await API.auth.checkSession();
+      const session = await API.auth.adminCheckSession();
       if (session?.user?.isAdmin) {
         localStorage.setItem("isAdmin", "true");
         setCheckingAdmin(false);

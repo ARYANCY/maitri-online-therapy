@@ -11,18 +11,18 @@ export default function AdminLogin() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize attempts and check session
+  // --- Initialize attempts and verify session
   useEffect(() => {
     let isMounted = true;
 
-    const initialize = async () => {
+    const init = async () => {
       // Load attempts info
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
-      // Check session
+      // Verify session
       try {
         const session = await API.auth.checkSession();
         if (isMounted && session?.user?.isAdmin) {
@@ -39,20 +39,20 @@ export default function AdminLogin() {
       }
     };
 
-    initialize();
+    init();
 
     return () => {
       isMounted = false;
     };
   }, [navigate]);
 
-  // --- Handle input change
+  // --- Handle input
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Handle form submission
+  // --- Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || attemptsLeft <= 0) return;
@@ -64,7 +64,7 @@ export default function AdminLogin() {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        const session = await API.auth.checkSession();
+        const session = await API.auth.adminCheckSession();
         if (session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
@@ -72,7 +72,7 @@ export default function AdminLogin() {
           navigate("/admin", { replace: true });
           return;
         }
-        setError("Session verification failed. Try again.");
+        setError("Session verification failed. Please try again.");
       } else {
         const remaining = attemptsLeft - 1;
         setAttemptsLeft(remaining);
@@ -87,7 +87,8 @@ export default function AdminLogin() {
       }
     } catch (err) {
       console.error("Admin login error:", err);
-      setError(err?.response?.data?.message || "Something went wrong. Try again.");
+      const msg = err?.response?.data?.message || err?.message || "Something went wrong. Try again.";
+      setError(msg);
     } finally {
       setLoading(false);
       setPassword("");
@@ -96,24 +97,24 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
-      <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
-      <p className="admin-login-warning text-center text-muted mb-4">
-        Restricted to authorized administrators only. Unauthorized attempts will be blocked.
+    <div className="admin-login-container container my-5 p-5 shadow rounded border border-light">
+      <h2 className="text-center mb-3">Admin Login</h2>
+      <p className="text-center text-muted mb-4">
+        Restricted to authorized administrators. Unauthorized attempts will be blocked.
       </p>
 
       <form
         onSubmit={handleSubmit}
         className="admin-login-form mx-auto"
-        style={{ maxWidth: "400px" }}
+        style={{ maxWidth: 400 }}
       >
         <input
           type="password"
           placeholder="Enter Admin Password"
           value={password}
           onChange={handleChange}
-          className="form-control"
           ref={inputRef}
+          className="form-control form-control-lg"
           disabled={loading || attemptsLeft <= 0}
           autoFocus
         />
@@ -132,7 +133,11 @@ export default function AdminLogin() {
           </div>
         )}
 
-        {error && <div className="text-danger mt-2 text-center">{error}</div>}
+        {error && (
+          <div className="alert alert-danger mt-3 text-center p-2">
+            {error}
+          </div>
+        )}
       </form>
     </div>
   );
