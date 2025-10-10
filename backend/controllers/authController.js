@@ -7,16 +7,25 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Determine admin status
+    // Determine admin status: either password or email matches admin config
     let isAdmin = false;
+
     if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
       isAdmin = true;
+    }
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
+    if (adminEmails.includes(email)) isAdmin = true;
+
+    // Persist admin status in user doc
+    if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
     }
@@ -49,25 +58,26 @@ exports.googleLogin = async (req, res) => {
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
+
     const payload = ticket.getPayload();
     const email = payload.email;
 
     let user = await User.findOne({ email });
     if (!user) {
-      // Create new user
       user = new User({
         email,
         name: payload.name,
         googleId: payload.sub,
         avatar: payload.picture,
-        isAdmin: false  // default: not admin
+        isAdmin: false
       });
       await user.save();
     }
 
-    // Optional: mark as admin if email matches admin list
+    // Determine admin status
     const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
     const isAdmin = adminEmails.includes(email);
+
     if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
@@ -91,10 +101,19 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-// --- Require login middleware
+// --- Require login middleware (all users)
 exports.requireLogin = (req, res, next) => {
   if (!req.session.userId) return res.status(401).json({ error: "Unauthorized" });
   req.user = { _id: req.session.userId, isAdmin: req.session.isAdmin || false };
+  next();
+};
+
+// --- Require admin middleware (for /admin route)
+exports.requireAdmin = (req, res, next) => {
+  if (!req.session.userId || !req.session.isAdmin) {
+    return res.status(403).json({ error: "Admin access only" });
+  }
+  req.user = { _id: req.session.userId, isAdmin: true };
   next();
 };
 

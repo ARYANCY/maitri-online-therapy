@@ -44,8 +44,8 @@ router.get(
         }
 
         const redirectUrl = isAdmin
-          ? `${process.env.CLIENT_URL}/splash`  // Admin landing
-          : `${process.env.CLIENT_URL}/home`;   // Normal user landing
+          ? `${process.env.CLIENT_URL}/admin` 
+          : `${process.env.CLIENT_URL}/dashboard`;   
         return res.redirect(redirectUrl);
       });
     } catch (err) {

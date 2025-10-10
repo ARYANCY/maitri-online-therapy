@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const requireLogin = require("../middleware/authMiddleware");
-const { checkAdmin } = require("../middleware/checkAdmin");
+const { requireLogin, requireAdmin } = require("../middleware/authMiddleware");
 const {
   createTherapist,
   getAcceptedTherapists,
@@ -10,12 +9,14 @@ const {
   deleteTherapist
 } = require("../controllers/therapistController");
 
-router.post("/apply", createTherapist);
-router.get("/accepted", getAcceptedTherapists);
+// Public routes
+router.post("/apply", createTherapist);        // Anyone can apply
+router.get("/accepted", getAcceptedTherapists); // Anyone can view accepted therapists
 
-router.use(requireLogin);
-router.get("/", checkAdmin, getAllTherapists);
-router.patch("/:id/status", checkAdmin, updateTherapistStatus);
-router.delete("/:id", checkAdmin, deleteTherapist);
+// Protected routes (admin only)
+router.use(requireLogin, requireAdmin);
+router.get("/", getAllTherapists);                // Admin: get all
+router.patch("/:id/status", updateTherapistStatus); // Admin: update status
+router.delete("/:id", deleteTherapist);           // Admin: delete therapist
 
 module.exports = router;

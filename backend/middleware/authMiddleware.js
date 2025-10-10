@@ -1,4 +1,25 @@
-module.exports = function requireLogin(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+// authMiddleware.js
+
+// --- Require login (any user)
+exports.requireLogin = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: "Unauthorized: Please login" });
+  }
+  req.user = {
+    _id: req.session.userId,
+    isAdmin: req.session.isAdmin || false,
+  };
+  next();
+};
+
+// --- Require admin (only for /admin routes)
+exports.requireAdmin = (req, res, next) => {
+  if (!req.session.userId || !req.session.isAdmin) {
+    return res.status(403).json({ error: "Forbidden: Admins only" });
+  }
+  req.user = {
+    _id: req.session.userId,
+    isAdmin: true,
+  };
   next();
 };
