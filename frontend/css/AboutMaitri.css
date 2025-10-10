@@ -18,6 +18,75 @@
   flex-direction: column;
   gap: 4rem;
 }
+.maitri-treasure {
+  background: linear-gradient(135deg, #fceabb, #f8b500);
+  padding: 3rem 2rem;
+  border-radius: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin: 3rem 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.maitri-treasure:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.maitri-treasure h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 2px #fff;
+}
+
+.maitri-treasure p {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.treasure-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.treasure-features li {
+  font-size: 1rem;
+  margin: 0.6rem 0;
+  font-weight: 600;
+  color: #222;
+  position: relative;
+  padding-left: 25px;
+}
+
+.treasure-features li::before {
+  content: "★";
+  position: absolute;
+  left: 0;
+  color: #ff6f61;
+  font-size: 1.2rem;
+}
+
+.maitri-treasure-btn {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.9rem 2.2rem;
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.maitri-treasure-btn:hover {
+  background: linear-gradient(135deg, #feb47b, #ff7e5f);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
 
 .maitri-hero {
   text-align: center;

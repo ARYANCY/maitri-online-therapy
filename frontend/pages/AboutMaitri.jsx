@@ -138,18 +138,25 @@ export default function AboutMaitri() {
           ))}
         </section>
 
-        <section className="maitri-contact">
-          <h2>{t("aboutMaitri.contactTitle", "Get Started with Maitri")}</h2>
+        <section className="maitri-treasure">
+          <h2>{t("aboutMaitri.treasureTitle", "Discover Maitri Treasure")}</h2>
           <p>
             {t(
-              "aboutMaitri.contactDescription",
-              "Start your journey toward better mental health today. Explore our journaling and support features now!"
+              "aboutMaitri.treasureDescription",
+              "Students can explore hidden gems around the campus—cafes, study spots, canteens, and chill zones. Connect with friends, join communities, and make every day an adventure!"
             )}
           </p>
-          <button className="maitri-start-btn">
-            {t("aboutMaitri.startButton", "Start Journaling")}
+          <ul className="treasure-features">
+            <li>{t("aboutMaitri.treasureFeature1", "Find the best cafes and hangout spots in GU")}</li>
+            <li>{t("aboutMaitri.treasureFeature2", "Meet like-minded friends and build your network")}</li>
+            <li>{t("aboutMaitri.treasureFeature3", "Track your favorite study corners and events")}</li>
+            <li>{t("aboutMaitri.treasureFeature4", "Share tips, stories, and hidden gems with peers")}</li>
+          </ul>
+          <button className="maitri-treasure-btn">
+            {t("aboutMaitri.treasureButton", "Start the Treasure Hunt")}
           </button>
         </section>
+
       </div>
     </div>
   );
