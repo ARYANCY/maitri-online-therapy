@@ -10,17 +10,15 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
 
-  // --- Validate admin session first
+  // --- Validate admin session ONCE
   const validateAdminSession = useCallback(async () => {
-    setCheckingAdmin(true);
-
     const localAdmin = localStorage.getItem("isAdmin") === "true";
     if (localAdmin) {
-      setCheckingAdmin(false);
+      setAuthorized(true);
       return true;
     }
 
@@ -28,7 +26,7 @@ export default function Admin() {
       const session = await API.auth.adminCheckSession();
       if (session?.user?.isAdmin) {
         localStorage.setItem("isAdmin", "true");
-        setCheckingAdmin(false);
+        setAuthorized(true);
         return true;
       } else {
         localStorage.removeItem("isAdmin");
@@ -42,11 +40,11 @@ export default function Admin() {
     }
   }, [navigate]);
 
-  // --- Fetch therapist applications from server
+  // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
-    setError("");
-    setLoading(true);
     try {
+      setError("");
+      setLoading(true);
       const data = await API.adminTherapist.getAll();
       setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
     } catch (err) {
@@ -84,6 +82,8 @@ export default function Admin() {
         case "delete":
           await API.adminTherapist.delete(id);
           break;
+        default:
+          break;
       }
       await fetchTherapists();
     } catch (err) {
@@ -93,13 +93,13 @@ export default function Admin() {
     }
   };
 
-  // --- Initialize: validate session then fetch therapists
+  // --- Run once on mount
   useEffect(() => {
     let isMounted = true;
 
     (async () => {
       const valid = await validateAdminSession();
-      if (valid && isMounted) fetchTherapists();
+      if (valid && isMounted) await fetchTherapists();
     })();
 
     return () => {
@@ -109,8 +109,8 @@ export default function Admin() {
     };
   }, [validateAdminSession, fetchTherapists]);
 
-  if (checkingAdmin)
-    return <div className="text-center py-5">Verifying admin privileges...</div>;
+  // --- Show only after authorization check once
+  if (!authorized) return <div className="text-center py-5">Verifying admin privileges...</div>;
 
   return (
     <>
