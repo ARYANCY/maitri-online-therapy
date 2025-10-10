@@ -11,24 +11,30 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  // Initialize attempts and blocked state
+  // --- Initialize attempts and check if already logged in
   useEffect(() => {
     const blocked = localStorage.getItem("adminBlocked") === "true";
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+    if (isAdmin) {
+      navigate("/admin", { replace: true });
+      return;
+    }
 
     if (blocked) setAttemptsLeft(0);
     else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
     inputRef.current?.focus();
-  }, []);
+  }, [navigate]);
 
-  // Handle password input change
+  // --- Handle password input
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // Handle form submit
+  // --- Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
@@ -37,22 +43,22 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      // Send admin login request
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        // Immediately check session to confirm admin
         const session = await API.auth.checkSession();
+
         if (session?.user?.isAdmin) {
-          // Clear attempts and redirect
+          // Store session in localStorage
+          localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");
-          navigate("/admin", { replace: true }); // replace prevents back-navigation
+
+          navigate("/admin", { replace: true });
         } else {
           setError("Session verification failed. Please try again.");
         }
       } else {
-        // Handle incorrect password
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
         localStorage.setItem("adminAttempts", newAttempts);
