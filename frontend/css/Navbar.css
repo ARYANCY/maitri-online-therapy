@@ -3,19 +3,19 @@
   top: 0;
   width: 100%;
   z-index: 1000;
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  background: rgba(0, 0, 0, 0.65);
-  border-bottom: 1px solid rgba(36, 36, 36, 0.15);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(200, 200, 200, 0.25);
   border-radius: 0 0 24px 24px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   transition: all 0.3s ease;
 }
-.ww{
-  color: white !important;
+.ww {
+  color: #000 !important;
 }
 .navbar-top {
   display: flex;
@@ -32,7 +32,7 @@
   font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
-  background: linear-gradient(270deg, #6C63FF, #4A90E2, #9C27B0, #6C63FF);
+  background: linear-gradient(270deg, #4A90E2, #6C63FF, #9C27B0, #4A90E2);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -53,44 +53,44 @@
   transform: scale(1.08);
 }
 
-
 .navbar-bottom {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   padding: 0.9rem 12rem;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(0,0,0,0.08);
   gap: 0.7rem;
   border-radius: 0 0 24px 24px;
 }
+
 .navbar-bottom .dashboard-btn {
-  background: var(--btn-bg-default);
+  background: #4A90E2;
   color: #fff;
   font-weight: 700;
   border: none;
-  border-radius: var(--border-radius);
-  padding: var(--padding-tab-btn);
+  border-radius: 10px;
+  padding: 0.6rem 1.3rem;
   cursor: pointer;
   text-transform: uppercase;
-  transition: all 0.35s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.35s ease;
 }
 
 .navbar-bottom .dashboard-btn:hover {
-  background: var(--btn-bg-hover);
+  background: #6C63FF;
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 6px 18px rgba(155,77,202,0.5);
+  box-shadow: 0 6px 18px rgba(76, 89, 255, 0.35);
 }
 
 .navbar-bottom .dashboard-btn.logout-btn {
-  color: #000;
-  background: var(--btn-bg-default);
+  color: #fff;
+  background: #9C27B0;
 }
 
 .navbar-bottom .dashboard-btn.logout-btn:hover {
-  background: var(--btn-bg-hover);
+  background: #B946E0;
   transform: translateY(-2px) scale(1.03);
 }
 
@@ -113,7 +113,7 @@
 }
 
 .navbar-link {
-  color: #000000;
+  color: #333;
   text-decoration: none;
   font-weight: 500;
   padding: 0.6rem 4.2rem;
@@ -122,14 +122,13 @@
 }
 
 .navbar-link:hover {
-  background: rgba(108, 99, 255, 0.2);
-  color: #000000;
-  font-weight: 6050;
+  background: rgba(108, 99, 255, 0.1);
+  color: #000;
   transform: translateY(-2px);
 }
 
 .navbar-link.active {
-  border-bottom: 2px solid #6C63FF;
+  border-bottom: 2px solid #4A90E2;
 }
 
 .button-row {
@@ -150,14 +149,14 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .navbar-chat-btn:hover,
 .reminder-btn:hover {
   background: linear-gradient(135deg, #7a70ff, #357ABD);
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 
 .lang-switcher {
@@ -166,12 +165,12 @@
 }
 
 .lang-switcher button {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   padding: 6px 16px;
   cursor: pointer;
-  color: #fff;
+  color: #333;
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.25s ease;
@@ -179,8 +178,8 @@
 
 .lang-switcher button:hover,
 .lang-switcher button.active {
-  background: rgba(255, 255, 255, 0.28);
-  color: #6C63FF;
+  background: rgba(74, 144, 226, 0.2);
+  color: #4A90E2;
   transform: translateY(-1px) scale(1.02);
 }
 
@@ -201,21 +200,21 @@
   height: 46px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #6C63FF;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+  border: 2px solid #4A90E2;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .navbar-avatar:hover {
   transform: scale(1.12);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
 }
 
 .navbar-avatar.placeholder {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #6C63FF;
+  background: #4A90E2;
   color: #fff;
   font-weight: 700;
   font-size: 1rem;
@@ -224,20 +223,20 @@
 .navbar-username {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #fff;
+  color: #333;
 }
 
 .navbar-right button {
   background: transparent;
   border: none;
-  color: #fff;
+  color: #333;
   cursor: pointer;
   font-size: 0.9rem;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .navbar-right button:hover {
-  color: #6C63FF;
+  color: #4A90E2;
   transform: translateY(-1px) scale(1.02);
 }
 
@@ -253,14 +252,10 @@
 #checkbox {
   display: none;
 }
-#checkbox {
-  display: none;
-}
 
 .toggle {
   position: relative;
-      top: 56px;
-
+  top: 56px;
   width: 40px;
   height: 40px;
   cursor: pointer;
@@ -277,7 +272,7 @@
 .bars {
   width: 100%;
   height: 4px;
-  background-color: rgb(120, 120, 120);
+  background-color: rgb(90, 90, 90);
   border-radius: 4px;
 }
 
@@ -361,10 +356,10 @@
   }
 
   .navbar-title {
-        flex: 1;
-        text-align: center;
-        font-size: 2.5rem;
-        padding: 7px 7.8rem;
+    flex: 1;
+    text-align: center;
+    font-size: 2.5rem;
+    padding: 7px 7.8rem;
   }
 
   .navbar-bottom {
@@ -391,14 +386,13 @@
   }
 }
 
-
 @media (max-width: 480px) {
   .navbar-top, .navbar-bottom {
     padding: 0.5rem 1rem;
   }
   .navbar-title {
-        font-size: 2.6rem;
-        padding: 5px 2.5rem;
+    font-size: 2.6rem;
+    padding: 5px 2.5rem;
   }
   .navbar-username {
     font-size: 0.8rem;
