@@ -14,9 +14,7 @@ router.get("/accepted", getAcceptedTherapists);
 router.use(requireLogin);
 
 router.get("/", checkAdmin, getAllTherapists);
-
 router.patch("/:id/status", checkAdmin, updateTherapistStatus);
-
 router.delete("/:id", checkAdmin, deleteTherapist);
 
 module.exports = router;
