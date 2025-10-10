@@ -16,11 +16,13 @@ export default function AdminLogin() {
     let isMounted = true;
 
     const initialize = async () => {
+      // Load attempts info
       const blocked = localStorage.getItem("adminBlocked") === "true";
       const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
       if (blocked) setAttemptsLeft(0);
       else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
 
+      // Check session
       try {
         const session = await API.auth.checkSession();
         if (isMounted && session?.user?.isAdmin) {
@@ -53,7 +55,7 @@ export default function AdminLogin() {
   // --- Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (attemptsLeft <= 0 || loading) return;
+    if (loading || attemptsLeft <= 0) return;
 
     setLoading(true);
     setError("");
@@ -69,24 +71,23 @@ export default function AdminLogin() {
           localStorage.removeItem("adminBlocked");
           navigate("/admin", { replace: true });
           return;
-        } else {
-          setError("Session verification failed. Please try again.");
         }
+        setError("Session verification failed. Try again.");
       } else {
-        const newAttempts = attemptsLeft - 1;
-        setAttemptsLeft(newAttempts);
-        localStorage.setItem("adminAttempts", newAttempts);
+        const remaining = attemptsLeft - 1;
+        setAttemptsLeft(remaining);
+        localStorage.setItem("adminAttempts", remaining);
 
-        if (newAttempts <= 0) {
+        if (remaining <= 0) {
           localStorage.setItem("adminBlocked", "true");
           setError("You have been blocked from further attempts.");
         } else {
-          setError(`Incorrect password. ${newAttempts} attempt(s) remaining.`);
+          setError(`Incorrect password. ${remaining} attempt(s) remaining.`);
         }
       }
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong. Please try again.");
+      console.error("Admin login error:", err);
+      setError(err?.response?.data?.message || "Something went wrong. Try again.");
     } finally {
       setLoading(false);
       setPassword("");
@@ -95,7 +96,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="admin-login-container container my-5 p-4">
+    <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
       <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
       <p className="admin-login-warning text-center text-muted mb-4">
         Restricted to authorized administrators only. Unauthorized attempts will be blocked.

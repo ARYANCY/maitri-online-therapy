@@ -82,11 +82,16 @@ app.use("/api/therapists", requireLogin,therapistRoutes);
 app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
+  const isLoggedIn = !!req.user || !!req.session?.userId;
+  const user = req.user || (req.session?.userId
+    ? { _id: req.session.userId, isAdmin: req.session.isAdmin || false }
+    : null);
   res.json({
-    success: !!req.user || !!req.session?.userId,
-    user: req.user || (req.session?.userId ? { _id: req.session.userId, isAdmin: req.session.isAdmin || false } : null)
+    success: isLoggedIn,
+    user
   });
 });
+
 
 
 app.get("/", (req, res) => {

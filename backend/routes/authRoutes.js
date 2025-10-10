@@ -60,49 +60,56 @@ router.get("/logout", (req, res, next) => {
   }
 });
 
-// backend/routes/authRoutes.js
-router.post("/admin-login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    if (!password) return res.status(400).json({ success: false, error: "Password required" });
+router.post("/admin-login", (req, res) => {
+  const { password } = req.body;
 
-    // Optionally, allow a default admin account
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (password !== adminPassword) return res.json({ success: false });
-
-    // Check if admin user exists in DB
-    let user = await User.findOne({ email });
-    if (!user) {
-      // Create admin user if not exists
-      user = new User({ 
-        name: "Admin", 
-        email: email || "admin@example.com", 
-        password: "", 
-        isAdmin: true 
-      });
-      await user.save();
-    } else if (!user.isAdmin) {
-      // Make existing user admin
-      user.isAdmin = true;
-      await user.save();
-    }
-
-    // Set session
-    req.session.userId = user._id;
-    req.session.isAdmin = true;
-
-    req.session.save(err => {
-      if (err) return res.status(500).json({ success: false, error: "Session save failed" });
-      res.json({ success: true, user: { _id: user._id, email: user.email, name: user.name, isAdmin: true } });
+  if (password === process.env.ADMIN_PASSWORD) {
+    // Create or fetch admin user in DB if not exists
+    User.findOne({ isAdmin: true }).then(async adminUser => {
+      if (!adminUser) {
+        // First-time setup: create admin user in DB
+        const newAdmin = new User({
+          name: "Admin",
+          email: process.env.ADMIN_EMAILS?.split(",")[0] || "admin@example.com",
+          password: await bcrypt.hash(password, 10),
+          isAdmin: true
+        });
+        await newAdmin.save();
+        req.session.userId = newAdmin._id;
+        req.session.isAdmin = true;
+        req.session.save(err => {
+          if (err) return res.status(500).json({ success: false, message: "Session save failed" });
+          return res.json({ success: true });
+        });
+      } else {
+        // Admin already exists, just set session
+        req.session.userId = adminUser._id;
+        req.session.isAdmin = true;
+        req.session.save(err => {
+          if (err) return res.status(500).json({ success: false, message: "Session save failed" });
+          return res.json({ success: true });
+        });
+      }
+    }).catch(err => {
+      console.error(err);
+      return res.status(500).json({ success: false, message: "Login failed" });
     });
-
-  } catch (err) {
-    console.error("Admin login error:", err);
-    res.status(500).json({ success: false, error: "Login failed" });
+  } else {
+    return res.json({ success: false });
   }
 });
 
+// Session check route
+router.get("/session-check", (req, res) => {
+  if (!req.session.userId) return res.json({ user: null });
+  return res.json({
+    user: {
+      _id: req.session.userId,
+      isAdmin: req.session.isAdmin || false
+    }
+  });
+});
 
 
 module.exports = router;
