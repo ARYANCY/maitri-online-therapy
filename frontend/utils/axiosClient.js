@@ -19,7 +19,7 @@ API.interceptors.response.use(
   }
 );
 
-// Existing auth endpoints
+// Auth endpoints
 API.auth = {
   login: data => API.post("/auth/login", data),
   logout: () => API.post("/auth/logout"),
@@ -27,7 +27,7 @@ API.auth = {
   checkSession: () => API.get("/api/session-check"),
 };
 
-// Existing dashboard endpoints
+// Dashboard endpoints
 API.dashboard = {
   get: (type = "entries") => API.get(`/api/dashboard?type=${type}`),
   getTasks: () => API.get("/api/dashboard/tasks"),
@@ -37,13 +37,20 @@ API.dashboard = {
   },
 };
 
+// Therapist endpoints
 API.therapist = {
-  apply: data => API.post("/therapists/apply", data),          // public
-  getAll: () => API.get("/therapists"),                       // admin only
-  getAccepted: () => API.get("/therapists/accepted"),         // public
-  updateStatus: (id, status) => API.patch(`/therapists/${id}/status`, { status }), // admin only
-  delete: id => API.delete(`/therapists/${id}`),             // admin only
+  apply: data => API.post("/api/therapists/apply", data),       // public
+  getAll: () => API.get("/api/therapists"),                    // admin only
+  getAccepted: () => API.get("/api/therapists/accepted"),      // public
+  updateStatus: (id, status) => API.patch(`/api/therapists/${id}/status`, { status }), // admin only
+  delete: id => API.delete(`/api/therapists/${id}`),          // admin only
 };
 
+// Reminder endpoints
+API.reminder = {
+  create: data => API.post("/api/reminders", data),
+  list: () => API.get("/api/reminders"),
+  cancel: id => API.delete(`/api/reminders/${id}`),
+};
 
 export default API;
