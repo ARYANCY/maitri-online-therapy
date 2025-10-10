@@ -1,107 +1,92 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "../css/Admin.css";
 import Navbar from "../components/Navbar";
+import "../css/Admin.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [error, setError] = useState("");
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
 
-  const checkAdmin = async () => {
+  // --- Check admin session
+  const checkAdmin = useCallback(async () => {
     try {
-      const data = await API.auth.checkSession();
-      if (!data?.user?.isAdmin) {
-        navigate("/admin-login");
+      const session = await API.auth.checkSession();
+      if (!session?.user?.isAdmin) {
+        navigate("/admin-login", { replace: true });
         return false;
       }
       setCheckingAdmin(false);
       return true;
     } catch {
-      navigate("/admin-login");
+      navigate("/admin-login", { replace: true });
       return false;
     }
-  };
+  }, [navigate]);
 
-  const fetchTherapists = async () => {
+  // --- Fetch therapist applications
+  const fetchTherapists = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
-      const data = await API.adminTherapist.getAll(); // <-- Use admin endpoint
+      const data = await API.adminTherapist.getAll();
       setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
     } catch (err) {
-      setError(err.message || "Error fetching therapist applications");
+      setError(err.message || "Failed to fetch therapist applications.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleAccept = async (id) => {
+  // --- Handle therapist actions
+  const handleAction = async (id, action) => {
     setActionLoading(id);
     try {
-      await API.adminTherapist.updateStatus(id, "accepted"); // <-- Admin endpoint
+      if (action === "accept") await API.adminTherapist.updateStatus(id, "accepted");
+      if (action === "reject") {
+        await API.adminTherapist.updateStatus(id, "rejected");
+
+        // Auto-delete after 2 hours
+        setTimeout(async () => {
+          try {
+            await API.adminTherapist.delete(id);
+            fetchTherapists();
+          } catch (err) {
+            console.error("Auto-delete failed:", err);
+          }
+        }, 2 * 60 * 60 * 1000);
+      }
+      if (action === "delete") await API.adminTherapist.delete(id);
+
+      // Refresh after any action
       fetchTherapists();
     } catch (err) {
-      setError(err.message || "Error accepting therapist");
+      setError(err.message || `Failed to ${action} therapist.`);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (id) => {
-    if (!window.confirm("Are you sure you want to reject this therapist?")) return;
-    setActionLoading(id);
-    try {
-      await API.adminTherapist.updateStatus(id, "rejected"); // <-- Admin endpoint
-      fetchTherapists();
-
-      setTimeout(async () => {
-        try {
-          await API.adminTherapist.delete(id); // <-- Admin endpoint
-          fetchTherapists();
-        } catch (err) {
-          console.error("Auto-delete failed:", err);
-        }
-      }, 2 * 60 * 60 * 1000);
-    } catch (err) {
-      setError(err.message || "Error rejecting therapist");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this therapist?")) return;
-    setActionLoading(id);
-    try {
-      await API.adminTherapist.delete(id); // <-- Admin endpoint
-      fetchTherapists();
-    } catch (err) {
-      setError(err.message || "Error deleting therapist");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
+  // --- Initial checks & data fetch
   useEffect(() => {
     (async () => {
       const ok = await checkAdmin();
       if (ok) fetchTherapists();
     })();
-  }, []);
+  }, [checkAdmin, fetchTherapists]);
 
   if (checkingAdmin) return <div className="text-center py-5">Checking admin privileges...</div>;
 
   return (
     <>
       <Navbar />
-      <div className="admin-container light-version container my-5 p-4">
-        <div className="text-center mb-4 intro-section">
+      <div className="admin-container container my-5 p-4">
+        <div className="text-center mb-4">
           <h1 className="text-primary fw-bold">Therapist Applications</h1>
           <p className="text-muted lead">
             Review therapist applications. Approve trusted professionals or reject unverified entries.
@@ -114,7 +99,7 @@ export default function Admin() {
         {error && <div className="alert alert-danger text-center">{error}</div>}
         {loading && <div className="text-center my-3">Loading therapists...</div>}
 
-        {!loading && therapists.length > 0 && (
+        {!loading && therapists.length > 0 ? (
           <div className="table-responsive shadow-sm glass-card p-3 rounded">
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
@@ -126,7 +111,7 @@ export default function Admin() {
               </thead>
               <tbody>
                 {therapists.map(t => (
-                  <tr key={t._id} className="therapist-row">
+                  <tr key={t._id}>
                     <td>{t.name}</td>
                     <td>{t.email}</td>
                     <td>{t.phone}</td>
@@ -135,13 +120,25 @@ export default function Admin() {
                     <td>{t.qualifications || "N/A"}</td>
                     <td className={`status ${t.status}`}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</td>
                     <td className="action-buttons">
-                      <button onClick={() => handleAccept(t._id)} className="btn btn-sm mx-1 status-btn accepted" disabled={t.status === "accepted" || actionLoading === t._id}>
+                      <button
+                        className="btn btn-sm mx-1 status-btn accepted"
+                        onClick={() => handleAction(t._id, "accept")}
+                        disabled={t.status === "accepted" || actionLoading === t._id}
+                      >
                         {actionLoading === t._id && t.status !== "accepted" ? "..." : "Accept"}
                       </button>
-                      <button onClick={() => handleReject(t._id)} className="btn btn-sm mx-1 status-btn rejected" disabled={t.status === "rejected" || actionLoading === t._id}>
+                      <button
+                        className="btn btn-sm mx-1 status-btn rejected"
+                        onClick={() => handleAction(t._id, "reject")}
+                        disabled={t.status === "rejected" || actionLoading === t._id}
+                      >
                         {actionLoading === t._id && t.status !== "rejected" ? "..." : "Reject"}
                       </button>
-                      <button onClick={() => handleDelete(t._id)} className="btn btn-sm mx-1 status-btn deleted" disabled={actionLoading === t._id}>
+                      <button
+                        className="btn btn-sm mx-1 status-btn deleted"
+                        onClick={() => handleAction(t._id, "delete")}
+                        disabled={actionLoading === t._id}
+                      >
                         Delete
                       </button>
                     </td>
@@ -150,9 +147,9 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
+        ) : (
+          !loading && <div className="text-center py-4 text-muted">No therapist applications found.</div>
         )}
-
-        {!loading && therapists.length === 0 && <div className="text-center py-4 text-muted">No therapist applications found.</div>}
 
         <footer className="text-center mt-5">
           <hr />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import "../css/AdminLogin.css";
@@ -11,13 +11,12 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  useEffect(() => {
+  // Initialize attempts
+  React.useEffect(() => {
     const blocked = localStorage.getItem("adminBlocked") === "true";
     const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-
     if (blocked) setAttemptsLeft(0);
     else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
-
     inputRef.current?.focus();
   }, []);
 
@@ -31,14 +30,21 @@ export default function AdminLogin() {
     if (attemptsLeft <= 0 || loading) return;
 
     setLoading(true);
+
     try {
       const res = await API.auth.adminLogin({ password });
 
       if (res.success) {
-        localStorage.setItem("isAdmin", "true");
-        localStorage.removeItem("adminAttempts");
-        localStorage.removeItem("adminBlocked");
-        navigate("/admin");
+        // After login, verify session immediately
+        const session = await API.auth.checkSession();
+        if (session?.user?.isAdmin) {
+          // Clear attempts and redirect
+          localStorage.removeItem("adminAttempts");
+          localStorage.removeItem("adminBlocked");
+          navigate("/admin");
+        } else {
+          setError("Session failed. Please try again.");
+        }
       } else {
         const newAttempts = attemptsLeft - 1;
         setAttemptsLeft(newAttempts);
