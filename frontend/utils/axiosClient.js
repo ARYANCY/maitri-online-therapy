@@ -37,12 +37,13 @@ API.dashboard = {
   },
 };
 
-// ===== New Therapist Endpoints =====
 API.therapist = {
-  apply: data => API.post("/therapists/apply", data),
-  getAll: () => API.get("/therapists/all"),
-  getAccepted: () => API.get("/therapists/accepted"),
-  updateStatus: (id, status) => API.patch(`/therapists/${id}/status`, { status }),
+  apply: data => API.post("/therapists/apply", data),          // public
+  getAll: () => API.get("/therapists/all"),                   // admin only
+  getAccepted: () => API.get("/therapists/accepted"),         // public
+  updateStatus: (id, status) => API.patch(`/therapists/${id}/status`, { status }), // admin only
+  delete: id => API.delete(`/therapists/${id}`),             // admin only
 };
+
 
 export default API;

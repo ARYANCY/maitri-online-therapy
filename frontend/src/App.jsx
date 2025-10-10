@@ -7,7 +7,7 @@ import AboutMaitri from "../pages/AboutMaitri";
 import TalkToCounselor from "../pages/TalkToCounselor";
 import TherapistForm from "../pages/TherapistForm";
 import Admin from "../pages/Admin";
-
+import AdminLogin from "./pages/AdminLogin";
 export default function App() {
   return (
     <Router>
@@ -18,6 +18,7 @@ export default function App() {
         <Route path="/about-maitri" element={<AboutMaitri />} />
         <Route path="/talk-to-counselor" element={<TalkToCounselor />} />
         <Route path="/therapist-form" element={<TherapistForm />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Home />} />
       </Routes>

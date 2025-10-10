@@ -8,30 +8,47 @@ import "bootstrap/dist/css/bootstrap.min.css";
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
   const navigate = useNavigate();
 
   const fetchTherapists = async () => {
     setError("");
+    setLoading(true);
     try {
       const data = await API.therapist.getAll();
       setTherapists(
-        data.map(t => ({
+        data.map((t) => ({
           ...t,
-          status: t.status || "pending", // Ensure all new ones default to pending
+          status: t.status || "pending", // Default to pending if not set
         }))
       );
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || "Error fetching therapist applications");
+      setError(err.message || "Error fetching therapist applications");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccept = async (id) => {
+    setActionLoading(id);
+    try {
+      await API.therapist.updateStatus(id, "accepted");
+      fetchTherapists();
+    } catch (err) {
+      setError(err.message || "Error accepting therapist");
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleReject = async (id) => {
+    setActionLoading(id);
     try {
       await API.therapist.updateStatus(id, "rejected");
       fetchTherapists();
 
-      // Schedule deletion after 2 hours
+      // Schedule auto-deletion after 2 hours
       setTimeout(async () => {
         try {
           await API.therapist.delete(id);
@@ -40,20 +57,24 @@ export default function Admin() {
         } catch (err) {
           console.error("Auto-delete failed:", err);
         }
-      }, 2 * 60 * 60 * 1000); // 2 hours in ms
+      }, 2 * 60 * 60 * 1000); // 2 hours
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || "Error rejecting therapist");
+      setError(err.message || "Error rejecting therapist");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const handleAccept = async (id) => {
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this therapist?")) return;
+    setActionLoading(id);
     try {
-      await API.therapist.updateStatus(id, "accepted");
+      await API.therapist.delete(id);
       fetchTherapists();
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || "Error accepting therapist");
+      setError(err.message || "Error deleting therapist");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -81,12 +102,22 @@ export default function Admin() {
         </div>
 
         {error && <div className="alert alert-danger text-center">{error}</div>}
+        {loading && <div className="text-center my-3">Loading...</div>}
 
         <div className="table-responsive shadow-sm glass-card p-3 rounded">
           <table className="table table-hover align-middle text-center admin-table">
             <thead className="table-light">
               <tr>
-                {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(h => (
+                {[
+                  "Name",
+                  "Email",
+                  "Phone",
+                  "Specialization",
+                  "Experience",
+                  "Qualifications",
+                  "Status",
+                  "Actions",
+                ].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -94,10 +125,12 @@ export default function Admin() {
             <tbody>
               {therapists.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="text-muted py-4">No applications found.</td>
+                  <td colSpan="8" className="text-muted py-4">
+                    No applications found.
+                  </td>
                 </tr>
               ) : (
-                therapists.map(t => (
+                therapists.map((t) => (
                   <tr key={t._id}>
                     <td>{t.name}</td>
                     <td>{t.email}</td>
@@ -112,16 +145,23 @@ export default function Admin() {
                       <button
                         onClick={() => handleAccept(t._id)}
                         className="btn btn-sm mx-1 status-btn accepted"
-                        disabled={t.status === "accepted"}
+                        disabled={t.status === "accepted" || actionLoading === t._id}
                       >
                         Accept
                       </button>
                       <button
                         onClick={() => handleReject(t._id)}
                         className="btn btn-sm mx-1 status-btn rejected"
-                        disabled={t.status === "rejected"}
+                        disabled={t.status === "rejected" || actionLoading === t._id}
                       >
                         Reject
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t._id)}
+                        className="btn btn-sm mx-1 status-btn deleted"
+                        disabled={actionLoading === t._id}
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -133,8 +173,12 @@ export default function Admin() {
 
         <footer className="text-center mt-5">
           <hr />
-          <Link to="/talk-to-counselor" className="btn btn-link me-3">Talk to Counselor</Link>
-          <Link to="/therapist-form" className="btn btn-link">Therapist Form</Link>
+          <Link to="/talk-to-counselor" className="btn btn-link me-3">
+            Talk to Counselor
+          </Link>
+          <Link to="/therapist-form" className="btn btn-link">
+            Therapist Form
+          </Link>
         </footer>
       </div>
     </>
