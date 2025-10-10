@@ -16,7 +16,7 @@ export default function Home() {
             A space to connect, learn, and grow — start your journey with Google login.
           </p>
           <button onClick={handleGoogleLogin} className="google-login-btn">
-            Login with Google
+            Start your journey
           </button>
         </div>
       </div>

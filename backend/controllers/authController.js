@@ -3,34 +3,26 @@ const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// --- Email/password login
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Determine admin status: either password or email matches admin config
     let isAdmin = false;
-
-    if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
-      isAdmin = true;
-    }
+    if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) isAdmin = true;
 
     const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
     if (adminEmails.includes(email)) isAdmin = true;
 
-    // Persist admin status in user doc
     if (isAdmin && !user.isAdmin) {
       user.isAdmin = true;
       await user.save();
     }
 
-    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
@@ -48,7 +40,6 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// --- Google OAuth login
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
@@ -58,7 +49,6 @@ exports.googleLogin = async (req, res) => {
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
-
     const payload = ticket.getPayload();
     const email = payload.email;
 
@@ -74,7 +64,6 @@ exports.googleLogin = async (req, res) => {
       await user.save();
     }
 
-    // Determine admin status
     const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
     const isAdmin = adminEmails.includes(email);
 
@@ -83,7 +72,6 @@ exports.googleLogin = async (req, res) => {
       await user.save();
     }
 
-    // Set session
     req.session.userId = user._id;
     req.session.isAdmin = isAdmin;
 
@@ -101,23 +89,18 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-// --- Require login middleware (all users)
 exports.requireLogin = (req, res, next) => {
   if (!req.session.userId) return res.status(401).json({ error: "Unauthorized" });
   req.user = { _id: req.session.userId, isAdmin: req.session.isAdmin || false };
   next();
 };
 
-// --- Require admin middleware (for /admin route)
 exports.requireAdmin = (req, res, next) => {
-  if (!req.session.userId || !req.session.isAdmin) {
-    return res.status(403).json({ error: "Admin access only" });
-  }
+  if (!req.session.userId || !req.session.isAdmin) return res.status(403).json({ error: "Admin access only" });
   req.user = { _id: req.session.userId, isAdmin: true };
   next();
 };
 
-// --- Logout
 exports.logoutUser = (req, res) => {
   try {
     if (req.session) {
