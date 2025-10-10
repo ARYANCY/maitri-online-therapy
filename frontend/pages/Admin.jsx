@@ -14,19 +14,27 @@ export default function Admin() {
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
 
-  // --- Verify admin session
+  // --- Verify admin session only once
   const checkAdmin = useCallback(async () => {
     setCheckingAdmin(true);
+
+    // If already verified in localStorage, skip API call
+    if (localStorage.getItem("isAdmin") === "true") {
+      setCheckingAdmin(false);
+      return true;
+    }
+
     try {
       const session = await API.auth.checkSession();
-      if (!session?.user?.isAdmin) {
+      if (session?.user?.isAdmin) {
+        localStorage.setItem("isAdmin", "true");
+        setCheckingAdmin(false);
+        return true;
+      } else {
         localStorage.removeItem("isAdmin");
         navigate("/admin-login", { replace: true });
         return false;
       }
-      localStorage.setItem("isAdmin", "true");
-      setCheckingAdmin(false);
-      return true;
     } catch {
       localStorage.removeItem("isAdmin");
       navigate("/admin-login", { replace: true });
@@ -61,7 +69,7 @@ export default function Admin() {
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
 
-          // Schedule auto-delete in 2 hours, store timer reference for cleanup
+          // Schedule auto-delete in 2 hours
           if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
           autoDeleteTimers.current[id] = setTimeout(async () => {
             try {
@@ -98,14 +106,13 @@ export default function Admin() {
 
     return () => {
       isMounted = false;
-      // Clear all pending auto-delete timers on unmount
       Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
       autoDeleteTimers.current = {};
     };
   }, [checkAdmin, fetchTherapists]);
 
   if (checkingAdmin)
-    return <div className="text-center py-5">Checking admin privileges...</div>;
+    return <div className="text-center py-5">Verifying admin privileges...</div>;
 
   return (
     <>
