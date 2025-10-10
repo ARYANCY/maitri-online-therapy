@@ -7,7 +7,7 @@ import AboutMaitri from "../pages/AboutMaitri";
 import TalkToCounselor from "../pages/TalkToCounselor";
 import TherapistForm from "../pages/TherapistForm";
 import Admin from "../pages/Admin";
-import AdminLogin from "./pages/AdminLogin";
+import AdminLogin from "../pages/AdminLogin";
 export default function App() {
   return (
     <Router>
