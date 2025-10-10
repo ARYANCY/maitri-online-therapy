@@ -1,203 +1,220 @@
-/* TalkToCounselor.css — refined luxury newspaper aesthetic */
-
 body {
-  font-family: "Inter", "Poppins", "Georgia", serif;
-  background: linear-gradient(180deg, #f9f9f9 0%, #f2f2f2 100%);
-  color: #1b1b1b;
-  letter-spacing: 0.2px;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(120deg, #dbeafe, #f9fafb, #e0f2fe, #fef3c7);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+  color: #1a1a1a;
+  margin: 0;
   overflow-x: hidden;
 }
 
-.light-version {
-  background-color: #f9f9f9;
+.talk-page {
   min-height: 100vh;
-}
-
-header h1 {
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: #003366;
-  letter-spacing: 0.5px;
-}
-
-header p {
-  font-size: 1.1rem;
-  color: #555;
-  max-width: 700px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-/* --- Card Layout --- */
-.row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  flex-direction: column;
+}
+
+.talk-header {
+  text-align: center;
+}
+
+.talk-title {
+  font-size: 2.5rem;
+  background: linear-gradient(90deg, #004aad, #00b7ff, #ff00a8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+.talk-subtitle {
+  font-size: 1.15rem;
+  color: #444;
+  margin-top: 10px;
+}
+
+.counselor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
   justify-content: center;
+  align-items: stretch;
+  padding: 1rem;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 18px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
-  width: 100%;
+.counselor-card {
+  background: linear-gradient(145deg, #ffffff, #f3f4f6);
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.glass-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+.counselor-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 74, 173, 0.05), rgba(255, 0, 168, 0.05));
+  z-index: 0;
 }
 
-.card-body {
+.counselor-card-body {
+  position: relative;
+  z-index: 1;
   padding: 1.8rem;
 }
 
-.card-title {
-  font-size: 1.3rem;
-  color: #002b6b;
-  margin-bottom: 0.5rem;
+.counselor-name {
+  font-size: 1.4rem;
   font-weight: 600;
+  color: #004aad;
+  margin-bottom: 0.6rem;
 }
 
-.card-text {
+.counselor-info {
   color: #333;
-  font-size: 0.97rem;
-  margin-bottom: 6px;
+  font-size: 0.95rem;
+  margin: 0.3rem 0;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #004aad, #002f6c);
-  border: none;
+.btn-call {
+  display: inline-block;
+  background: linear-gradient(90deg, #004aad, #00b7ff);
+  color: #fff;
+  font-weight: 600;
   border-radius: 10px;
-  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  text-decoration: none;
+  margin-top: 1rem;
   transition: all 0.35s ease;
-  letter-spacing: 0.3px;
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #002f6c, #001d47);
-  transform: translateY(-2px);
+.btn-call:hover {
+  background: linear-gradient(90deg, #00b7ff, #ff00a8);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
 }
 
-/* --- Section Division --- */
-.talk-container {
-  padding-bottom: 60px;
+.counselor-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, #ffffff, #e8ecf1);
+  border-color: rgba(0, 74, 173, 0.2);
 }
 
-.container-divider {
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(to right, transparent, #004aad, transparent);
-  margin: 40px 0;
-}
-
-/* --- Footer --- */
-footer {
-  background: #ffffff;
-  border-top: 1px solid #ddd;
-  padding: 50px 0 30px;
-  color: #333;
+/* FOOTER */
+.footer-section {
+  margin-top: auto;
+  background: linear-gradient(135deg, #004aad, #00b7ff, #ff00a8);
+  background-size: 300% 300%;
+  animation: gradientMove 12s ease infinite;
+  color: #fff;
   text-align: center;
+  padding: 2.5rem 1rem;
   position: relative;
   overflow: hidden;
 }
 
-footer::before {
-  content: "";
-  position: absolute;
-  top: -50px;
-  left: -100px;
-  width: 300%;
-  height: 200px;
-  background: radial-gradient(circle at center, #e0e9ff 0%, transparent 70%);
-  opacity: 0.5;
-  transform: rotate(-15deg);
+.footer-overlay {
+  position: relative;
+  z-index: 1;
 }
 
-footer .footer-heading {
-  font-size: 1.4rem;
+.footer-title {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #004aad;
-  margin-bottom: 15px;
+  letter-spacing: 1px;
 }
 
-footer p {
-  font-size: 0.95rem;
-  color: #555;
-  margin-bottom: 10px;
+.footer-subtitle {
+  font-size: 1rem;
+  margin: 0.6rem 0 1.5rem;
+  color: #e8f1ff;
 }
 
-.footer-links a {
-  color: #004aad;
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-link {
+  color: #ffffff;
+  font-weight: 600;
   text-decoration: none;
-  margin: 0 12px;
-  font-weight: 500;
+  position: relative;
   transition: color 0.3s ease;
 }
 
-.footer-links a:hover {
-  color: #001d47;
-  text-decoration: underline;
+.footer-link::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #fff;
+  transition: width 0.3s ease;
 }
 
-footer .social-icons {
-  margin-top: 15px;
+.footer-link:hover {
+  color: #ffe6f2;
 }
 
-footer .social-icons a {
-  color: #555;
-  margin: 0 10px;
-  font-size: 1.4rem;
-  transition: color 0.3s ease, transform 0.3s ease;
+.footer-link:hover::after {
+  width: 100%;
 }
 
-footer .social-icons a:hover {
-  color: #004aad;
-  transform: scale(1.2);
+.footer-copy {
+  font-size: 0.9rem;
+  opacity: 0.85;
 }
 
-/* --- Responsive Refinements --- */
-@media (max-width: 992px) {
-  header h1 {
-    font-size: 2rem;
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
   }
-  .card-body {
-    padding: 1.5rem;
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .talk-title {
+    font-size: 2.2rem;
+  }
+  .counselor-grid {
+    gap: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
-  header h1 {
-    font-size: 1.8rem;
+  .talk-title {
+    font-size: 2rem;
   }
-  header p {
+  .talk-subtitle {
     font-size: 1rem;
-  }
-  .glass-card {
-    margin-bottom: 1rem;
   }
 }
 
 @media (max-width: 576px) {
-  header h1 {
-    font-size: 1.5rem;
+  .talk-title {
+    font-size: 1.7rem;
   }
-  .card-title {
-    font-size: 1.1rem;
+  .counselor-card {
+    margin: 0 0.5rem;
   }
-  .card-text {
-    font-size: 0.9rem;
+  .btn-call {
+    width: 100%;
+    text-align: center;
   }
-  .btn-primary {
-    font-size: 0.9rem;
-  }
-  footer .footer-links {
-    display: flex;
+  .footer-links {
     flex-direction: column;
-    align-items: center;
-    gap: 6px;
+    gap: 0.8rem;
   }
 }
