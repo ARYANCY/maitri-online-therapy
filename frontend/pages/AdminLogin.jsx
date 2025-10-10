@@ -8,8 +8,8 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
-  const navigate = useNavigate();
   const inputRef = useRef(null);
+  const navigate = useNavigate();
 
   // --- Initialize attempts and redirect if already logged in
   useEffect(() => {
@@ -28,11 +28,13 @@ export default function AdminLogin() {
     inputRef.current?.focus();
   }, [navigate]);
 
+  // --- Handle input change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
+  // --- Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (attemptsLeft <= 0 || loading) return;
@@ -47,6 +49,7 @@ export default function AdminLogin() {
         const session = await API.auth.checkSession();
 
         if (session?.user?.isAdmin) {
+          // Store session info
           localStorage.setItem("isAdmin", "true");
           localStorage.removeItem("adminAttempts");
           localStorage.removeItem("adminBlocked");
@@ -83,7 +86,11 @@ export default function AdminLogin() {
         Restricted to authorized administrators only. Unauthorized attempts will be blocked.
       </p>
 
-      <form onSubmit={handleSubmit} className="admin-login-form mx-auto" style={{ maxWidth: "400px" }}>
+      <form
+        onSubmit={handleSubmit}
+        className="admin-login-form mx-auto"
+        style={{ maxWidth: "400px" }}
+      >
         <input
           type="password"
           placeholder="Enter Admin Password"
@@ -104,7 +111,9 @@ export default function AdminLogin() {
         </button>
 
         {attemptsLeft > 0 && !error && (
-          <div className="text-muted mt-2 text-center">Attempts remaining: {attemptsLeft}</div>
+          <div className="text-muted mt-2 text-center">
+            Attempts remaining: {attemptsLeft}
+          </div>
         )}
 
         {error && <div className="text-danger mt-2 text-center">{error}</div>}

@@ -24,6 +24,7 @@ export default function Admin() {
           navigate("/admin-login", { replace: true });
           return false;
         }
+        localStorage.setItem("isAdmin", "true");
       } catch {
         localStorage.removeItem("isAdmin");
         navigate("/admin-login", { replace: true });
@@ -34,7 +35,7 @@ export default function Admin() {
     return true;
   }, [navigate]);
 
-  // --- Fetch all therapist applications
+  // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
     setError("");
     setLoading(true);
@@ -58,6 +59,7 @@ export default function Admin() {
           break;
         case "reject":
           await API.adminTherapist.updateStatus(id, "rejected");
+          // Schedule auto-delete in 2 hours
           setTimeout(async () => {
             try {
               await API.adminTherapist.delete(id);
@@ -73,7 +75,7 @@ export default function Admin() {
         default:
           break;
       }
-      fetchTherapists();
+      await fetchTherapists();
     } catch (err) {
       setError(err.message || `Failed to ${action} therapist.`);
     } finally {
@@ -81,6 +83,7 @@ export default function Admin() {
     }
   };
 
+  // --- Initialize: check admin and fetch therapists
   useEffect(() => {
     (async () => {
       const ok = await checkAdmin();
@@ -88,7 +91,8 @@ export default function Admin() {
     })();
   }, [checkAdmin, fetchTherapists]);
 
-  if (checkingAdmin) return <div className="text-center py-5">Checking admin privileges...</div>;
+  if (checkingAdmin)
+    return <div className="text-center py-5">Checking admin privileges...</div>;
 
   return (
     <>
@@ -99,7 +103,10 @@ export default function Admin() {
           <p className="text-muted lead">
             Review therapist applications. Approve trusted professionals or reject unverified entries.
           </p>
-          <button className="btn btn-outline-primary mt-3" onClick={() => navigate("/dashboard")}>
+          <button
+            className="btn btn-outline-primary mt-3"
+            onClick={() => navigate("/dashboard")}
+          >
             Go to Dashboard
           </button>
         </div>
@@ -112,7 +119,16 @@ export default function Admin() {
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
                 <tr>
-                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(h => (
+                  {[
+                    "Name",
+                    "Email",
+                    "Phone",
+                    "Specialization",
+                    "Experience",
+                    "Qualifications",
+                    "Status",
+                    "Actions",
+                  ].map(h => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
@@ -126,7 +142,9 @@ export default function Admin() {
                     <td>{t.specialization}</td>
                     <td>{t.experience} yrs</td>
                     <td>{t.qualifications || "N/A"}</td>
-                    <td className={`status ${t.status}`}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</td>
+                    <td className={`status ${t.status}`}>
+                      {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
+                    </td>
                     <td className="action-buttons">
                       <button
                         className="btn btn-sm mx-1 status-btn accepted"
@@ -156,13 +174,19 @@ export default function Admin() {
             </table>
           </div>
         ) : (
-          !loading && <div className="text-center py-4 text-muted">No therapist applications found.</div>
+          !loading && (
+            <div className="text-center py-4 text-muted">No therapist applications found.</div>
+          )
         )}
 
         <footer className="text-center mt-5">
           <hr />
-          <Link to="/talk-to-counselor" className="btn btn-link me-3">Talk to Counselor</Link>
-          <Link to="/therapist-form" className="btn btn-link">Therapist Form</Link>
+          <Link to="/talk-to-counselor" className="btn btn-link me-3">
+            Talk to Counselor
+          </Link>
+          <Link to="/therapist-form" className="btn btn-link">
+            Therapist Form
+          </Link>
         </footer>
       </div>
     </>
