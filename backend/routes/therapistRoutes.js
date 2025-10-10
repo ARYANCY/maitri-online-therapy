@@ -6,7 +6,7 @@ const {
   getAllTherapists,
   updateTherapistStatus,
   deleteTherapist,
-} = require("./controllers/therapistController");
+} = require("../controllers/therapistController");
 
 // Apply login middleware to all routes in this router
 router.use(requireLogin);
