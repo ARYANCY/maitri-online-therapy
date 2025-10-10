@@ -191,7 +191,7 @@ const resources = {
         treasureTitle: "Discover Maitri Treasure",
         treasureDescription:
           "Students can explore hidden gems around campus—cafes, study spots, canteens, and chill zones. Connect with friends, join communities, and make every day an adventure!",
-        treasureFeature1: "Find the best cafes and hangout spots around GU",
+        treasureFeature1: "Find the best cafes and hangout spots around Gauhati University,Guwahati",
         treasureFeature2: "Meet like-minded friends and grow your network",
         treasureFeature3: "Track your favorite study corners and campus events",
         treasureFeature4: "Share tips, stories, and hidden gems with peers",
@@ -412,7 +412,7 @@ hi: {
         treasureTitle: "मैत्री ट्रेज़र की खोज करें",
         treasureDescription:
           "छात्र कैम्पस के आसपास छिपी हुई जगहों—कैफे, अध्ययन स्थल, कैंटीन और आराम क्षेत्रों की खोज कर सकते हैं। दोस्तों से जुड़ें, समुदाय में शामिल हों और हर दिन को एक रोमांचक अनुभव बनाएं!",
-        treasureFeature1: "GU के सर्वश्रेष्ठ कैफे और हांगआउट स्पॉट खोजें",
+        treasureFeature1: "गुवाहाटी विश्वविद्यालय,गुवाहाटी के सर्वश्रेष्ठ कैफे और हांगआउट स्पॉट खोजें",
         treasureFeature2: "समान विचारधारा वाले दोस्तों से मिलें और अपना नेटवर्क बनाएं",
         treasureFeature3: "अपने पसंदीदा अध्ययन स्थल और आयोजनों का ट्रैक रखें",
         treasureFeature4: "टिप्स, कहानियाँ और छिपी हुई जगहों को साथियों के साथ साझा करें",
@@ -635,7 +635,7 @@ as: {
         treasureTitle: "মৈত্ৰী ট্রেজাৰ আবিষ্কাৰ কৰক",
         treasureDescription:
           "ছাত্ৰ-ছাত্ৰীয়ে কেম্পাছৰ চুটি ৰহস্যসমূহ—কেফে, পাঠ অধ্যয়ন স্থান, কেণ্টিন, আৰু বিশ্ৰাম অঞ্চল—অন্বেষণ কৰিব পাৰে। বন্ধু-বান্ধৱীৰ সৈতে সংযোগ কৰক, সমাজৰ অংশ হ’ব, আৰু প্ৰতিটো দিনক এক অভিযান হিচাপে উপভোগ কৰক!",
-        treasureFeature1: "GU-ৰ সৰ্বশ্ৰেষ্ঠ কেফে আৰু হেংআউট স্থানসমূহ সন্ধান কৰক",
+        treasureFeature1: "গুৱাহাটী বিশ্ববিদ্যালয়,গুৱাহাটী সৰ্বশ্ৰেষ্ঠ কেফে আৰু হেংআউট স্থানসমূহ সন্ধান কৰক",
         treasureFeature2: "সদৃশ মন থকা বন্ধু-বান্ধৱী লগ পাব আৰু আপোনাৰ নেটৱৰ্ক বৃদ্ধি কৰক",
         treasureFeature3: "আপোনাৰ প্ৰিয় অধ্যয়ন কোণ আৰু কেম্পাছৰ অনুষ্ঠানবোৰৰ খবৰ ৰাখক",
         treasureFeature4: "সহপাঠীৰ সৈতে টিপছ, গল্প আৰু ৰহস্যসমূহ শ্বেয়াৰ কৰক",
