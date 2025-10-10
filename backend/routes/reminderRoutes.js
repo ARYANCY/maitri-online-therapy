@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const reminderController = require("../controllers/reminderController");
 const requireLogin = require("../middleware/authMiddleware");
-router.post("/", requireLogin, reminderController.createReminder);
-router.get("/", requireLogin, reminderController.listReminders);
-router.delete("/:id", requireLogin, reminderController.cancelReminder);
+const { createReminder, listReminders, cancelReminder } = require("../controllers/reminderController");
+
+router.post("/", requireLogin, createReminder); // was likely router.post("/", reminderController)
+router.get("/", requireLogin, listReminders);
+router.delete("/:id", requireLogin, cancelReminder);
 
 module.exports = router;

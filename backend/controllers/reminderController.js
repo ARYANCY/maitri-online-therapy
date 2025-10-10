@@ -2,13 +2,14 @@ const mongoose = require("mongoose");
 const Reminder = require("../models/Reminder");
 const reminderScheduler = require("../jobs/reminderScheduler");
 
-exports.createReminder = async (req, res) => {
+const createReminder = async (req, res) => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ error: "Unauthorized: Please log in" });
 
     const { message, sendAt } = req.body;
-    if (!message || !sendAt) return res.status(400).json({ error: "'message' and 'sendAt' are required" });
+    if (!message || !sendAt)
+      return res.status(400).json({ error: "'message' and 'sendAt' are required" });
 
     const sendDate = new Date(sendAt);
     if (isNaN(sendDate.getTime()) || sendDate <= new Date()) {
@@ -23,6 +24,7 @@ exports.createReminder = async (req, res) => {
       message,
       sendAt: sendDate,
     });
+
     console.log("Reminder created in DB:", reminder);
 
     try {
@@ -39,7 +41,7 @@ exports.createReminder = async (req, res) => {
   }
 };
 
-exports.listReminders = async (req, res) => {
+const listReminders = async (req, res) => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ error: "Unauthorized: Please log in" });
@@ -52,16 +54,18 @@ exports.listReminders = async (req, res) => {
   }
 };
 
-exports.cancelReminder = async (req, res) => {
+const cancelReminder = async (req, res) => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ error: "Unauthorized: Please log in" });
 
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid reminder ID" });
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ error: "Invalid reminder ID" });
 
     const reminder = await Reminder.findOneAndDelete({ _id: id, userId: user._id });
-    if (!reminder) return res.status(404).json({ error: "Reminder not found or already deleted" });
+    if (!reminder)
+      return res.status(404).json({ error: "Reminder not found or already deleted" });
 
     try {
       reminderScheduler.cancelReminder(reminder._id);
@@ -76,3 +80,6 @@ exports.cancelReminder = async (req, res) => {
     return res.status(500).json({ error: "Server error", details: err.message });
   }
 };
+
+// Export as named functions (for proper destructuring in routes)
+module.exports = { createReminder, listReminders, cancelReminder };
