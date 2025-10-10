@@ -5,13 +5,21 @@ const { checkAdmin } = require("../middleware/checkAdmin");
 const {
   getAllTherapists,
   updateTherapistStatus,
-  deleteTherapist
+  deleteTherapist,
 } = require("../controllers/therapistController");
 
-// Admin-only routes
+// Apply login middleware to all routes in this router
 router.use(requireLogin);
-router.get("/therapists", checkAdmin, getAllTherapists);
-router.patch("/therapists/:id/status", checkAdmin, updateTherapistStatus);
-router.delete("/therapists/:id", checkAdmin, deleteTherapist);
+
+// GET /therapists/          -> Get all therapists (admin only)
+router.get("/", checkAdmin, getAllTherapists);
+
+// PATCH /therapists/:id/status -> Update therapist status (admin only)
+router.patch("/:id/status", checkAdmin, updateTherapistStatus);
+
+// DELETE /therapists/:id    -> Delete a therapist (admin only)
+router.delete("/:id", checkAdmin, deleteTherapist);
 
 module.exports = router;
+
+
