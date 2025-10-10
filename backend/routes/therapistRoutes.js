@@ -7,15 +7,13 @@ const {
   getAcceptedTherapists,
   getAllTherapists,
   updateTherapistStatus,
-  deleteTherapist,
+  deleteTherapist
 } = require("../controllers/therapistController");
 
-// Public routes
 router.post("/apply", createTherapist);
 router.get("/accepted", getAcceptedTherapists);
 
-// Admin routes (protected)
-router.use(requireLogin); // All below require login
+router.use(requireLogin);
 router.get("/", checkAdmin, getAllTherapists);
 router.patch("/:id/status", checkAdmin, updateTherapistStatus);
 router.delete("/:id", checkAdmin, deleteTherapist);
