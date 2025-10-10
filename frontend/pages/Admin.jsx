@@ -10,35 +10,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
-  const [authorized, setAuthorized] = useState(false);
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
-
-  // --- Validate admin session ONCE
-  const validateAdminSession = useCallback(async () => {
-    const localAdmin = localStorage.getItem("isAdmin") === "true";
-    if (localAdmin) {
-      setAuthorized(true);
-      return true;
-    }
-
-    try {
-      const session = await API.auth.adminCheckSession();
-      if (session?.user?.isAdmin) {
-        localStorage.setItem("isAdmin", "true");
-        setAuthorized(true);
-        return true;
-      } else {
-        localStorage.removeItem("isAdmin");
-        navigate("/admin-login", { replace: true });
-        return false;
-      }
-    } catch {
-      localStorage.removeItem("isAdmin");
-      navigate("/admin-login", { replace: true });
-      return false;
-    }
-  }, [navigate]);
 
   // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
@@ -93,24 +66,15 @@ export default function Admin() {
     }
   };
 
-  // --- Run once on mount
+  // --- Load data once
   useEffect(() => {
-    let isMounted = true;
-
-    (async () => {
-      const valid = await validateAdminSession();
-      if (valid && isMounted) await fetchTherapists();
-    })();
+    fetchTherapists();
 
     return () => {
-      isMounted = false;
       Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
       autoDeleteTimers.current = {};
     };
-  }, [validateAdminSession, fetchTherapists]);
-
-  // --- Show only after authorization check once
-  if (!authorized) return <div className="text-center py-5">Verifying admin privileges...</div>;
+  }, [fetchTherapists]);
 
   return (
     <>
@@ -137,7 +101,7 @@ export default function Admin() {
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
                 <tr>
-                  {["Name","Email","Phone","Specialization","Experience","Qualifications","Status","Actions"]
+                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"]
                     .map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
