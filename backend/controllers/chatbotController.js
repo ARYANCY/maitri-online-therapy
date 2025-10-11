@@ -188,25 +188,31 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-    // Get language from request, fallback to "en"
-    let userLanguage =
-      (req.getLanguage?.() || req.headers["accept-language"] || "en")
-        .split(",")[0]          // pick first preferred language
-        .split("-")[0]          // get language code only (hi, en, as)
-        .toLowerCase();         // normalize to lowercase
+// Get language from request header or function
+let userLanguage =
+  (req.getLanguage?.() || req.headers["accept-language"] || "en")
+    .split(",")[0]        // pick first preferred language
+    .split("-")[0]        // get language code only (hi, en, as)
+    .toLowerCase();       // normalize
 
-    // Only allow supported languages
-    const supportedLanguages = ["hi", "as", "en"];
-    if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
+// Only allow supported languages
+const supportedLanguages = ["hi", "as", "en"];
+if (!supportedLanguages.includes(userLanguage)) {
+  userLanguage = "en";   // fallback strictly to English
+}
 
-    // Map to language name
-    const LANGUAGE_MAP = {
-      hi: "Hindi",
-      as: "Assamese",
-      en: "English",
-    };
+// Map language code to name
+const LANGUAGE_MAP = {
+  hi: "Hindi",
+  as: "Assamese",
+  en: "English",
+};
 
-    const languageName = LANGUAGE_MAP[userLanguage]; // now works correctly
+const languageName = LANGUAGE_MAP[userLanguage];
+
+// Force i18next to use this language for this request
+req.language = userLanguage;          // or req.lng = userLanguage
+if (req.i18n) req.i18n.changeLanguage(userLanguage);
 
         const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
