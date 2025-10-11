@@ -18,7 +18,7 @@ function validateObjectId(req, res, next) {
 }
 
 // All routes below require admin login
-router.use(requireLogin, requireAdmin);
+router.use(requireAdmin);
 
 // GET all therapist forms
 router.get("/", getAllTherapists);
