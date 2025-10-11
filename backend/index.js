@@ -18,7 +18,6 @@ const { validateEnv, getConfig } = require('./config/env');
 const { connectDB } = require('./config/database');
 const logger = require('./utils/logger');
 const passport = require('./config/passport');
-const reminderScheduler = require('./jobs/reminderScheduler');
 const { i18nMiddleware } = require('./utils/i18n');
 
 // Import middleware
@@ -220,9 +219,6 @@ const startServer = async () => {
   try {
     // Connect to database
     await connectDB();
-    
-    // Initialize reminder scheduler
-    reminderScheduler.init();
     
     // Start HTTP server
     const server = app.listen(config.server.port, config.server.host, () => {
