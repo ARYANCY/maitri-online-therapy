@@ -124,6 +124,78 @@ body {
   transform: translateY(-3px);
   background: var(--bg-hover);
 }
+.report-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.report-popup {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  padding: 20px;
+  width: 300px;
+  text-align: center;
+  position: relative;
+  transform: scale(0.7);
+  opacity: 0;
+  animation: popup-zoom 0.2s forwards;
+}
+
+@keyframes popup-zoom {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.report-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.report-option-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: 1px solid #007bff;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.report-option-btn:hover {
+  background: #e2e6ea;
+}
+
+.info-tooltip {
+  margin-left: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.report-popup-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  position: absolute;
+  top: 8px;
+  right: 12px;
+}
+
 
 .download-btn {
   width: 100%;

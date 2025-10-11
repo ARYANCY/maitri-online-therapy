@@ -81,6 +81,23 @@ API.reminder = {
   },
 };
 
+API.report = {
+  download: async (format = 'json') => {
+    const url = `/api/reports/download?format=${format}`;
+    const isFile = format === 'csv' || format === 'pdf';
+    const response = await API.get(url, {
+      responseType: isFile ? 'blob' : 'json'
+    });
+    return response;
+  },
+  fetch: async (format = 'json') => {
+    // For fetching report data as JSON (no download)
+    if (format !== 'json') throw new Error("fetch only supports JSON format");
+    return API.get(`/api/reports?format=json`);
+  }
+};
+
+
 async function ensureAdminSession() {
   const localIsAdmin = localStorage.getItem("isAdmin") === "true";
   if (localIsAdmin) return;

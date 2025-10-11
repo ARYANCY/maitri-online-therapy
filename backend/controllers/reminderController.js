@@ -208,18 +208,28 @@ const getReminderStats = async (req, res) => {
       error: "Unauthorized: Please log in" 
     });
 
+    const now = new Date();
+
     const stats = await Reminder.aggregate([
       { $match: { userId: user._id } },
       {
         $group: {
           _id: null,
           total: { $sum: 1 },
-          sent: { $sum: { $cond: ["$sent", 1, 0] } },
-          pending: { $sum: { $cond: [{ $and: ["$sent", { $not: "$sent" }] }, 1, 0] } },
+          sent: { $sum: { $cond: [{ $eq: ["$sent", true] }, 1, 0] } },
+          pending: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ["$sent", false] }, { $gt: ["$sendAt", now] }] },
+                1,
+                0
+              ]
+            }
+          },
           overdue: {
             $sum: {
               $cond: [
-                { $and: [{ $not: "$sent" }, { $lte: ["$sendAt", new Date()] }] },
+                { $and: [{ $eq: ["$sent", false] }, { $lte: ["$sendAt", now] }] },
                 1,
                 0
               ]
@@ -244,6 +254,7 @@ const getReminderStats = async (req, res) => {
     });
   }
 };
+
 
 // Export as named functions (for proper destructuring in routes)
 module.exports = { createReminder, listReminders, cancelReminder, getReminderStats };

@@ -24,6 +24,9 @@ export default function Dashboard() {
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
   const [downloading, setDownloading] = useState(false);
 
+  const [showFormatPopup, setShowFormatPopup] = useState(false);
+  const [reportFormat, setReportFormat] = useState("pdf");
+
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -88,156 +91,134 @@ export default function Dashboard() {
     [todos]
   );
 
-const handleDownloadReport = useCallback(async () => {
-  if (!user) return;
-  setDownloading(true);
+    const handleDownloadReport = useCallback(async (format = "pdf") => {
+      if (!user) return;
+      setDownloading(true);
 
-  let latestChartData = chartData;
-
-  try {
-    const data = await API.dashboard.get();
-    const normalizedChartData = {};
-    Object.keys(data.chartData || {}).forEach(key => {
-      normalizedChartData[key] = Array.isArray(data.chartData[key])
-        ? data.chartData[key]
-        : [data.chartData[key]];
-    });
-    latestChartData = normalizedChartData;
-  } catch (err) {
-    console.error("Failed to fetch latest dashboard data:", err);
-  }
-
-  try {
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let yPos = 20;
-    const leftMargin = 12;
-
-    // Title
-    pdf.setFontSize(20);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Maitri Report", pageWidth / 2, yPos, { align: "center" });
-    yPos += 10;
-
-    // Disclaimer
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "normal");
-    const disclaimer =
-      "This report summarizes your mental health screening metrics.\n" +
-      "It is AI-generated; please consult a qualified counselor for professional guidance.";
-    pdf.text(pdf.splitTextToSize(disclaimer, pageWidth - 2 * leftMargin), leftMargin, yPos);
-    yPos += 24;
-
-    // User Info
-    pdf.setFontSize(14);
-    pdf.text("User Information:", leftMargin, yPos);
-    yPos += 8;
-    pdf.setFontSize(12);
-    pdf.text(`Name: ${user?.name || "Guest"}`, leftMargin + 2, yPos);
-    yPos += 8;
-    pdf.text(`Email: ${user?.email || "N/A"}`, leftMargin + 2, yPos);
-    yPos += 8;
-    pdf.text(`Language: ${localStorage.getItem("preferredLang") || "en"}`, leftMargin + 2, yPos);
-    yPos += 12;
-
-    // Screening Metrics Table
-    pdf.setFontSize(14);
-    pdf.text("Screening Metrics:", leftMargin, yPos);
-    yPos += 8;
-    pdf.setFontSize(12);
-
-    const tableColWidths = [50, 50, pageWidth - leftMargin - 50 - 50 - 12];
-    const rowPadding = 2;
-
-    const metricInfo = {
-      stress_level: { info: "Stress Level. Normal: 0-14 Low, 15-25 Moderate, 26+ High", thresholds: [0, 15, 26] },
-      happiness_level: { info: "Happiness Level. Normal: 30-50 Average, <30 Low", thresholds: [0, 30, 50] },
-      anxiety_level: { info: "Anxiety Level. Normal: 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      overall_mood_level: { info: "Overall Mood. Normal: 20-40 Average, <20 Low", thresholds: [0, 20, 40] },
-      phq9_score: { info: "PHQ-9 Depression. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      gad7_score: { info: "GAD-7 Anxiety. 0-4 Minimal, 5-9 Mild, 10-14 Moderate, 15+ Severe", thresholds: [0, 5, 10, 15] },
-      ghq_score: { info: "GHQ-12 General mental health. 0-11 Healthy, 12-20 At risk, 21+ High distress", thresholds: [0, 12, 21] }
-    };
-
-    const getColor = (metric, value) => {
-      const t = metricInfo[metric]?.thresholds;
-      if (!t) return "#000000";
-      if (metric === "happiness_level") {
-        if (value < t[1]) return "#FF0000";
-        if (value <= t[2]) return "#008000";
-        return "#FFA500";
-      } else if (metric === "stress_level" || metric === "overall_mood_level") {
-        if (value < t[1]) return "#008000";
-        if (value < t[2]) return "#FFA500";
-        return "#FF0000";
-      } else {
-        if (value < t[1]) return "#008000";
-        if (value < t[2]) return "#FFA500";
-        return "#FF0000";
+      let data;
+      try {
+        data = await API.dashboard.get();
+      } catch (err) {
+        console.error("Failed to fetch latest dashboard data:", err);
+        setDownloading(false);
+        return;
       }
-    };
 
-    if (latestChartData && Object.keys(latestChartData).length > 0) {
-      Object.keys(latestChartData).forEach(key => {
-        const value = latestChartData[key].join(", ");
-        const infoText = metricInfo[key]?.info || "Info not available";
-        const numericValue = parseFloat(latestChartData[key][0]);
-
-        const splitInfo = pdf.splitTextToSize(infoText, tableColWidths[2] - 2 * rowPadding);
-        const rowHeight = Math.max(8, splitInfo.length * 6 + rowPadding);
-
-        if (yPos + rowHeight > 280) { pdf.addPage(); yPos = 20; }
-
-        pdf.rect(leftMargin, yPos - 6, tableColWidths[0], rowHeight);
-        pdf.rect(leftMargin + tableColWidths[0], yPos - 6, tableColWidths[1], rowHeight);
-        pdf.rect(leftMargin + tableColWidths[0] + tableColWidths[1], yPos - 6, tableColWidths[2], rowHeight);
-
-        pdf.text(key.replace(/_/g, " ").toUpperCase(), leftMargin + 2, yPos);
-
-        pdf.setTextColor(getColor(key, numericValue));
-        pdf.text(value, leftMargin + tableColWidths[0] + 2, yPos);
-        pdf.setTextColor("#000000");
-        pdf.text(splitInfo, leftMargin + tableColWidths[0] + tableColWidths[1] + 2, yPos);
-
-        yPos += rowHeight;
+      const normalizedChartData = {};
+      Object.keys(data.chartData || {}).forEach(key => {
+        normalizedChartData[key] = Array.isArray(data.chartData[key])
+          ? data.chartData[key]
+          : [data.chartData[key]];
       });
-    } else {
-      pdf.text("- No metrics available.", leftMargin, yPos);
-      yPos += 8;
-    }
 
-    // Add chart snapshot after table
-const chartElement = document.querySelector(".dashboard-tab-content canvas");
-if (chartElement) {
-  const canvas = await html2canvas(chartElement, { scale: 2 });
-  const imgData = canvas.toDataURL("image/png");
+      try {
+        if (format === "pdf") {
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          let yPos = 20;
+          const leftMargin = 12;
 
-  if (yPos > 200) { // new page if not enough space
-    pdf.addPage();
-    yPos = 20;
-  }
+          pdf.setFontSize(20);
+          pdf.setFont("helvetica", "bold");
+          pdf.text("Maitri Report", pageWidth / 2, yPos, { align: "center" });
+          yPos += 10;
 
-  pdf.setFontSize(14);
-  pdf.text("Visual Chart Representation:", leftMargin, yPos + 10);
-  yPos += 20;
+          pdf.setFontSize(12);
+          pdf.setFont("helvetica", "normal");
+          pdf.text(
+            pdf.splitTextToSize(
+              "This report summarizes your mental health screening metrics.\nIt is AI-generated; please consult a qualified counselor for professional guidance.",
+              pageWidth - 2 * leftMargin
+            ),
+            leftMargin,
+            yPos
+          );
+          yPos += 24;
 
-  // Keep image smaller to fit on page
-  const maxImgWidth = pageWidth - leftMargin * 2 - 18; // narrower than full width
-  const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
-  const maxImgHeight = 100; // limit height so it doesn’t overflow
-  const finalHeight = imgHeight > maxImgHeight ? maxImgHeight : imgHeight;
+          // User info
+          pdf.setFontSize(14);
+          pdf.text("User Information:", leftMargin, yPos);
+          yPos += 8;
+          pdf.setFontSize(12);
+          pdf.text(`Name: ${user?.name || "Guest"}`, leftMargin + 2, yPos);
+          yPos += 8;
+          pdf.text(`Email: ${user?.email || "N/A"}`, leftMargin + 2, yPos);
+          yPos += 8;
+          pdf.text(`Language: ${localStorage.getItem("preferredLang") || "en"}`, leftMargin + 2, yPos);
+          yPos += 12;
 
-  pdf.addImage(imgData, "PNG", leftMargin, yPos, maxImgWidth, finalHeight);
-  yPos += finalHeight + 10;
-}
+          // Metrics table
+          const tableColWidths = [50, 50, pageWidth - leftMargin - 50 - 50 - 12];
+          const rowPadding = 2;
 
-    pdf.save("maitri-report.pdf");
-  } catch (err) {
-    console.error("PDF generation failed:", err);
-  } finally {
-    setDownloading(false);
-  }
-}, [user, chartData]);
+          Object.keys(normalizedChartData).forEach(key => {
+            const value = normalizedChartData[key].join(", ");
+            const rowHeight = 10;
+            if (yPos + rowHeight > 280) { pdf.addPage(); yPos = 20; }
+
+            pdf.rect(leftMargin, yPos - 6, tableColWidths[0], rowHeight);
+            pdf.rect(leftMargin + tableColWidths[0], yPos - 6, tableColWidths[1], rowHeight);
+            pdf.rect(leftMargin + tableColWidths[0] + tableColWidths[1], yPos - 6, tableColWidths[2], rowHeight);
+
+            pdf.text(key.replace(/_/g, " ").toUpperCase(), leftMargin + 2, yPos);
+            pdf.text(value, leftMargin + tableColWidths[0] + 2, yPos);
+
+            yPos += rowHeight;
+          });
+
+          // Chart snapshot
+          const chartElement = document.querySelector(".dashboard-tab-content canvas");
+          if (chartElement) {
+            const canvas = await html2canvas(chartElement, { scale: 2 });
+            const imgData = canvas.toDataURL("image/png");
+            const maxImgWidth = pageWidth - leftMargin * 2 - 18;
+            const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
+            const finalHeight = imgHeight > 100 ? 100 : imgHeight;
+            if (yPos > 200) { pdf.addPage(); yPos = 20; }
+            pdf.addImage(imgData, "PNG", leftMargin, yPos, maxImgWidth, finalHeight);
+          }
+
+          pdf.save(`maitri-report.pdf`);
+        }
+
+        else if (format === "csv") {
+          // CSV format
+          const rows = [["Metric", "Value"]];
+          Object.keys(normalizedChartData).forEach(key => {
+            rows.push([key, normalizedChartData[key].join(", ")]);
+          });
+          const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", "maitri-report.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        else if (format === "json") {
+          // JSON format
+          const jsonData = {
+            user: { name: user?.name, email: user?.email, language: localStorage.getItem("preferredLang") },
+            metrics: normalizedChartData
+          };
+          const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "maitri-report.json";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+      } catch (err) {
+        console.error("Report generation failed:", err);
+      } finally {
+        setDownloading(false);
+      }
+    }, [user]);
+
 
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
@@ -283,11 +264,57 @@ if (chartElement) {
             )}
             <button
               className="dashboard-download-btn download-btn"
-              onClick={handleDownloadReport}
+              onClick={() => setShowFormatPopup(true)}
               disabled={downloading}
             >
-              {downloading ? t("dashboard.downloading", "Generating Report...") : t("dashboard.downloadReport", "Download Report")}
+              {downloading
+                ? t("dashboard.downloading", "Generating Report...")
+                : t("dashboard.downloadReport", "Download Report")}
             </button>
+
+            {showFormatPopup && (
+              <div className="report-popup-overlay" onClick={() => setShowFormatPopup(false)}>
+                <div
+                  className="report-popup"
+                  onClick={(e) => e.stopPropagation()} // prevent overlay click from closing modal
+                >
+                  <h6>Select Report Format</h6>
+                  <div className="report-options">
+                    {["pdf", "csv", "json"].map(fmt => (
+                      <button
+                        key={fmt}
+                        className="report-option-btn"
+                        onClick={() => {
+                          handleDownloadReport(fmt);
+                          setShowFormatPopup(false);
+                        }}
+                      >
+                        {fmt.toUpperCase()}
+                        <span
+                          className="info-tooltip"
+                          title={
+                            fmt === "pdf"
+                              ? "Printable and shareable PDF"
+                              : fmt === "csv"
+                              ? "Spreadsheet-friendly CSV"
+                              : "Raw data JSON"
+                          }
+                        >
+                          ℹ
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <button className="report-popup-close" onClick={() => setShowFormatPopup(false)}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+
+
           </div>
         </div>
 
