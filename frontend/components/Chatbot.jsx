@@ -9,6 +9,8 @@ export default function Chatbot({ onTodosUpdate }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [error, setError] = useState(null);
+  const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom whenever messages update
@@ -18,16 +20,14 @@ export default function Chatbot({ onTodosUpdate }) {
 
   useEffect(scrollToBottom, [messages, scrollToBottom]);
 
-  // Fetch chat messages
+  // Fetch messages function
   const fetchMessages = useCallback(async () => {
     setFetching(true);
+    setError(null);
     try {
       const session = await API.auth.checkSession();
       if (!session.user) {
-        setMessages([
-          { sender: "bot", text: t("chatbot.loginPrompt", "Please log in first.") },
-        ]);
-        setFetching(false);
+        setMessages([{ sender: "bot", text: t("chatbot.loginPrompt", "Please log in first.") }]);
         return;
       }
 
@@ -36,49 +36,55 @@ export default function Chatbot({ onTodosUpdate }) {
       if (onTodosUpdate) onTodosUpdate(res.todos || []);
     } catch (err) {
       console.error("Fetch messages error:", err);
-      setMessages([
-        { sender: "bot", text: t("chatbot.connectionError", "Cannot connect to server.") },
-      ]);
+      setError(t("chatbot.connectionError", "Cannot connect to server."));
+      setMessages([{ sender: "bot", text: t("chatbot.connectionError", "Cannot connect to server.") }]);
     } finally {
       setFetching(false);
     }
   }, [onTodosUpdate, t]);
 
+  const fetchMessagesRef = useRef(fetchMessages);
+
   // Initial fetch + refresh on language change
   useEffect(() => {
-    fetchMessages();
+    fetchMessagesRef.current();
 
-    const handleLanguageChange = () => fetchMessages();
+    const handleLanguageChange = () => {
+      fetchMessagesRef.current();
+    };
+
     window.addEventListener("languageChanged", handleLanguageChange);
     return () => window.removeEventListener("languageChanged", handleLanguageChange);
-  }, [fetchMessages]);
+  }, []);
 
-  // Send a message
-  const handleSend = async () => {
+  // Debounced send function
+  const handleSend = useCallback(async () => {
     if (!input.trim()) return;
 
-    const userMessage = { sender: "user", text: input.trim() };
+    const messageText = input.trim();
+    const userMessage = { sender: "user", text: messageText };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    setTyping(true);
+    setError(null);
 
     try {
-      const res = await API.post("/api/chatbot", { message: input.trim() });
+      const res = await API.post("/api/chatbot", { message: messageText });
       if (res?.messages) setMessages(res.messages);
       if (onTodosUpdate) onTodosUpdate(res.todos || []);
     } catch (err) {
       console.error("Send message error:", err);
+      setError(t("chatbot.sendError", "Sorry, I couldn't process that message."));
       setMessages(prev => [
         ...prev,
-        {
-          sender: "bot",
-          text: t("chatbot.sendError", "Sorry, I couldn't process that message."),
-        },
+        { sender: "bot", text: t("chatbot.sendError", "Sorry, I couldn't process that message.") },
       ]);
     } finally {
       setLoading(false);
+      setTyping(false);
     }
-  };
+  }, [input, onTodosUpdate, t]);
 
   // Handle Enter key
   const handleKeyPress = e => {
@@ -97,8 +103,11 @@ export default function Chatbot({ onTodosUpdate }) {
             </div>
           ))
         )}
+        {typing && <div className="chat-message bot typing">{t("chatbot.typing", "Bot is typing...")}</div>}
         <div ref={messagesEndRef} />
       </div>
+
+      {error && <div className="chatbot-error">{error}</div>}
 
       <div className="chatbot-input-area">
         <input

@@ -185,24 +185,6 @@
   border-color: #0056b3;
 }
 
-/* Tick Mark for Selected Language */
-.lang-btn .tick-mark {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #2ecc71;
-  font-weight: bold;
-  font-size: 0.9rem;
-  transition: opacity 0.2s ease;
-}
-
-.lang-btn:not(.active) .tick-mark {
-  opacity: 0;
-}
-.lang-btn.active .tick-mark {
-  opacity: 1;
-}
 .navbar-chat-btn:hover,
 .reminder-btn:hover {
   background: linear-gradient(135deg, #7a70ff, #357ABD);

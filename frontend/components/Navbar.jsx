@@ -111,15 +111,6 @@ export default function Navbar({ user, downloadReport }) {
           >
             {t("navbar.feelingDown")}
           </a>
-
-          {typeof downloadReport === "function" && (
-            <button
-              className="navbar-link download-btn"
-              onClick={downloadReport}
-            >
-              {t("navbar.downloadReport", "Download Report")}
-            </button>
-          )}
         </div>
 
         <div className="navbar-right">
