@@ -30,10 +30,6 @@ export default function Home() {
     }
   };
 
-  const handleAdminAccess = () => {
-    if (user?.isAdmin) navigate("/admin");
-    else navigate("/admin-login");
-  };
 
   return (
     <div className="home" style={{ backgroundImage: `url(${homeImage})` }}>
@@ -52,14 +48,6 @@ export default function Home() {
           >
             {isLoading ? "Redirecting..." : "Start your journey"}
           </button>
-          <div className="mt-3">
-            <button
-              onClick={handleAdminAccess}
-              className="btn btn-outline-light btn-sm"
-            >
-              Admin Access
-            </button>
-          </div>
         </div>
       </div>
     </div>
