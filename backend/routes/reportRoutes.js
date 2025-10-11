@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { downloadReport, generateReportData, convertToCSV, sendPDF } = require("../controllers/reportController");
+const { downloadReport, generateReportData, sendPDF, convertToCSV } = require('../controllers/reportController');
 const { requireLogin } = require("../middleware/authMiddleware");
 
 // Endpoint to fetch report in any format
