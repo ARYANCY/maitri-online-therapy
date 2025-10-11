@@ -7,8 +7,15 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+
+  const MAX_ATTEMPTS = 3;
+  const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
 
   useEffect(() => {
     let isMounted = true;
@@ -21,12 +28,14 @@ export default function AdminLogin() {
             return;
           }
           // User is logged in but not admin - allow admin login
+          setIsCheckingSession(false);
           inputRef.current?.focus();
         }
       } catch (err) {
         // User is not logged in - redirect to home for Google login
         if (isMounted) {
           setError("Please login with Google first, then return here for admin access.");
+          setIsCheckingSession(false);
           setTimeout(() => {
             navigate("/", { replace: true });
           }, 3000);
@@ -37,6 +46,25 @@ export default function AdminLogin() {
     return () => { isMounted = false; };
   }, [navigate]);
 
+  useEffect(() => {
+    // Check if user is locked out
+    const lockoutTime = localStorage.getItem("adminLockoutTime");
+    if (lockoutTime) {
+      const timeLeft = LOCKOUT_DURATION - (Date.now() - parseInt(lockoutTime));
+      if (timeLeft > 0) {
+        setIsLocked(true);
+        setTimeout(() => {
+          setIsLocked(false);
+          localStorage.removeItem("adminLockoutTime");
+          setAttempts(0);
+        }, timeLeft);
+      } else {
+        localStorage.removeItem("adminLockoutTime");
+        setAttempts(0);
+      }
+    }
+  }, []);
+
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
@@ -44,64 +72,200 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading || !password) return;
+    if (loading || !password || isLocked) return;
+    
     setLoading(true);
     setError("");
+    
     try {
       const res = await API.auth.adminLogin({ password });
       if (!res?.success) {
-        setError(res?.message || "Admin login failed.");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        
+        if (newAttempts >= MAX_ATTEMPTS) {
+          setIsLocked(true);
+          localStorage.setItem("adminLockoutTime", Date.now().toString());
+          setError(`Too many failed attempts. Please wait 5 minutes before trying again.`);
+          setTimeout(() => {
+            setIsLocked(false);
+            localStorage.removeItem("adminLockoutTime");
+            setAttempts(0);
+          }, LOCKOUT_DURATION);
+        } else {
+          setError(res?.message || `Incorrect password. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`);
+        }
         return;
       }
+      
+      // Success - clear attempts and redirect
+      setAttempts(0);
+      localStorage.removeItem("adminLockoutTime");
       localStorage.setItem("isAdmin", "true");
       localStorage.setItem("adminEmail", res.user.email || "");
       localStorage.setItem("userId", res.user._id || "");
       localStorage.setItem("userName", res.user.name || "");
-      navigate("/admin", { replace: true });
+      
+      // Show success message briefly before redirect
+      setError("");
+      setTimeout(() => {
+        navigate("/admin", { replace: true });
+      }, 1000);
+      
     } catch (err) {
-      setError(err?.message || "Something went wrong.");
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setIsLocked(true);
+        localStorage.setItem("adminLockoutTime", Date.now().toString());
+        setError(`Too many failed attempts. Please wait 5 minutes before trying again.`);
+        setTimeout(() => {
+          setIsLocked(false);
+          localStorage.removeItem("adminLockoutTime");
+          setAttempts(0);
+        }, LOCKOUT_DURATION);
+      } else {
+        setError(err?.message || `Login failed. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`);
+      }
     } finally {
       setLoading(false);
-      setPassword("");
-      inputRef.current?.focus();
+      if (!isLocked) {
+        setPassword("");
+        inputRef.current?.focus();
+      }
     }
   };
 
+  const getTimeLeft = () => {
+    const lockoutTime = localStorage.getItem("adminLockoutTime");
+    if (!lockoutTime) return 0;
+    const timeLeft = LOCKOUT_DURATION - (Date.now() - parseInt(lockoutTime));
+    return Math.max(0, Math.ceil(timeLeft / 1000));
+  };
+
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+
+  useEffect(() => {
+    if (isLocked) {
+      const interval = setInterval(() => {
+        const remaining = getTimeLeft();
+        setTimeLeft(remaining);
+        if (remaining === 0) {
+          setIsLocked(false);
+          setAttempts(0);
+          localStorage.removeItem("adminLockoutTime");
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isLocked]);
+
+  if (isCheckingSession) {
+    return (
+      <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-muted">Checking authentication status...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
-      <h2 className="text-center mb-3">Admin Login</h2>
-      <p className="text-muted text-center mb-4">
-        You must be logged in with Google first. Enter the admin password below to gain admin privileges.
-      </p>
+      <div className="text-center mb-4">
+        <i className="bi bi-shield-lock display-4 text-primary mb-3"></i>
+        <h2 className="mb-2">Admin Access</h2>
+        <p className="text-muted">
+          You must be logged in with Google first. Enter the admin password below to gain admin privileges.
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: 400 }}>
-        <input
-          type="password"
-          placeholder="Enter Admin Password"
-          value={password}
-          onChange={handleChange}
-          className="form-control"
-          ref={inputRef}
-          autoFocus
-          autoComplete="current-password"
-          spellCheck="false"
-          inputMode="text"
-        />
+        <div className="mb-3">
+          <label className="form-label">Admin Password</label>
+          <div className="input-group">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter Admin Password"
+              value={password}
+              onChange={handleChange}
+              className="form-control"
+              ref={inputRef}
+              autoFocus
+              autoComplete="current-password"
+              spellCheck="false"
+              disabled={isLocked}
+            />
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLocked}
+            >
+              <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}></i>
+            </button>
+          </div>
+        </div>
+
         <button
           type="submit"
-          className="btn btn-primary w-100 mt-3"
-          disabled={loading || !password}
+          className="btn btn-primary w-100 mb-3"
+          disabled={loading || !password || isLocked}
         >
-          {loading ? "Logging in..." : "Login as Admin"}
+          {loading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+              Authenticating...
+            </>
+          ) : isLocked ? (
+            `Locked for ${timeLeft}s`
+          ) : (
+            <>
+              <i className="bi bi-unlock me-2"></i>
+              Login as Admin
+            </>
+          )}
         </button>
-        {error && <div className="text-danger mt-2 text-center">{error}</div>}
+
+        {error && (
+          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            {error}
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setError("")}
+            ></button>
+          </div>
+        )}
+
+        {attempts > 0 && !isLocked && (
+          <div className="alert alert-warning">
+            <i className="bi bi-info-circle me-2"></i>
+            Failed attempts: {attempts}/{MAX_ATTEMPTS}
+          </div>
+        )}
+
         <div className="text-center mt-3">
           <button 
             type="button" 
-            className="btn btn-link" 
+            className="btn btn-link text-decoration-none" 
             onClick={() => navigate("/")}
           >
-            ← Back to Home
+            <i className="bi bi-arrow-left me-1"></i>
+            Back to Home
           </button>
+        </div>
+
+        <div className="text-center mt-2">
+          <small className="text-muted">
+            <i className="bi bi-info-circle me-1"></i>
+            Admin access is restricted to authorized personnel only.
+          </small>
         </div>
       </form>
     </div>

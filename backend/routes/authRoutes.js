@@ -2,7 +2,34 @@ const express = require("express");
 const router = express.Router();
 const passport = require("../config/passport");
 const User = require("../models/User");
+const { getSessionInfo } = require("../controllers/authController");
 
+// Rate limiting middleware
+const rateLimit = require("express-rate-limit");
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    error: "Too many login attempts, please try again later."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // limit each IP to 3 admin login attempts per windowMs
+  message: {
+    success: false,
+    error: "Too many admin login attempts, please try again later."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Google OAuth routes
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 router.get(
@@ -10,89 +37,241 @@ router.get(
   passport.authenticate("google", { failureRedirect: `${process.env.CLIENT_URL}/login`, session: true }),
   async (req, res) => {
     try {
-      if (!req.user?._id) return res.redirect(`${process.env.CLIENT_URL}/login`);
+      if (!req.user?._id) {
+        console.error("Google OAuth: No user data received");
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+      }
 
+      // Set comprehensive session data
       req.session.userId = req.user._id;
       req.session.email = req.user.email;
       req.session.isAdmin = !!req.user.isAdmin;
+      req.session.loginTime = Date.now();
+      req.session.loginMethod = "google";
 
       req.session.save(err => {
-        if (err) return res.redirect(`${process.env.CLIENT_URL}/login`);
-        const redirectUrl = req.user.isAdmin ? `${process.env.CLIENT_URL}/admin` : `${process.env.CLIENT_URL}/dashboard`;
+        if (err) {
+          console.error("Google OAuth session save error:", err);
+          return res.redirect(`${process.env.CLIENT_URL}/login?error=session_failed`);
+        }
+        
+        const redirectUrl = req.user.isAdmin 
+          ? `${process.env.CLIENT_URL}/admin` 
+          : `${process.env.CLIENT_URL}/dashboard`;
+        
+        console.log(`Google OAuth success: User ${req.user.email} redirected to ${redirectUrl}`);
         return res.redirect(redirectUrl);
       });
     } catch (err) {
-      console.error(err);
-      return res.redirect(`${process.env.CLIENT_URL}/login`);
+      console.error("Google OAuth callback error:", err);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
     }
   }
 );
 
-router.post("/admin-login", async (req, res) => {
+// Admin login route with rate limiting
+router.post("/admin-login", adminLoginLimiter, async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password) return res.status(400).json({ success: false, message: "Password required" });
+    
+    // Input validation
+    if (!password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Admin password is required" 
+      });
+    }
 
-    if (!req.session?.userId) return res.status(401).json({ success: false, message: "No logged-in user" });
-    if (password !== process.env.ADMIN_PASSWORD) return res.status(401).json({ success: false, message: "Incorrect password" });
+    if (typeof password !== "string" || password.length < 1) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid password format" 
+      });
+    }
 
+    // Check if user is logged in
+    if (!req.session?.userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Please login with Google first before accessing admin features" 
+      });
+    }
+
+    // Verify admin password
+    if (password !== process.env.ADMIN_PASSWORD) {
+      console.warn(`Admin login attempt with incorrect password from user: ${req.session.email}`);
+      return res.status(401).json({ 
+        success: false, 
+        message: "Incorrect admin password" 
+      });
+    }
+
+    // Get user and update admin status
     const user = await User.findById(req.session.userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) {
+      console.error(`Admin login: User not found for session userId: ${req.session.userId}`);
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
 
+    // Update user admin status
     user.isAdmin = true;
     await user.save();
 
+    // Update session
     req.session.isAdmin = true;
-    req.session.email = user.email;
+    req.session.adminLoginTime = Date.now();
 
     req.session.save(err => {
-      if (err) return res.status(500).json({ success: false, message: "Session save failed" });
-      return res.json({ success: true, user: { _id: user._id, email: user.email, name: user.name, isAdmin: true } });
+      if (err) {
+        console.error("Admin login session save error:", err);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Session save failed" 
+        });
+      }
+      
+      console.log(`Admin login success: User ${user.email} granted admin access`);
+      return res.json({ 
+        success: true, 
+        user: { 
+          _id: user._id, 
+          email: user.email, 
+          name: user.name, 
+          isAdmin: true,
+          avatar: user.avatar,
+          createdAt: user.createdAt
+        },
+        sessionInfo: {
+          adminLoginTime: req.session.adminLoginTime,
+          isAdmin: true
+        }
+      });
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: "Login failed" });
+    console.error("Admin login error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Admin login failed. Please try again." 
+    });
   }
 });
 
+// Logout route
 router.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("connect.sid", { path: "/" });
-    return res.redirect(`${process.env.CLIENT_URL}/login`);
+  const userEmail = req.session?.email || "unknown";
+  
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout session destroy error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Logout failed"
+      });
+    }
+    
+    res.clearCookie("connect.sid", { 
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+    });
+    
+    console.log(`User ${userEmail} logged out successfully`);
+    return res.redirect(`${process.env.CLIENT_URL}/`);
   });
 });
 
+// Enhanced session check route
 router.get("/session-check", async (req, res) => {
   try {
     const { userId, email, isAdmin } = req.session;
     const referer = req.get("Referer") || "";
     const onAdminPage = referer.includes("/admin");
 
-    if (!userId || (onAdminPage && !isAdmin)) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+    // Check if session exists
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "No active session",
+        user: null 
+      });
     }
 
-    // Fetch user details from database for complete user info
-    const User = require("../models/User");
+    // Check admin access for admin pages
+    if (onAdminPage && !isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Admin access required",
+        user: null 
+      });
+    }
+
+    // Fetch fresh user data from database
     const user = await User.findById(userId).select("-password");
-    
     if (!user) {
-      return res.status(401).json({ success: false, message: "User not found" });
+      // User was deleted, destroy session
+      req.session.destroy();
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not found",
+        user: null 
+      });
     }
 
+    // Check if admin status has changed
+    const currentAdminStatus = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map(e => e.trim().toLowerCase())
+      .includes(email?.toLowerCase());
+
+    if (currentAdminStatus !== isAdmin) {
+      user.isAdmin = currentAdminStatus;
+      await user.save();
+      req.session.isAdmin = currentAdminStatus;
+    }
+
+    // Return comprehensive session info
     res.json({ 
       success: true, 
       user: { 
         _id: user._id, 
         email: user.email, 
         name: user.name,
-        isAdmin: !!isAdmin 
-      } 
+        isAdmin: currentAdminStatus,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      },
+      sessionInfo: {
+        loginTime: req.session.loginTime,
+        loginMethod: req.session.loginMethod,
+        isAdmin: currentAdminStatus,
+        sessionAge: req.session.loginTime ? Date.now() - req.session.loginTime : 0
+      }
     });
   } catch (err) {
     console.error("Session check error:", err);
-    res.status(500).json({ success: false, message: "Session check failed" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Session check failed",
+      error: err.message 
+    });
   }
+});
+
+// Session info route (alternative to session-check)
+router.get("/session-info", getSessionInfo);
+
+// Health check route
+router.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Auth service is healthy",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
 });
 
 module.exports = router;
