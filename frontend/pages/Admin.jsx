@@ -10,8 +10,23 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null); // Session user
   const navigate = useNavigate();
   const autoDeleteTimers = useRef({});
+
+  // --- Fetch session data
+  const fetchSession = useCallback(async () => {
+    try {
+      const session = await API.auth.checkSession();
+      if (!session?.user) throw new Error("No session found");
+      setUser(session.user);
+      if (!session.user.isAdmin) navigate("/login", { replace: true });
+    } catch {
+      localStorage.removeItem("isAdmin");
+      localStorage.removeItem("adminEmail");
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 
   // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
@@ -40,7 +55,6 @@ export default function Admin() {
             break;
           case "reject":
             await API.adminTherapist.updateStatus(id, "rejected");
-
             // Schedule auto-delete after 2 hours
             if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
             autoDeleteTimers.current[id] = setTimeout(async () => {
@@ -69,16 +83,16 @@ export default function Admin() {
     [fetchTherapists]
   );
 
-  // --- Load therapists once
+  // --- Load session and therapists on mount
   useEffect(() => {
+    fetchSession();
     fetchTherapists();
 
     return () => {
-      // Clear all scheduled auto-delete timers
       Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
       autoDeleteTimers.current = {};
     };
-  }, [fetchTherapists]);
+  }, [fetchTherapists, fetchSession]);
 
   return (
     <>
@@ -86,6 +100,7 @@ export default function Admin() {
       <div className="admin-container container my-5 p-4">
         <div className="text-center mb-4">
           <h1 className="text-primary fw-bold">Therapist Applications</h1>
+          {user && <p className="text-secondary mb-2">Hello, {user.name}</p>} {/* User greeting */}
           <p className="text-muted lead">
             Review therapist applications. Approve trusted professionals or reject unverified entries.
           </p>
@@ -103,9 +118,7 @@ export default function Admin() {
               <thead className="table-light">
                 <tr>
                   {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(
-                    (header) => (
-                      <th key={header}>{header}</th>
-                    )
+                    (header) => <th key={header}>{header}</th>
                   )}
                 </tr>
               </thead>

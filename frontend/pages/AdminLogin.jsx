@@ -7,7 +7,11 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [attemptsLeft, setAttemptsLeft] = useState(3);
+  const [attemptsLeft, setAttemptsLeft] = useState(() => {
+    const saved = localStorage.getItem("adminAttempts");
+    return saved ? parseInt(saved, 10) : 3;
+  });
+
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -17,9 +21,8 @@ export default function AdminLogin() {
 
     const checkSession = async () => {
       try {
-        const session = await API.auth.checkSession(); // unified session check
+        const session = await API.auth.checkSession();
         if (isMounted && session?.user?.isAdmin) {
-          // Store session info locally
           localStorage.setItem("isAdmin", "true");
           localStorage.setItem("adminEmail", session.user.email || "");
           navigate("/admin", { replace: true });
@@ -51,7 +54,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      // Send password to backend
+      // Promote currently logged-in user to admin
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
@@ -68,7 +71,7 @@ export default function AdminLogin() {
         return;
       }
 
-      // ✅ Password correct — fetch session info from backend
+      // Password correct — fetch updated session
       const session = await API.auth.checkSession();
       if (!session?.user?.isAdmin) {
         setError("Session validation failed.");

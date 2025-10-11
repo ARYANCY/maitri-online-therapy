@@ -36,39 +36,41 @@ router.get(
 router.post("/admin-login", async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password)
-      return res.status(400).json({ success: false, message: "Password required" });
+    if (!password) return res.status(400).json({ success: false, message: "Password required" });
 
-    // Find any user (who is not admin yet)
-    let user = await User.findOne({ isAdmin: false });
-    if (!user)
-      return res.status(404).json({ success: false, message: "No user available to make admin" });
+    // Ensure a user is already logged in via Google OAuth
+    if (!req.session?.userId) {
+      return res.status(401).json({ success: false, message: "No logged-in user" });
+    }
 
-    // Check plain-text password from .env
-    if (password !== process.env.ADMIN_PASSWORD)
+    // Verify admin password from .env
+    if (password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ success: false, message: "Incorrect password" });
+    }
 
-    // Update user to admin
+    // Promote current session user to admin
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
     user.isAdmin = true;
     await user.save();
 
-    // Store session info
-    req.session.userId = user._id;
-    req.session.email = user.email;
+    // Update session info
     req.session.isAdmin = true;
+    req.session.email = user.email;
 
     req.session.save(err => {
       if (err) return res.status(500).json({ success: false, message: "Session save failed" });
-      return res.json({ success: true });
+      return res.json({ 
+        success: true, 
+        user: { _id: user._id, email: user.email, name: user.name, isAdmin: true } 
+      });
     });
   } catch (err) {
     console.error("Admin login error:", err);
     return res.status(500).json({ success: false, message: "Login failed" });
   }
 });
-
-
-
 // --- Logout
 router.get("/logout", (req, res) => {
   req.session.destroy(() => {
