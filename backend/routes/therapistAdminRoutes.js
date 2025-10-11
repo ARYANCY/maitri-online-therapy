@@ -20,16 +20,7 @@ function validateObjectId(req, res, next) {
 // All routes below require admin login
 router.use(requireAdmin);
 
-// GET all therapist forms
-router.get("/", getAllTherapists);
-
-// PATCH therapist status
-router.patch("/:id/status", validateObjectId, updateTherapistStatus);
-
-// DELETE therapist (cannot delete accepted)
-router.delete("/:id", validateObjectId, deleteTherapist);
-
-// Optional: Bulk update status (production-ready)
+// Bulk update status (must come first)
 router.patch("/bulk/status", async (req, res) => {
   try {
     const { ids, status } = req.body;
@@ -49,5 +40,10 @@ router.patch("/bulk/status", async (req, res) => {
     res.status(500).json({ message: "Error updating statuses" });
   }
 });
+
+// Single therapist routes
+router.get("/", getAllTherapists);
+router.patch("/:id/status", validateObjectId, updateTherapistStatus);
+router.delete("/:id", validateObjectId, deleteTherapist);
 
 module.exports = router;
