@@ -85,7 +85,7 @@ async function validateAdminSession() {
   const isAdmin = localStorage.getItem("isAdmin") === "true";
   if (!isAdmin) {
     try {
-      const session = await API.auth.checkSession();
+      const session = await API.auth.adminCheckSession();
       if (!session?.user?.isAdmin) {
         localStorage.removeItem("isAdmin");
         return Promise.reject(new Error("Admin session invalid or expired."));
