@@ -25,12 +25,17 @@ export default function Admin() {
       const data = await API.adminTherapist.getAll();
       if (!Array.isArray(data)) throw new Error("Invalid therapist data received");
 
-      // Ensure each therapist has _id
       setTherapists(
         data.map((t) => ({
-          ...t,
           _id: t._id || t.id || t.therapistId,
+          name: t.name || "N/A",
+          email: t.email || "N/A",
+          phone: t.phone || "N/A",
+          specialization: t.specialization || "N/A",
+          experience: t.experience ?? 0,
+          qualifications: t.qualifications || "N/A",
           status: t.status || "pending",
+          createdAt: t.createdAt || t.created_at || new Date(),
         }))
       );
     } catch (err) {
@@ -88,9 +93,7 @@ export default function Admin() {
 
         await fetchTherapists();
       } catch (err) {
-        const message =
-          err?.response?.data?.message || err?.message || `Failed to ${action} therapist.`;
-        setError(message);
+        setError(err?.message || `Failed to ${action} therapist.`);
       } finally {
         setActionLoading(null);
         setTimeout(() => setSuccess(""), 3000);
@@ -124,8 +127,7 @@ export default function Admin() {
 
         await fetchTherapists();
       } catch (err) {
-        const message = err?.response?.data?.message || err?.message || "Bulk action failed";
-        setError(message);
+        setError(err?.message || "Bulk action failed");
       } finally {
         setActionLoading(null);
         setTimeout(() => setSuccess(""), 3000);
@@ -139,9 +141,9 @@ export default function Admin() {
     return therapists
       .filter((t) => {
         const searchMatch =
-          t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
+          t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.specialization.toLowerCase().includes(searchTerm.toLowerCase());
         const statusMatch = statusFilter === "all" || t.status === statusFilter;
         return searchMatch && statusMatch;
       })
@@ -327,83 +329,38 @@ export default function Admin() {
                       </thead>
                       <tbody>
                         {filteredAndSortedTherapists.map((t) => (
-                          <tr key={t._id || t.email || Math.random()}>
+                          <tr key={t._id}>
                             <td>
                               <input type="checkbox" className="form-check-input" />
                             </td>
                             <td>
                               <div className="d-flex align-items-center">
                                 <div className="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                  {t.name?.charAt(0)?.toUpperCase()}
+                                  {t.name.charAt(0).toUpperCase()}
                                 </div>
                                 <strong>{t.name}</strong>
                               </div>
                             </td>
                             <td>
-                              <a href={`mailto:${t.email}`} className="text-decoration-none">
-                                {t.email}
-                              </a>
+                              <a href={`mailto:${t.email}`} className="text-decoration-none">{t.email}</a>
                             </td>
-                            <td>
-                              <a href={`tel:${t.phone}`} className="text-decoration-none">
-                                {t.phone}
-                              </a>
-                            </td>
-                            <td>
-                              <span className="badge bg-info">{t.specialization}</span>
-                            </td>
+                            <td>{t.phone}</td>
+                            <td><span className="badge bg-info">{t.specialization}</span></td>
                             <td>{t.experience} years</td>
-                            <td>
-                              <span
-                                className="text-truncate d-inline-block"
-                                style={{ maxWidth: "150px" }}
-                                title={t.qualifications || "N/A"}
-                              >
-                                {t.qualifications || "N/A"}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={getStatusBadgeClass(t.status)}>
-                                {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
-                              </span>
-                            </td>
-                            <td>
-                              <small className="text-muted">
-                                {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "N/A"}
-                              </small>
-                            </td>
+                            <td title={t.qualifications}>{t.qualifications}</td>
+                            <td><span className={getStatusBadgeClass(t.status)}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</span></td>
+                            <td><small className="text-muted">{new Date(t.createdAt).toLocaleDateString()}</small></td>
                             <td>
                               <div className="btn-group" role="group">
-                                <button
-                                  className="btn btn-success btn-sm"
-                                  onClick={() => handleAction(t._id, "accept")}
-                                  disabled={t.status === "accepted" || actionLoading === t._id}
-                                  title="Accept Application"
-                                >
+                                <button className="btn btn-success btn-sm" onClick={() => handleAction(t._id, "accept")} disabled={t.status === "accepted" || actionLoading === t._id}>
                                   <i className="bi bi-check"></i>
                                 </button>
-                                <button
-                                  className="btn btn-warning btn-sm"
-                                  onClick={() => handleAction(t._id, "reject")}
-                                  disabled={t.status === "rejected" || actionLoading === t._id}
-                                  title="Reject Application"
-                                >
+                                <button className="btn btn-warning btn-sm" onClick={() => handleAction(t._id, "reject")} disabled={t.status === "rejected" || actionLoading === t._id}>
                                   <i className="bi bi-x"></i>
                                 </button>
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        "Are you sure you want to delete this application? This action cannot be undone."
-                                      )
-                                    ) {
-                                      handleAction(t._id, "delete");
-                                    }
-                                  }}
-                                  disabled={actionLoading === t._id}
-                                  title="Delete Application"
-                                >
+                                <button className="btn btn-danger btn-sm" onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this application?")) handleAction(t._id, "delete");
+                                }} disabled={actionLoading === t._id}>
                                   <i className="bi bi-trash"></i>
                                 </button>
                               </div>
@@ -428,13 +385,10 @@ export default function Admin() {
                     : "No applications have been submitted yet."}
                 </p>
                 {(searchTerm || statusFilter !== "all") && (
-                  <button
-                    className="btn btn-outline-primary"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("all");
-                    }}
-                  >
+                  <button className="btn btn-outline-primary" onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                  }}>
                     Clear Filters
                   </button>
                 )}
