@@ -117,7 +117,8 @@ const translations = {
       tasksError: "Failed to load tasks",
       tasksUpdateError: "Failed to update tasks",
       noTasks: "No tasks available",
-      tasksRequired: "Tasks must be an array"
+      tasksRequired: "Tasks must be an array",
+      error: "Network Error"
     },
     
     // Todo messages

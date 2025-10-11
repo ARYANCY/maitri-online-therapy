@@ -188,33 +188,24 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-// Get language from request header or function
-let userLanguage =
-  (req.getLanguage?.() || req.headers["accept-language"] || "en")
-    .split(",")[0]        // pick first preferred language
-    .split("-")[0]        // get language code only (hi, en, as)
-    .toLowerCase();       // normalize
+  let userLanguage =
+    req.getLanguage?.() ||
+    req.headers["accept-language"]?.split(",")[0]?.split("-")[0] ||
+    "en";
 
-// Only allow supported languages
-const supportedLanguages = ["hi", "as", "en"];
-if (!supportedLanguages.includes(userLanguage)) {
-  userLanguage = "en";   // fallback strictly to English
-}
+  // Default to English only if language is not supported
+  const supportedLanguages = ["hi", "as", "en"];
+  if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
 
-// Map language code to name
-const LANGUAGE_MAP = {
-  hi: "Hindi",
-  as: "Assamese",
-  en: "English",
-};
+  const LANGUAGE_MAP = {
+    hi: "Hindi",
+    as: "Assamese",
+    en: "English",
+  };
 
-const languageName = LANGUAGE_MAP[userLanguage];
+  const languageName = LANGUAGE_MAP[userLanguage];
 
-// Force i18next to use this language for this request
-req.language = userLanguage;          // or req.lng = userLanguage
-if (req.i18n) req.i18n.changeLanguage(userLanguage);
-
-        const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
+    const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
 Context: You are helping with mental health support and emotional well-being.
 User's language preference: ${languageName}.Talk in this language even if the user writes in another language.
