@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import Navbar from "../components/Navbar";
@@ -24,7 +24,15 @@ export default function Admin() {
     try {
       const data = await API.adminTherapist.getAll();
       if (!Array.isArray(data)) throw new Error("Invalid therapist data received");
-      setTherapists(data.map((t) => ({ ...t, status: t.status || "pending" })));
+
+      // Ensure each therapist has _id
+      setTherapists(
+        data.map((t) => ({
+          ...t,
+          _id: t._id || t.id || t.therapistId,
+          status: t.status || "pending",
+        }))
+      );
     } catch (err) {
       setError(err?.message || "Failed to fetch therapist applications.");
     } finally {
@@ -57,7 +65,7 @@ export default function Admin() {
     };
   }, [navigate, fetchTherapists]);
 
-  // Handle individual actions
+  // Handle individual action
   const handleAction = useCallback(
     async (id, action) => {
       if (!id || !action) return;
@@ -77,9 +85,12 @@ export default function Admin() {
             ? "Therapist application rejected."
             : "Therapist application deleted successfully!"
         );
+
         await fetchTherapists();
       } catch (err) {
-        setError(err?.message || `Failed to ${action} therapist.`);
+        const message =
+          err?.response?.data?.message || err?.message || `Failed to ${action} therapist.`;
+        setError(message);
       } finally {
         setActionLoading(null);
         setTimeout(() => setSuccess(""), 3000);
@@ -91,7 +102,7 @@ export default function Admin() {
   // Handle bulk actions
   const handleBulkAction = useCallback(
     async (action, selectedIds) => {
-      if (!selectedIds.length) return;
+      if (!selectedIds?.length) return;
       setActionLoading("bulk");
       setError("");
       setSuccess("");
@@ -101,6 +112,7 @@ export default function Admin() {
           if (action === "accept") return API.adminTherapist.updateStatus(id, "accepted");
           if (action === "reject") return API.adminTherapist.updateStatus(id, "rejected");
           if (action === "delete") return API.adminTherapist.delete(id);
+          return Promise.resolve();
         });
 
         await Promise.all(promises);
@@ -109,9 +121,11 @@ export default function Admin() {
             selectedIds.length
           } therapist(s) successfully!`
         );
+
         await fetchTherapists();
       } catch (err) {
-        setError(`Failed to ${action} selected therapists.`);
+        const message = err?.response?.data?.message || err?.message || "Bulk action failed";
+        setError(message);
       } finally {
         setActionLoading(null);
         setTimeout(() => setSuccess(""), 3000);
@@ -121,29 +135,29 @@ export default function Admin() {
   );
 
   // Filter and sort therapists
-  const filteredAndSortedTherapists = therapists
-    .filter((t) => {
-      const searchMatch =
-        t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
-      const statusMatch = statusFilter === "all" || t.status === statusFilter;
-      return searchMatch && statusMatch;
-    })
-    .sort((a, b) => {
-      let aVal = a[sortBy];
-      let bVal = b[sortBy];
+  const filteredAndSortedTherapists = useMemo(() => {
+    return therapists
+      .filter((t) => {
+        const searchMatch =
+          t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          t.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
+        const statusMatch = statusFilter === "all" || t.status === statusFilter;
+        return searchMatch && statusMatch;
+      })
+      .sort((a, b) => {
+        let aVal = a[sortBy];
+        let bVal = b[sortBy];
 
-      if (sortBy === "createdAt") {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
-      }
+        if (sortBy === "createdAt") {
+          aVal = new Date(aVal);
+          bVal = new Date(bVal);
+        }
 
-      if (sortOrder === "asc") return aVal > bVal ? 1 : -1;
-      return aVal < bVal ? 1 : -1;
-    });
-  
-    
+        if (sortOrder === "asc") return aVal > bVal ? 1 : -1;
+        return aVal < bVal ? 1 : -1;
+      });
+  }, [therapists, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -158,7 +172,6 @@ export default function Admin() {
     }
   };
 
-  
   return (
     <>
       <Navbar user={{ name: userName }} />
@@ -282,7 +295,9 @@ export default function Admin() {
                       type="button"
                       className="btn btn-outline-success btn-sm"
                       onClick={() => {
-                        const selectedIds = filteredAndSortedTherapists.filter((t) => t.status === "pending").map((t) => t._id);
+                        const selectedIds = filteredAndSortedTherapists
+                          .filter((t) => t.status === "pending")
+                          .map((t) => t._id);
                         if (selectedIds.length > 0) handleBulkAction("accept", selectedIds);
                       }}
                       disabled={actionLoading === "bulk"}
@@ -312,7 +327,7 @@ export default function Admin() {
                       </thead>
                       <tbody>
                         {filteredAndSortedTherapists.map((t) => (
-                          <tr key={t._id}>
+                          <tr key={t._id || t.email || Math.random()}>
                             <td>
                               <input type="checkbox" className="form-check-input" />
                             </td>
@@ -339,7 +354,11 @@ export default function Admin() {
                             </td>
                             <td>{t.experience} years</td>
                             <td>
-                              <span className="text-truncate d-inline-block" style={{ maxWidth: "150px" }} title={t.qualifications || "N/A"}>
+                              <span
+                                className="text-truncate d-inline-block"
+                                style={{ maxWidth: "150px" }}
+                                title={t.qualifications || "N/A"}
+                              >
                                 {t.qualifications || "N/A"}
                               </span>
                             </td>
@@ -349,7 +368,9 @@ export default function Admin() {
                               </span>
                             </td>
                             <td>
-                              <small className="text-muted">{new Date(t.createdAt).toLocaleDateString()}</small>
+                              <small className="text-muted">
+                                {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "N/A"}
+                              </small>
                             </td>
                             <td>
                               <div className="btn-group" role="group">
@@ -372,7 +393,11 @@ export default function Admin() {
                                 <button
                                   className="btn btn-danger btn-sm"
                                   onClick={() => {
-                                    if (window.confirm("Are you sure you want to delete this application? This action cannot be undone.")) {
+                                    if (
+                                      window.confirm(
+                                        "Are you sure you want to delete this application? This action cannot be undone."
+                                      )
+                                    ) {
                                       handleAction(t._id, "delete");
                                     }
                                   }}
@@ -403,7 +428,13 @@ export default function Admin() {
                     : "No applications have been submitted yet."}
                 </p>
                 {(searchTerm || statusFilter !== "all") && (
-                  <button className="btn btn-outline-primary" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                  <button
+                    className="btn btn-outline-primary"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                    }}
+                  >
                     Clear Filters
                   </button>
                 )}

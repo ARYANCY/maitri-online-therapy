@@ -62,19 +62,63 @@ API.therapist = {
 
 API.adminTherapist = {
   getAll: async () => {
-    await ensureAdminSession();
-    return API.get("/api/admin/therapists");
+    try {
+      await ensureAdminSession();
+      const response = await API.get("/api/admin/therapists");
+      return response.data;
+    } catch (err) {
+      console.error("Failed to fetch therapists:", err);
+      throw new Error(err.response?.data?.message || "Failed to fetch therapists");
+    }
   },
+
   updateStatus: async (id, status) => {
-    if (!id || !status) return Promise.reject(new Error("ID and status are required"));
-    await ensureAdminSession();
-    return API.patch(`/api/admin/therapists/${id}/status`, { status });
+    if (!id || !status) throw new Error("ID and status are required");
+    if (!["pending", "accepted", "rejected"].includes(status)) {
+      throw new Error("Invalid status value");
+    }
+
+    try {
+      await ensureAdminSession();
+      const response = await API.patch(`/api/admin/therapists/${id}/status`, { status });
+      return response.data;
+    } catch (err) {
+      console.error(`Failed to update therapist status [${id}]:`, err);
+      throw new Error(err.response?.data?.message || "Failed to update therapist status");
+    }
   },
+
   delete: async (id) => {
-    if (!id) return Promise.reject(new Error("ID is required"));
-    await ensureAdminSession();
-    return API.delete(`/api/admin/therapists/${id}`);
+    if (!id) throw new Error("ID is required");
+
+    try {
+      await ensureAdminSession();
+      const response = await API.delete(`/api/admin/therapists/${id}`);
+      return response.data;
+    } catch (err) {
+      console.error(`Failed to delete therapist [${id}]:`, err);
+      throw new Error(err.response?.data?.message || "Failed to delete therapist");
+    }
   },
+
+  // Optional: bulk update
+  updateBulkStatus: async (ids = [], status) => {
+    if (!Array.isArray(ids) || ids.length === 0 || !status) {
+      throw new Error("IDs array and status are required");
+    }
+    if (!["pending", "accepted", "rejected"].includes(status)) {
+      throw new Error("Invalid status value");
+    }
+
+    try {
+      await ensureAdminSession();
+      const response = await API.patch(`/api/admin/therapists/bulk/status`, { ids, status });
+      return response.data;
+    } catch (err) {
+      console.error("Failed to bulk update therapist statuses:", err);
+      throw new Error(err.response?.data?.message || "Failed to bulk update statuses");
+    }
+  }
 };
 
 API.reminder = {

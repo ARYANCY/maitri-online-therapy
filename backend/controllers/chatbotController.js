@@ -188,36 +188,19 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-// Use i18njs instance (assuming it's imported as `i18n`)
-const i18n = req.i18n || require('i18njs'); // adjust import if needed
-
-// Determine user language
-let userLanguage =
-  req.getLanguage?.() ||                     // use middleware-detected language
-  req.headers["accept-language"]?.split(",")[0]?.split("-")[0] || // fallback to header
-  "en";                                     // final fallback
-
-// Only allow supported languages
-const supportedLanguages = ["hi", "as", "en"];
-if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
-
-// Set language in i18n explicitly
-i18n.setLocale(userLanguage);
-
-// Map to language name using i18n labels (optional)
 const LANGUAGE_MAP = {
-  hi: i18n.t("language.hindi") || "Hindi",
-  as: i18n.t("language.assamese") || "Assamese",
-  en: i18n.t("language.english") || "English",
+  hi: 'Hindi',
+  as: 'Assamese',
+  en: 'English'
 };
 
-const languageName = LANGUAGE_MAP[userLanguage];
-
+const normalizedLang = (userLanguage || 'en').toLowerCase().trim();
+const languageName = LANGUAGE_MAP[normalizedLang] || 'English';
 
     const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
 Context: You are helping with mental health support and emotional well-being.
-User's language preference: ${languageName}.Talk in this language even if the user writes in another language.
+User's language preference: ${languageName}
 
 Conversation so far:
 ${history}
