@@ -65,7 +65,7 @@ API.adminTherapist = {
     try {
       await ensureAdminSession();
       const response = await API.get("/api/admin/therapists");
-      return response.data;
+      return response; // already the actual data (array)
     } catch (err) {
       console.error("Failed to fetch therapists:", err);
       throw new Error(err.response?.data?.message || "Failed to fetch therapists");
@@ -81,7 +81,7 @@ API.adminTherapist = {
     try {
       await ensureAdminSession();
       const response = await API.patch(`/api/admin/therapists/${id}/status`, { status });
-      return response.data;
+      return response; // no .data
     } catch (err) {
       console.error(`Failed to update therapist status [${id}]:`, err);
       throw new Error(err.response?.data?.message || "Failed to update therapist status");
@@ -94,14 +94,13 @@ API.adminTherapist = {
     try {
       await ensureAdminSession();
       const response = await API.delete(`/api/admin/therapists/${id}`);
-      return response.data;
+      return response; // no .data
     } catch (err) {
       console.error(`Failed to delete therapist [${id}]:`, err);
       throw new Error(err.response?.data?.message || "Failed to delete therapist");
     }
   },
 
-  // Optional: bulk update
   updateBulkStatus: async (ids = [], status) => {
     if (!Array.isArray(ids) || ids.length === 0 || !status) {
       throw new Error("IDs array and status are required");
@@ -113,13 +112,14 @@ API.adminTherapist = {
     try {
       await ensureAdminSession();
       const response = await API.patch(`/api/admin/therapists/bulk/status`, { ids, status });
-      return response.data;
+      return response; // no .data
     } catch (err) {
       console.error("Failed to bulk update therapist statuses:", err);
       throw new Error(err.response?.data?.message || "Failed to bulk update statuses");
     }
   }
 };
+
 
 API.reminder = {
   create: (data) => API.post("/api/reminders", data),
