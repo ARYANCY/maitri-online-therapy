@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/Home.css";
-import homeImage from "../src/images/home.jpg";
+import homeImage from "@/images/home.jpg";
 import API from "../utils/axiosClient";
 
 export default function Home() {

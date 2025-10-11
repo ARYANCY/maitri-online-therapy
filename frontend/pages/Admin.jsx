@@ -142,6 +142,8 @@ export default function Admin() {
       if (sortOrder === "asc") return aVal > bVal ? 1 : -1;
       return aVal < bVal ? 1 : -1;
     });
+  
+    
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -156,9 +158,10 @@ export default function Admin() {
     }
   };
 
+  
   return (
     <>
-      <Navbar />
+      <Navbar user={user} />
       <div className="admin-container container-fluid py-4">
         <div className="row">
           <div className="col-12">

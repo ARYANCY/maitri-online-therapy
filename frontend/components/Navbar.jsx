@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
-import GULogo from "../src/images/logo.png";
+import GULogo from "@/images/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import "../css/Navbar.css";
