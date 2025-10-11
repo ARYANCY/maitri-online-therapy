@@ -15,14 +15,11 @@ export default function Navbar({ user, downloadReport }) {
     if (i18n.language !== lng) {
       i18n.changeLanguage(lng);
       localStorage.setItem("preferredLang", lng);
-      
-      // Send language preference to backend
       try {
         await API.post("/auth/update-language", { language: lng });
         console.log(`Language preference updated to ${lng}`);
       } catch (err) {
         console.error("Failed to update language preference:", err);
-        // Don't show error to user as this is not critical
       }
     }
   };
@@ -37,12 +34,11 @@ export default function Navbar({ user, downloadReport }) {
       {/* Top section */}
       <div className="navbar-top">
         <div className="navbar-title-container">
-            <a href="https://gauhati.ac.in" target="_blank" rel="noopener noreferrer">
-              <img src={GULogo} alt="GU Logo" className="gu-logo" />
-            </a>
-            <h1 className="navbar-title">{t("navbar.title")}</h1>
+          <a href="https://gauhati.ac.in" target="_blank" rel="noopener noreferrer">
+            <img src={GULogo} alt="GU Logo" className="gu-logo" />
+          </a>
+          <h1 className="navbar-title">{t("navbar.title")}</h1>
         </div>
-        
 
         <div className="lang-switcher">
           {["en", "hi", "as"].map((lng) => (
@@ -70,7 +66,6 @@ export default function Navbar({ user, downloadReport }) {
           <div className="bars" id="bar2"></div>
           <div className="bars" id="bar3"></div>
         </label>
-
       </div>
 
       {/* Bottom nav (links & user info) */}
@@ -88,12 +83,7 @@ export default function Navbar({ user, downloadReport }) {
           <Link to="/talk-to-counselor" className="navbar-link ww">
             {t("navbar.talkToCounselor", "Talk to Counselor")}
           </Link>
-          {user?.isAdmin && (
-            <Link to="/admin" className="navbar-link ww admin-link">
-              <i className="bi bi-gear me-1"></i>
-              {t("navbar.adminPanel", "Admin Panel")}
-            </Link>
-          )}
+
           <a
             href="https://chat-app-ashen-phi.vercel.app/"
             target="_blank"
@@ -102,6 +92,7 @@ export default function Navbar({ user, downloadReport }) {
           >
             {t("navbar.feelingDown")}
           </a>
+
           {typeof downloadReport === "function" && (
             <button
               className="navbar-link download-btn"

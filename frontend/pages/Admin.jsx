@@ -17,20 +17,34 @@ export default function Admin() {
   const [sortOrder, setSortOrder] = useState("desc");
   const navigate = useNavigate();
 
+  // Fetch therapists
+  const fetchTherapists = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await API.adminTherapist.getAll();
+      if (!Array.isArray(data)) throw new Error("Invalid therapist data received");
+      setTherapists(data.map((t) => ({ ...t, status: t.status || "pending" })));
+    } catch (err) {
+      setError(err?.message || "Failed to fetch therapist applications.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Check admin session on mount
   useEffect(() => {
     let mounted = true;
     const checkAdmin = async () => {
       try {
         const session = await API.auth.checkSession();
         if (!session?.user?.isAdmin) {
-          // User is not admin, redirect to admin login
           navigate("/admin-login", { replace: true });
           return;
         }
         if (mounted) {
           setUserName(session.user.name || "");
-          // User is admin, proceed to load admin data
-          fetchTherapists();
+          await fetchTherapists();
         }
       } catch (err) {
         console.error("Admin session check failed:", err);
@@ -38,68 +52,63 @@ export default function Admin() {
       }
     };
     checkAdmin();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [navigate, fetchTherapists]);
 
-  const fetchTherapists = useCallback(async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const data = await API.adminTherapist.getAll();
-      setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
-    } catch (err) {
-      setError(err.message || "Failed to fetch therapist applications.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Handle individual actions
   const handleAction = useCallback(
     async (id, action) => {
       if (!id || !action) return;
       setActionLoading(id);
       setError("");
       setSuccess("");
-      
+
       try {
-        if (action === "accept") {
-          await API.adminTherapist.updateStatus(id, "accepted");
-          setSuccess("Therapist application accepted successfully!");
-        } else if (action === "reject") {
-          await API.adminTherapist.updateStatus(id, "rejected");
-          setSuccess("Therapist application rejected.");
-        } else if (action === "delete") {
-          await API.adminTherapist.delete(id);
-          setSuccess("Therapist application deleted successfully!");
-        }
+        if (action === "accept") await API.adminTherapist.updateStatus(id, "accepted");
+        if (action === "reject") await API.adminTherapist.updateStatus(id, "rejected");
+        if (action === "delete") await API.adminTherapist.delete(id);
+
+        setSuccess(
+          action === "accept"
+            ? "Therapist application accepted successfully!"
+            : action === "reject"
+            ? "Therapist application rejected."
+            : "Therapist application deleted successfully!"
+        );
         await fetchTherapists();
       } catch (err) {
-        setError(err.message || `Failed to ${action} therapist.`);
+        setError(err?.message || `Failed to ${action} therapist.`);
       } finally {
         setActionLoading(null);
-        // Clear success message after 3 seconds
         setTimeout(() => setSuccess(""), 3000);
       }
     },
     [fetchTherapists]
   );
 
+  // Handle bulk actions
   const handleBulkAction = useCallback(
     async (action, selectedIds) => {
       if (!selectedIds.length) return;
       setActionLoading("bulk");
       setError("");
       setSuccess("");
-      
+
       try {
-        const promises = selectedIds.map(id => {
+        const promises = selectedIds.map((id) => {
           if (action === "accept") return API.adminTherapist.updateStatus(id, "accepted");
           if (action === "reject") return API.adminTherapist.updateStatus(id, "rejected");
           if (action === "delete") return API.adminTherapist.delete(id);
         });
-        
+
         await Promise.all(promises);
-        setSuccess(`${action === "accept" ? "Accepted" : action === "reject" ? "Rejected" : "Deleted"} ${selectedIds.length} therapist(s) successfully!`);
+        setSuccess(
+          `${action === "accept" ? "Accepted" : action === "reject" ? "Rejected" : "Deleted"} ${
+            selectedIds.length
+          } therapist(s) successfully!`
+        );
         await fetchTherapists();
       } catch (err) {
         setError(`Failed to ${action} selected therapists.`);
@@ -111,40 +120,39 @@ export default function Admin() {
     [fetchTherapists]
   );
 
+  // Filter and sort therapists
   const filteredAndSortedTherapists = therapists
-    .filter(therapist => {
-      const matchesSearch = 
-        therapist.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        therapist.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        therapist.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === "all" || therapist.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
+    .filter((t) => {
+      const searchMatch =
+        t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
+      const statusMatch = statusFilter === "all" || t.status === statusFilter;
+      return searchMatch && statusMatch;
     })
     .sort((a, b) => {
       let aVal = a[sortBy];
       let bVal = b[sortBy];
-      
+
       if (sortBy === "createdAt") {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
       }
-      
-      if (sortOrder === "asc") {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
 
+      if (sortOrder === "asc") return aVal > bVal ? 1 : -1;
+      return aVal < bVal ? 1 : -1;
+    });
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case "accepted": return "badge bg-success";
-      case "rejected": return "badge bg-danger";
-      case "pending": return "badge bg-warning";
-      default: return "badge bg-secondary";
+      case "accepted":
+        return "badge bg-success";
+      case "rejected":
+        return "badge bg-danger";
+      case "pending":
+        return "badge bg-warning";
+      default:
+        return "badge bg-secondary";
     }
   };
 
@@ -154,23 +162,17 @@ export default function Admin() {
       <div className="admin-container container-fluid py-4">
         <div className="row">
           <div className="col-12">
+            {/* Header */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h1 className="text-primary fw-bold mb-1">Admin Dashboard</h1>
                 <p className="text-muted mb-0">Welcome back, {userName}</p>
               </div>
               <div className="d-flex gap-2">
-                <button 
-                  className="btn btn-outline-primary"
-                  onClick={fetchTherapists}
-                  disabled={loading}
-                >
+                <button className="btn btn-outline-primary" onClick={fetchTherapists} disabled={loading}>
                   <i className="bi bi-arrow-clockwise"></i> Refresh
                 </button>
-                <button 
-                  className="btn btn-outline-secondary"
-                  onClick={() => navigate("/dashboard")}
-                >
+                <button className="btn btn-outline-secondary" onClick={() => navigate("/dashboard")}>
                   <i className="bi bi-house"></i> User Dashboard
                 </button>
               </div>
@@ -181,83 +183,40 @@ export default function Admin() {
               <div className="alert alert-danger alert-dismissible fade show" role="alert">
                 <i className="bi bi-exclamation-triangle me-2"></i>
                 {error}
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setError("")}
-                ></button>
+                <button type="button" className="btn-close" onClick={() => setError("")}></button>
               </div>
             )}
-            
             {success && (
               <div className="alert alert-success alert-dismissible fade show" role="alert">
                 <i className="bi bi-check-circle me-2"></i>
                 {success}
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setSuccess("")}
-                ></button>
+                <button type="button" className="btn-close" onClick={() => setSuccess("")}></button>
               </div>
             )}
 
             {/* Statistics Cards */}
             <div className="row mb-4">
-              <div className="col-md-3">
-                <div className="card bg-primary text-white">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between">
+              {[
+                { title: "Total Applications", count: therapists.length, icon: "bi-people", bg: "bg-primary" },
+                { title: "Pending", count: therapists.filter((t) => t.status === "pending").length, icon: "bi-clock", bg: "bg-warning" },
+                { title: "Accepted", count: therapists.filter((t) => t.status === "accepted").length, icon: "bi-check-circle", bg: "bg-success" },
+                { title: "Rejected", count: therapists.filter((t) => t.status === "rejected").length, icon: "bi-x-circle", bg: "bg-danger" },
+              ].map((card, idx) => (
+                <div className="col-md-3" key={idx}>
+                  <div className={`card ${card.bg} text-white`}>
+                    <div className="card-body d-flex justify-content-between align-items-center">
                       <div>
-                        <h6 className="card-title">Total Applications</h6>
-                        <h3 className="mb-0">{therapists.length}</h3>
+                        <h6 className="card-title">{card.title}</h6>
+                        <h3 className="mb-0">{card.count}</h3>
                       </div>
-                      <i className="bi bi-people fs-1 opacity-50"></i>
+                      <i className={`bi ${card.icon} fs-1 opacity-50`}></i>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card bg-warning text-white">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <h6 className="card-title">Pending</h6>
-                        <h3 className="mb-0">{therapists.filter(t => t.status === "pending").length}</h3>
-                      </div>
-                      <i className="bi bi-clock fs-1 opacity-50"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card bg-success text-white">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <h6 className="card-title">Accepted</h6>
-                        <h3 className="mb-0">{therapists.filter(t => t.status === "accepted").length}</h3>
-                      </div>
-                      <i className="bi bi-check-circle fs-1 opacity-50"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card bg-danger text-white">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <h6 className="card-title">Rejected</h6>
-                        <h3 className="mb-0">{therapists.filter(t => t.status === "rejected").length}</h3>
-                      </div>
-                      <i className="bi bi-x-circle fs-1 opacity-50"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Filters and Search */}
+            {/* Filters */}
             <div className="card mb-4">
               <div className="card-body">
                 <div className="row g-3">
@@ -273,11 +232,7 @@ export default function Admin() {
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Status Filter</label>
-                    <select
-                      className="form-select"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
+                    <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
                       <option value="accepted">Accepted</option>
@@ -286,11 +241,7 @@ export default function Admin() {
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Sort By</label>
-                    <select
-                      className="form-select"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
+                    <select className="form-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                       <option value="createdAt">Date Applied</option>
                       <option value="name">Name</option>
                       <option value="email">Email</option>
@@ -299,11 +250,7 @@ export default function Admin() {
                   </div>
                   <div className="col-md-2">
                     <label className="form-label">Order</label>
-                    <select
-                      className="form-select"
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
-                    >
+                    <select className="form-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
                       <option value="desc">Newest First</option>
                       <option value="asc">Oldest First</option>
                     </select>
@@ -312,7 +259,7 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Loading State */}
+            {/* Loading */}
             {loading && (
               <div className="text-center py-5">
                 <div className="spinner-border text-primary" role="status">
@@ -322,7 +269,7 @@ export default function Admin() {
               </div>
             )}
 
-            {/* Therapists Table */}
+            {/* Table */}
             {!loading && filteredAndSortedTherapists.length > 0 && (
               <div className="card shadow-sm">
                 <div className="card-header d-flex justify-content-between align-items-center">
@@ -332,12 +279,8 @@ export default function Admin() {
                       type="button"
                       className="btn btn-outline-success btn-sm"
                       onClick={() => {
-                        const selectedIds = filteredAndSortedTherapists
-                          .filter(t => t.status === "pending")
-                          .map(t => t._id);
-                        if (selectedIds.length > 0) {
-                          handleBulkAction("accept", selectedIds);
-                        }
+                        const selectedIds = filteredAndSortedTherapists.filter((t) => t.status === "pending").map((t) => t._id);
+                        if (selectedIds.length > 0) handleBulkAction("accept", selectedIds);
                       }}
                       disabled={actionLoading === "bulk"}
                     >
@@ -365,78 +308,72 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAndSortedTherapists.map(({ _id, name, email, phone, specialization, experience, qualifications, status, createdAt }) => (
-                          <tr key={_id}>
+                        {filteredAndSortedTherapists.map((t) => (
+                          <tr key={t._id}>
                             <td>
                               <input type="checkbox" className="form-check-input" />
                             </td>
                             <td>
                               <div className="d-flex align-items-center">
                                 <div className="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                  {name?.charAt(0)?.toUpperCase()}
+                                  {t.name?.charAt(0)?.toUpperCase()}
                                 </div>
-                                <strong>{name}</strong>
+                                <strong>{t.name}</strong>
                               </div>
                             </td>
                             <td>
-                              <a href={`mailto:${email}`} className="text-decoration-none">
-                                {email}
+                              <a href={`mailto:${t.email}`} className="text-decoration-none">
+                                {t.email}
                               </a>
                             </td>
                             <td>
-                              <a href={`tel:${phone}`} className="text-decoration-none">
-                                {phone}
+                              <a href={`tel:${t.phone}`} className="text-decoration-none">
+                                {t.phone}
                               </a>
                             </td>
                             <td>
-                              <span className="badge bg-info">{specialization}</span>
+                              <span className="badge bg-info">{t.specialization}</span>
                             </td>
-                            <td>{experience} years</td>
+                            <td>{t.experience} years</td>
                             <td>
-                              <span 
-                                className="text-truncate d-inline-block" 
-                                style={{maxWidth: "150px"}}
-                                title={qualifications || "N/A"}
-                              >
-                                {qualifications || "N/A"}
+                              <span className="text-truncate d-inline-block" style={{ maxWidth: "150px" }} title={t.qualifications || "N/A"}>
+                                {t.qualifications || "N/A"}
                               </span>
                             </td>
                             <td>
-                              <span className={getStatusBadgeClass(status)}>
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              <span className={getStatusBadgeClass(t.status)}>
+                                {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
                               </span>
                             </td>
                             <td>
-                              <small className="text-muted">
-                                {new Date(createdAt).toLocaleDateString()}
-                              </small>
+                              <small className="text-muted">{new Date(t.createdAt).toLocaleDateString()}</small>
                             </td>
                             <td>
                               <div className="btn-group" role="group">
-                                <button 
-                                  className="btn btn-success btn-sm" 
-                                  onClick={() => handleAction(_id, "accept")} 
-                                  disabled={status === "accepted" || actionLoading === _id}
+                                <button
+                                  className="btn btn-success btn-sm"
+                                  onClick={() => handleAction(t._id, "accept")}
+                                  disabled={t.status === "accepted" || actionLoading === t._id}
                                   title="Accept Application"
                                 >
                                   <i className="bi bi-check"></i>
                                 </button>
-                                <button 
-                                  className="btn btn-warning btn-sm" 
-                                  onClick={() => handleAction(_id, "reject")} 
-                                  disabled={status === "rejected" || actionLoading === _id}
+                                <button
+                                  className="btn btn-warning btn-sm"
+                                  onClick={() => handleAction(t._id, "reject")}
+                                  disabled={t.status === "rejected" || actionLoading === t._id}
                                   title="Reject Application"
                                 >
                                   <i className="bi bi-x"></i>
                                 </button>
-                                <button 
-                                  className="btn btn-danger btn-sm" 
+                                <button
+                                  className="btn btn-danger btn-sm"
                                   onClick={() => {
                                     if (window.confirm("Are you sure you want to delete this application? This action cannot be undone.")) {
-                                      handleAction(_id, "delete");
+                                      handleAction(t._id, "delete");
                                     }
-                                  }} 
-                                  disabled={actionLoading === _id}
+                                  }}
+                                  disabled={actionLoading === t._id}
                                   title="Delete Application"
                                 >
                                   <i className="bi bi-trash"></i>
@@ -458,18 +395,12 @@ export default function Admin() {
                 <i className="bi bi-inbox display-1 text-muted"></i>
                 <h4 className="mt-3 text-muted">No therapist applications found</h4>
                 <p className="text-muted">
-                  {searchTerm || statusFilter !== "all" 
-                    ? "Try adjusting your search criteria or filters." 
+                  {searchTerm || statusFilter !== "all"
+                    ? "Try adjusting your search criteria or filters."
                     : "No applications have been submitted yet."}
                 </p>
                 {(searchTerm || statusFilter !== "all") && (
-                  <button 
-                    className="btn btn-outline-primary"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("all");
-                    }}
-                  >
+                  <button className="btn btn-outline-primary" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
                     Clear Filters
                   </button>
                 )}
