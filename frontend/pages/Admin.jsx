@@ -161,7 +161,7 @@ export default function Admin() {
   
   return (
     <>
-      <Navbar user={user} />
+      <Navbar user={{ name: userName }} />
       <div className="admin-container container-fluid py-4">
         <div className="row">
           <div className="col-12">
