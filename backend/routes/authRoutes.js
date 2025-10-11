@@ -33,26 +33,24 @@ router.get(
     }
   }
 );
-
 router.post("/admin-login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ success: false, message: "Email and password required" });
+    const { password } = req.body;
+    if (!password)
+      return res.status(400).json({ success: false, message: "Password required" });
 
-    const user = await User.findOne({ email });
+    // Find any user (who is not admin yet)
+    let user = await User.findOne({ isAdmin: false });
     if (!user)
-      return res.status(401).json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "No user available to make admin" });
 
     // Check plain-text password from .env
     if (password !== process.env.ADMIN_PASSWORD)
       return res.status(401).json({ success: false, message: "Incorrect password" });
 
-    // Update user's isAdmin to true if not already
-    if (!user.isAdmin) {
-      user.isAdmin = true;
-      await user.save();
-    }
+    // Update user to admin
+    user.isAdmin = true;
+    await user.save();
 
     // Store session info
     req.session.userId = user._id;
@@ -68,6 +66,7 @@ router.post("/admin-login", async (req, res) => {
     return res.status(500).json({ success: false, message: "Login failed" });
   }
 });
+
 
 
 // --- Logout
