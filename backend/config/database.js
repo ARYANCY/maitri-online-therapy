@@ -1,53 +1,29 @@
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 
-/**
- * Database connection configuration
- */
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
-    
-    if (!mongoURI) {
-      throw new Error('MongoDB URI is not defined in environment variables');
-    }
+    if (!mongoURI) throw new Error('MongoDB URI is not defined in environment variables');
 
     const options = {
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      bufferMaxEntries: 0, // Disable mongoose buffering
-      bufferCommands: false, // Disable mongoose buffering
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
       retryWrites: true,
       retryReads: true,
       compressors: ['zlib'],
       zlibCompressionLevel: 6,
     };
 
-    // Add SSL options for production
-    if (process.env.NODE_ENV === 'production') {
-      options.ssl = true;
-      options.sslValidate = true;
-    }
-
     const conn = await mongoose.connect(mongoURI, options);
-
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
-    // Connection event listeners
-    mongoose.connection.on('connected', () => {
-      logger.info('Mongoose connected to MongoDB');
-    });
+    mongoose.connection.on('connected', () => logger.info('Mongoose connected to MongoDB'));
+    mongoose.connection.on('error', (err) => logger.error('Mongoose connection error:', err));
+    mongoose.connection.on('disconnected', () => logger.warn('Mongoose disconnected from MongoDB'));
 
-    mongoose.connection.on('error', (err) => {
-      logger.error('Mongoose connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('Mongoose disconnected from MongoDB');
-    });
-
-    // Graceful shutdown
     process.on('SIGINT', async () => {
       await mongoose.connection.close();
       logger.info('Mongoose connection closed through app termination');
@@ -61,19 +37,10 @@ const connectDB = async () => {
   }
 };
 
-/**
- * Database health check
- */
 const checkDatabaseHealth = async () => {
   try {
     const state = mongoose.connection.readyState;
-    const states = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting',
-    };
-
+    const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
     return {
       status: states[state] || 'unknown',
       ready: state === 1,
@@ -83,17 +50,10 @@ const checkDatabaseHealth = async () => {
     };
   } catch (error) {
     logger.error('Database health check failed:', error);
-    return {
-      status: 'error',
-      ready: false,
-      error: error.message,
-    };
+    return { status: 'error', ready: false, error: error.message };
   }
 };
 
-/**
- * Database performance monitoring
- */
 const getDatabaseStats = async () => {
   try {
     const stats = await mongoose.connection.db.stats();
@@ -112,8 +72,4 @@ const getDatabaseStats = async () => {
   }
 };
 
-module.exports = {
-  connectDB,
-  checkDatabaseHealth,
-  getDatabaseStats,
-};
+module.exports = { connectDB, checkDatabaseHealth, getDatabaseStats };
