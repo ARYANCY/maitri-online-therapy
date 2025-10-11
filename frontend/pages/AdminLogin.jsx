@@ -20,10 +20,12 @@ export default function AdminLogin() {
         const session = await API.auth.adminCheckSession();
         if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
+          localStorage.setItem("adminEmail", session.user.email || "");
           navigate("/admin", { replace: true });
         }
       } catch {
         localStorage.removeItem("isAdmin");
+        localStorage.removeItem("adminEmail");
       } finally {
         if (isMounted) inputRef.current?.focus();
       }
@@ -51,6 +53,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
+      // Send password to backend for verification
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
@@ -67,15 +70,27 @@ export default function AdminLogin() {
         return;
       }
 
-      // ✅ Password correct — session already saved in backend
+      // ✅ Password correct — fetch session info from backend
+      const session = await API.auth.adminCheckSession();
+      if (!session?.user?.isAdmin) {
+        setError("Session validation failed.");
+        localStorage.removeItem("isAdmin");
+        localStorage.removeItem("adminEmail");
+        return;
+      }
+
+      // Store session info locally
       localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("adminEmail", session.user.email || "");
       localStorage.removeItem("adminAttempts");
       localStorage.removeItem("adminBlocked");
+
       navigate("/admin", { replace: true });
     } catch (err) {
       console.error("Admin login error:", err);
       setError(err.message || "Something went wrong. Try again.");
       localStorage.removeItem("isAdmin");
+      localStorage.removeItem("adminEmail");
     } finally {
       setLoading(false);
       setPassword("");
