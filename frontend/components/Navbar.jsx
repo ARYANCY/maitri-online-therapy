@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
 import GULogo from "@/images/logo.png";
 import { Link, useNavigate } from "react-router-dom";
@@ -114,7 +113,6 @@ export default function Navbar({ user, downloadReport }) {
         </div>
 
         <div className="navbar-right">
-          <ReminderBell />
           <div className="navbar-user">
             {user?.avatar ? (
               <img
