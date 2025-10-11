@@ -7,17 +7,19 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- On mount: check session
+  // -------------------- Check existing admin session --------------------
   useEffect(() => {
     let isMounted = true;
 
     const checkSession = async () => {
       try {
-        const session = await API.auth.adminCheckSession();
+        const session = await API.auth.checkSession(); // unified session check
         if (isMounted && session?.user?.isAdmin) {
+          // Store session info locally
           localStorage.setItem("isAdmin", "true");
           localStorage.setItem("adminEmail", session.user.email || "");
           navigate("/admin", { replace: true });
@@ -34,47 +36,63 @@ export default function AdminLogin() {
     return () => { isMounted = false; };
   }, [navigate]);
 
-  // --- Handle password change
+  // -------------------- Handle input change --------------------
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Submit login
+  // -------------------- Submit admin password --------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    if (loading || attemptsLeft <= 0) return;
 
     setLoading(true);
     setError("");
 
     try {
+      // Send password to backend
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
-        setError(res.message || "Incorrect password");
+        const remaining = attemptsLeft - 1;
+        setAttemptsLeft(remaining);
+        localStorage.setItem("adminAttempts", remaining);
+
+        if (remaining <= 0) {
+          localStorage.setItem("adminBlocked", "true");
+          setError("You have been blocked from further attempts.");
+        } else {
+          setError(`Incorrect password. ${remaining} attempt(s) remaining.`);
+        }
         return;
       }
 
-      // Fetch session info
-      const session = await API.auth.adminCheckSession();
+      // ✅ Password correct — fetch session info from backend
+      const session = await API.auth.checkSession();
       if (!session?.user?.isAdmin) {
-        setError("Session validation failed");
+        setError("Session validation failed.");
         localStorage.removeItem("isAdmin");
         localStorage.removeItem("adminEmail");
         return;
       }
 
-      // Save session locally
+      // Store full session info
       localStorage.setItem("isAdmin", "true");
       localStorage.setItem("adminEmail", session.user.email || "");
+      localStorage.setItem("userId", session.user._id || "");
+      localStorage.setItem("userName", session.user.name || "");
+      localStorage.removeItem("adminAttempts");
+      localStorage.removeItem("adminBlocked");
 
       navigate("/admin", { replace: true });
     } catch (err) {
       console.error("Admin login error:", err);
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Something went wrong. Try again.");
       localStorage.removeItem("isAdmin");
       localStorage.removeItem("adminEmail");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userName");
     } finally {
       setLoading(false);
       setPassword("");
@@ -84,10 +102,12 @@ export default function AdminLogin() {
 
   return (
     <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
-      <h2 className="text-center mb-3">Admin Login</h2>
-      <p className="text-center text-muted mb-4">Restricted to authorized administrators only.</p>
+      <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
+      <p className="admin-login-warning text-center text-muted mb-4">
+        Restricted to authorized administrators only. Unauthorized attempts will be blocked.
+      </p>
 
-      <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: "400px" }}>
+      <form onSubmit={handleSubmit} className="admin-login-form mx-auto" style={{ maxWidth: "400px" }}>
         <input
           type="password"
           placeholder="Enter Admin Password"
@@ -95,12 +115,17 @@ export default function AdminLogin() {
           onChange={handleChange}
           className="form-control"
           ref={inputRef}
+          disabled={loading || attemptsLeft <= 0}
           autoFocus
         />
 
-        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading}>
+        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading || attemptsLeft <= 0}>
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        {attemptsLeft > 0 && !error && (
+          <div className="text-muted mt-2 text-center">Attempts remaining: {attemptsLeft}</div>
+        )}
 
         {error && <div className="text-danger mt-2 text-center">{error}</div>}
       </form>
