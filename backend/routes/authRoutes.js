@@ -21,6 +21,7 @@ router.get(
       req.session.save(err => {
         if (err) return res.redirect(`${process.env.CLIENT_URL}/login`);
 
+        // Decide redirect based on admin flag
         const redirectUrl = req.user.isAdmin
           ? `${process.env.CLIENT_URL}/admin`
           : `${process.env.CLIENT_URL}/dashboard`;
@@ -33,17 +34,19 @@ router.get(
     }
   }
 );
+
+// --- Admin Login (promote existing session user)
 router.post("/admin-login", async (req, res) => {
   try {
     const { password } = req.body;
     if (!password) return res.status(400).json({ success: false, message: "Password required" });
 
-    // Ensure a user is already logged in via Google OAuth
+    // Ensure user is already logged in via Google OAuth
     if (!req.session?.userId) {
       return res.status(401).json({ success: false, message: "No logged-in user" });
     }
 
-    // Verify admin password from .env
+    // Verify admin password
     if (password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ success: false, message: "Incorrect password" });
     }
@@ -71,6 +74,7 @@ router.post("/admin-login", async (req, res) => {
     return res.status(500).json({ success: false, message: "Login failed" });
   }
 });
+
 // --- Logout
 router.get("/logout", (req, res) => {
   req.session.destroy(() => {
@@ -78,16 +82,23 @@ router.get("/logout", (req, res) => {
     return res.redirect(`${process.env.CLIENT_URL}/login`);
   });
 });
+
+// --- Unified session check
 router.get("/session-check", (req, res) => {
-  if (!req.session.userId || !req.session.isAdmin) 
+  const { userId, email, isAdmin } = req.session;
+
+  // Only redirect to admin-login if the request is for admin
+  const referer = req.get("Referer") || "";
+  const onAdminPage = referer.includes("/admin");
+
+  if (!userId || (onAdminPage && !isAdmin)) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
   res.json({
     success: true,
-    user: {
-      _id: req.session.userId,
-      email: req.session.email,
-      isAdmin: req.session.isAdmin
-    }
+    user: { _id: userId, email, isAdmin: !!isAdmin }
   });
 });
+
 module.exports = router;
