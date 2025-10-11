@@ -188,24 +188,27 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-  let userLanguage =
-    req.getLanguage?.() ||
-    req.headers["accept-language"]?.split(",")[0]?.split("-")[0] ||
-    "en";
+    // Get language from request, fallback to "en"
+    let userLanguage =
+      (req.getLanguage?.() || req.headers["accept-language"] || "en")
+        .split(",")[0]          // pick first preferred language
+        .split("-")[0]          // get language code only (hi, en, as)
+        .toLowerCase();         // normalize to lowercase
 
-  // Default to English only if language is not supported
-  const supportedLanguages = ["hi", "as", "en"];
-  if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
+    // Only allow supported languages
+    const supportedLanguages = ["hi", "as", "en"];
+    if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
 
-  const LANGUAGE_MAP = {
-    hi: "Hindi",
-    as: "Assamese",
-    en: "English",
-  };
+    // Map to language name
+    const LANGUAGE_MAP = {
+      hi: "Hindi",
+      as: "Assamese",
+      en: "English",
+    };
 
-  const languageName = LANGUAGE_MAP[userLanguage];
+    const languageName = LANGUAGE_MAP[userLanguage]; // now works correctly
 
-    const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
+        const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
 Context: You are helping with mental health support and emotional well-being.
 User's language preference: ${languageName}.Talk in this language even if the user writes in another language.
