@@ -3,6 +3,8 @@ const Metrics = require("../models/metrics");
 const Screening = require("../models/Screening");
 const Todo = require("../models/todo");
 const User = require("../models/User");
+const logger = require("../utils/logger");
+const { asyncHandler } = require("../middleware/errorHandler");
 
 const apiKeys = process.env.GEMINI_API_KEYS?.split(",").map(k => k.trim()) || [];
 if (!apiKeys.length) console.error("[Init] No GEMINI_API_KEYS found in .env");
@@ -60,141 +62,379 @@ function cleanJsonString(str) {
   }
 }
 
-exports.getChatbot = (req, res) => {
+exports.getChatbot = asyncHandler((req, res) => {
   const user = req.user;
   if (!user?._id) {
-    console.error("[getChatbot] Unauthorized access attempt");
-    return res.status(401).json({ error: req.t("auth.unauthorized") });
+    logger.warn('Unauthorized chatbot access attempt', {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestId: req.id,
+    });
+    return res.status(401).json({ 
+      success: false,
+      error: req.t("auth.unauthorized") 
+    });
   }
 
   const userId = user._id.toString();
-  if (!userSessions[userId]) userSessions[userId] = { messages: [] };
+  const userLanguage = req.getLanguage();
+  
+  if (!userSessions[userId]) {
+    userSessions[userId] = { 
+      messages: [],
+      language: userLanguage,
+      createdAt: new Date()
+    };
+  }
+  
   const session = userSessions[userId];
 
   if (!session.messages.length) {
     session.messages.push({
       sender: "bot",
       text: req.t("chatbot.welcome"),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      language: userLanguage
     });
-    console.log(`[getChatbot] Started session for user ${userId}`);
+    
+    logger.info('Chatbot session started', {
+      userId,
+      language: userLanguage,
+      ip: req.ip,
+      requestId: req.id,
+    });
   }
 
-  res.json({ messages: session.messages, sessionID: userId });
-};
+  res.json({ 
+    success: true,
+    messages: session.messages, 
+    sessionID: userId,
+    language: userLanguage,
+    suggestions: {
+      greeting: req.t("chatbot.suggestions.greeting"),
+      stress: req.t("chatbot.suggestions.stress"),
+      anxiety: req.t("chatbot.suggestions.anxiety"),
+      sadness: req.t("chatbot.suggestions.sadness"),
+      sleep: req.t("chatbot.suggestions.sleep"),
+      relationships: req.t("chatbot.suggestions.relationships"),
+      work: req.t("chatbot.suggestions.work"),
+      general: req.t("chatbot.suggestions.general")
+    }
+  });
+});
 
-exports.postChatbot = async (req, res) => {
+exports.postChatbot = asyncHandler(async (req, res) => {
   const user = req.user;
   if (!user?._id) {
-    console.error("[postChatbot] Unauthorized access attempt");
-    return res.status(401).json({ error: req.t("auth.unauthorized") });
+    logger.warn('Unauthorized chatbot message attempt', {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestId: req.id,
+    });
+    return res.status(401).json({ 
+      success: false,
+      error: req.t("auth.unauthorized") 
+    });
   }
 
   const userId = user._id.toString();
-  if (!userSessions[userId]) userSessions[userId] = { messages: [] };
+  const userLanguage = req.getLanguage();
+  
+  if (!userSessions[userId]) {
+    userSessions[userId] = { 
+      messages: [],
+      language: userLanguage,
+      createdAt: new Date()
+    };
+  }
+  
   const session = userSessions[userId];
 
   const { message } = req.body;
   if (!message?.trim()) {
-    console.warn(`[postChatbot] Empty message received from user ${userId}`);
-    return res.status(400).json({ error: req.t("chatbot.emptyMessage") });
+    logger.warn('Empty chatbot message received', {
+      userId,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(400).json({ 
+      success: false,
+      error: req.t("chatbot.emptyMessage") 
+    });
   }
 
-  session.messages.push({ sender: "user", text: message, timestamp: new Date().toISOString() });
+  // Add user message to session
+  session.messages.push({ 
+    sender: "user", 
+    text: message, 
+    timestamp: new Date().toISOString(),
+    language: userLanguage
+  });
+  
   const history = session.messages.map(m => `${m.sender}: ${m.text}`).join("\n");
-  console.log(`[postChatbot] Received message from user ${userId}: "${message}"`);
+  
+  logger.info('Chatbot message received', {
+    userId,
+    messageLength: message.length,
+    language: userLanguage,
+    ip: req.ip,
+    requestId: req.id,
+  });
 
   let botResponse = "";
   let metricsData = {};
   let screeningData = {};
   let todosData = [];
 
+  // Generate chatbot response
   try {
-    const userLanguage = req.getLanguage();
-    const chatbotPrompt = `You are a friendly therapist chatbot. Respond in ${userLanguage === 'hi' ? 'Hindi' : userLanguage === 'as' ? 'Assamese' : 'English'}.
+    const languageName = userLanguage === 'hi' ? 'Hindi' : userLanguage === 'as' ? 'Assamese' : 'English';
+    const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
+    
+Context: You are helping with mental health support and emotional well-being.
+User's language preference: ${languageName}
+
 Conversation so far:
 ${history}
-User just said: "${message}"
-Respond empathetically and naturally.`;
 
-    console.log(`[postChatbot] Generating chatbot response for user ${userId} in ${userLanguage}`);
+User just said: "${message}"
+
+Guidelines:
+- Be empathetic, supportive, and non-judgmental
+- Use appropriate therapeutic language
+- Keep responses concise but meaningful
+- Ask follow-up questions when appropriate
+- Provide practical suggestions when helpful
+- Always maintain a professional yet warm tone
+
+Respond naturally and therapeutically in ${languageName}:`;
+
+    logger.info('Generating chatbot response', {
+      userId,
+      language: userLanguage,
+      requestId: req.id,
+    });
+    
     botResponse = await safeGenerate(chatbotPrompt);
-    session.messages.push({ sender: "bot", text: botResponse, timestamp: new Date().toISOString() });
-    console.log(`[postChatbot] Bot response generated successfully for user ${userId}`);
+    session.messages.push({ 
+      sender: "bot", 
+      text: botResponse, 
+      timestamp: new Date().toISOString(),
+      language: userLanguage
+    });
+    
+    logger.info('Chatbot response generated successfully', {
+      userId,
+      responseLength: botResponse.length,
+      language: userLanguage,
+      requestId: req.id,
+    });
   } catch (err) {
     botResponse = req.t("chatbot.error");
-    session.messages.push({ sender: "bot", text: botResponse });
-    console.error(`[postChatbot] Bot response generation failed for user ${userId}: ${err.message || err}`);
+    session.messages.push({ 
+      sender: "bot", 
+      text: botResponse,
+      timestamp: new Date().toISOString(),
+      language: userLanguage
+    });
+    
+    logger.error('Chatbot response generation failed', {
+      userId,
+      error: err.message,
+      language: userLanguage,
+      ip: req.ip,
+      requestId: req.id,
+    });
   }
 
+  // Generate metrics and screening data
   try {
-    const metricsPrompt = `Analyze the user's emotional state and screening results.
-Respond ONLY in strict JSON with keys "metrics" and "screening".
-Metrics (0-50): stress_level, happiness_level, anxiety_level, overall_mood_level
-Screening: phq9_score (0-27), gad7_score (0-21), ghq_score (0-36), risk_level ("low","moderate","high")
-User message: "${message}"`;
+    const metricsPrompt = `Analyze the user's emotional state and mental health indicators from their message.
+    
+User message: "${message}"
 
-    console.log(`[postChatbot] Generating metrics and screening for user ${userId}`);
+Respond ONLY in strict JSON format with these exact keys:
+{
+  "metrics": {
+    "stress_level": number (0-50),
+    "happiness_level": number (0-50),
+    "anxiety_level": number (0-50),
+    "overall_mood_level": number (0-50)
+  },
+  "screening": {
+    "phq9_score": number (0-27),
+    "gad7_score": number (0-21),
+    "ghq_score": number (0-36),
+    "risk_level": string ("low", "moderate", "high")
+  }
+}
+
+Guidelines:
+- Use 0-50 scale for metrics (0 = very low, 50 = very high)
+- Use standard clinical scales for screening scores
+- Assess risk level based on overall indicators
+- Be conservative in assessments`;
+
+    logger.info('Generating metrics and screening data', {
+      userId,
+      language: userLanguage,
+      requestId: req.id,
+    });
+    
     const metricsResultText = await safeGenerate(metricsPrompt);
     const parsed = JSON.parse(cleanJsonString(metricsResultText));
     metricsData = parsed.metrics || {};
     screeningData = parsed.screening || {};
 
+    // Save metrics
     await Metrics.create({
       userId: user._id,
       message,
-      stress_level: Number(metricsData.stress_level) || 0,
-      happiness_level: Number(metricsData.happiness_level) || 0,
-      anxiety_level: Number(metricsData.anxiety_level) || 0,
-      overall_mood_level: Number(metricsData.overall_mood_level) || 0,
+      stress_level: Math.max(0, Math.min(50, Number(metricsData.stress_level) || 0)),
+      happiness_level: Math.max(0, Math.min(50, Number(metricsData.happiness_level) || 0)),
+      anxiety_level: Math.max(0, Math.min(50, Number(metricsData.anxiety_level) || 0)),
+      overall_mood_level: Math.max(0, Math.min(50, Number(metricsData.overall_mood_level) || 0)),
       createdAt: new Date(),
     });
 
+    // Save screening data
     await Screening.create({
       userId: user._id,
       message,
-      phq9_score: Number(screeningData.phq9_score) || 0,
-      gad7_score: Number(screeningData.gad7_score) || 0,
-      ghq_score: Number(screeningData.ghq_score) || 0,
+      phq9_score: Math.max(0, Math.min(27, Number(screeningData.phq9_score) || 0)),
+      gad7_score: Math.max(0, Math.min(21, Number(screeningData.gad7_score) || 0)),
+      ghq_score: Math.max(0, Math.min(36, Number(screeningData.ghq_score) || 0)),
       risk_level: screeningData.risk_level || "low",
       createdAt: new Date(),
     });
 
-    console.log(`[postChatbot] Metrics & Screening saved successfully for user ${userId}`);
+    logger.info('Metrics and screening data saved successfully', {
+      userId,
+      metrics: metricsData,
+      screening: screeningData,
+      requestId: req.id,
+    });
   } catch (err) {
     metricsData = { stress_level: 0, happiness_level: 0, anxiety_level: 0, overall_mood_level: 0 };
     screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
-    console.error(`[postChatbot] Metrics/Screening generation failed for user ${userId}: ${err.message || err}`);
+    
+    logger.error('Metrics/Screening generation failed', {
+      userId,
+      error: err.message,
+      language: userLanguage,
+      ip: req.ip,
+      requestId: req.id,
+    });
   }
 
+  // Generate todos
   try {
-    const todoPrompt = `You are a wellness assistant. Based on conversation and metrics, suggest 5-10 actionable tasks.
+    const todoPrompt = `You are a wellness assistant. Based on the conversation and mental health metrics, suggest 5-10 actionable, personalized tasks.
+
+User message: "${message}"
 Metrics: ${JSON.stringify(metricsData)}
 Screening: ${JSON.stringify(screeningData)}
-Respond ONLY in strict JSON: { "todos": [ { "title": "...", "completed": false }, ... ] }`;
 
-    console.log(`[postChatbot] Generating todos for user ${userId}`);
+Respond ONLY in strict JSON format:
+{
+  "todos": [
+    {
+      "title": "string (task description)",
+      "completed": false,
+      "priority": "low|medium|high",
+      "category": "self-care|mindfulness|social|physical|professional"
+    }
+  ]
+}
+
+Guidelines:
+- Make tasks specific and actionable
+- Consider the user's emotional state
+- Include a mix of immediate and longer-term tasks
+- Prioritize self-care and mental health
+- Keep task titles concise but clear
+- Use appropriate priority levels`;
+
+    logger.info('Generating personalized todos', {
+      userId,
+      language: userLanguage,
+      requestId: req.id,
+    });
+    
     const todoResultText = await safeGenerate(todoPrompt);
-    todosData = JSON.parse(cleanJsonString(todoResultText)).todos || [];
+    const todoResult = JSON.parse(cleanJsonString(todoResultText));
+    todosData = todoResult.todos || [];
 
+    // Save todos
     await Todo.findOneAndUpdate(
       { userId: user._id },
-      { tasks: todosData, updatedAt: new Date() },
+      { 
+        tasks: todosData, 
+        updatedAt: new Date(),
+        language: userLanguage
+      },
       { upsert: true, new: true }
     );
 
-    console.log(`[postChatbot] Todos generated and saved successfully for user ${userId}`);
+    logger.info('Todos generated and saved successfully', {
+      userId,
+      todoCount: todosData.length,
+      language: userLanguage,
+      requestId: req.id,
+    });
   } catch (err) {
     todosData = [];
-    console.error(`[postChatbot] Todo generation failed for user ${userId}: ${err.message || err}`);
+    
+    logger.error('Todo generation failed', {
+      userId,
+      error: err.message,
+      language: userLanguage,
+      ip: req.ip,
+      requestId: req.id,
+    });
   }
 
-  res.json({
+  // Prepare response with translated labels
+  const response = {
+    success: true,
     messages: session.messages,
     botResponse,
-    metrics: metricsData,
+    metrics: {
+      ...metricsData,
+      labels: {
+        stressLevel: req.t("chatbot.metrics.stressLevel"),
+        happinessLevel: req.t("chatbot.metrics.happinessLevel"),
+        anxietyLevel: req.t("chatbot.metrics.anxietyLevel"),
+        overallMood: req.t("chatbot.metrics.overallMood"),
+        phq9Score: req.t("chatbot.metrics.phq9Score"),
+        gad7Score: req.t("chatbot.metrics.gad7Score"),
+        ghqScore: req.t("chatbot.metrics.ghqScore"),
+        riskLevel: req.t("chatbot.metrics.riskLevel"),
+        low: req.t("chatbot.metrics.low"),
+        moderate: req.t("chatbot.metrics.moderate"),
+        high: req.t("chatbot.metrics.high")
+      }
+    },
     screening: screeningData,
-    todos: todosData,
+    todos: {
+      data: todosData,
+      message: todosData.length > 0 ? req.t("chatbot.todos.generated") : req.t("chatbot.todos.noTasks"),
+      labels: {
+        taskTitle: req.t("chatbot.todos.taskTitle"),
+        completed: req.t("chatbot.todos.completed"),
+        pending: req.t("chatbot.todos.pending")
+      }
+    },
     sessionID: userId,
+    language: userLanguage
+  };
+
+  logger.info('Chatbot response completed', {
+    userId,
+    messageCount: session.messages.length,
+    language: userLanguage,
+    requestId: req.id,
   });
-};
+
+  res.json(response);
+});

@@ -1,6 +1,10 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
+const logger = require("../utils/logger");
+const { asyncHandler } = require("../middleware/errorHandler");
+const { validate, schemas } = require("../middleware/validation");
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Rate limiting for login attempts
@@ -68,214 +72,312 @@ const sanitizeUser = (user) => {
   return userObj;
 };
 
-exports.loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // Input validation
-    if (!email || !password) {
-      return res.status(400).json({ 
-        success: false,
-        error: "Email and password are required" 
-      });
-    }
+exports.loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  
+  logger.info(`Login attempt for email: ${email}`, {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    requestId: req.id,
+  });
 
-    if (!validateEmail(email)) {
-      return res.status(400).json({ 
-        success: false,
-        error: "Please provide a valid email address" 
-      });
-    }
-
-    if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        success: false,
-        error: "Password must be at least 6 characters long" 
-      });
-    }
-
-    // Rate limiting check
-    const rateLimit = checkRateLimit(email);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({ 
-        success: false,
-        error: rateLimit.message 
-      });
-    }
-
-    // Find user
-    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
-    if (!user) {
-      recordLoginAttempt(email, false);
-      return res.status(401).json({ 
-        success: false,
-        error: "Invalid credentials" 
-      });
-    }
-
-    // Verify password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      recordLoginAttempt(email, false);
-      return res.status(401).json({ 
-        success: false,
-        error: "Invalid credentials" 
-      });
-    }
-
-    // Check admin status
-    const isAdmin = isAdminEmail(email) || (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD);
-    if (isAdmin && !user.isAdmin) { 
-      user.isAdmin = true; 
-      await user.save(); 
-    }
-
-    // Record successful login
-    recordLoginAttempt(email, true);
-
-    // Set session
-    req.session.userId = user._id;
-    req.session.isAdmin = isAdmin;
-    req.session.email = user.email;
-    req.session.loginTime = Date.now();
-
-    req.session.save(err => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ 
-          success: false,
-          error: "Session save failed" 
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        user: sanitizeUser({ 
-          _id: user._id, 
-          email: user.email, 
-          name: user.name, 
-          isAdmin,
-          avatar: user.avatar,
-          createdAt: user.createdAt
-        }),
-        sessionInfo: {
-          loginTime: req.session.loginTime,
-          isAdmin: isAdmin
-        }
-      });
+  // Input validation
+  if (!email || !password) {
+    logger.warn('Login attempt with missing credentials', {
+      email: email ? 'provided' : 'missing',
+      password: password ? 'provided' : 'missing',
+      ip: req.ip,
+      requestId: req.id,
     });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ 
+    return res.status(400).json({ 
       success: false,
-      error: "Login failed. Please try again later." 
+      error: "Email and password are required" 
     });
   }
-};
 
-exports.googleLogin = async (req, res) => {
-  try {
-    const { token } = req.body;
-    if (!token) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Google token is required" 
-      });
-    }
-
-    // Verify Google token
-    const ticket = await client.verifyIdToken({ 
-      idToken: token, 
-      audience: process.env.GOOGLE_CLIENT_ID 
+  if (!validateEmail(email)) {
+    logger.warn('Login attempt with invalid email format', {
+      email,
+      ip: req.ip,
+      requestId: req.id,
     });
-    const payload = ticket.getPayload();
-    
-    if (!payload) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid Google token" 
-      });
-    }
-
-    const email = payload.email?.toLowerCase();
-    const name = payload.name || "Unknown User";
-    const avatar = payload.picture || "";
-
-    if (!email) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Google account missing email" 
-      });
-    }
-
-    // Find or create user
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({ 
-        email, 
-        name, 
-        googleId: payload.sub, 
-        avatar, 
-        password: "", 
-        isAdmin: false 
-      });
-    } else {
-      // Update user info if needed
-      if (!user.avatar && avatar) user.avatar = avatar;
-      if (!user.name || user.name === "Unknown User") user.name = name;
-      await user.save();
-    }
-
-    // Check admin status
-    const isAdmin = isAdminEmail(email);
-    if (isAdmin && !user.isAdmin) { 
-      user.isAdmin = true; 
-      await user.save(); 
-    }
-
-    // Set session
-    req.session.userId = user._id;
-    req.session.isAdmin = isAdmin;
-    req.session.email = user.email;
-    req.session.loginTime = Date.now();
-
-    req.session.save(err => {
-      if (err) {
-        console.error("Session save error:", err);
-        return res.status(500).json({ 
-          success: false,
-          message: "Session save failed" 
-        });
-      }
-      
-      res.json({ 
-        success: true, 
-        user: sanitizeUser({ 
-          _id: user._id, 
-          email: user.email, 
-          name: user.name, 
-          isAdmin,
-          avatar: user.avatar,
-          createdAt: user.createdAt
-        }),
-        sessionInfo: {
-          loginTime: req.session.loginTime,
-          isAdmin: isAdmin
-        }
-      });
-    });
-  } catch (err) {
-    console.error("Google login error:", err);
-    res.status(500).json({ 
+    return res.status(400).json({ 
       success: false,
-      message: "Google login failed", 
-      error: err.message 
+      error: "Please provide a valid email address" 
     });
   }
-};
+
+  if (!validatePassword(password)) {
+    logger.warn('Login attempt with invalid password format', {
+      email,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(400).json({ 
+      success: false,
+      error: "Password must be at least 6 characters long" 
+    });
+  }
+
+  // Rate limiting check
+  const rateLimit = checkRateLimit(email);
+  if (!rateLimit.allowed) {
+    logger.warn('Login attempt blocked by rate limit', {
+      email,
+      ip: req.ip,
+      timeLeft: rateLimit.timeLeft,
+      requestId: req.id,
+    });
+    return res.status(429).json({ 
+      success: false,
+      error: rateLimit.message 
+    });
+  }
+
+  // Find user
+  const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
+  if (!user) {
+    recordLoginAttempt(email, false);
+    logger.warn('Login attempt with non-existent email', {
+      email,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(401).json({ 
+      success: false,
+      error: "Invalid credentials" 
+    });
+  }
+
+  // Verify password
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    recordLoginAttempt(email, false);
+    logger.warn('Login attempt with incorrect password', {
+      email,
+      userId: user._id,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(401).json({ 
+      success: false,
+      error: "Invalid credentials" 
+    });
+  }
+
+  // Check admin status
+  const isAdmin = isAdminEmail(email) || (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD);
+  if (isAdmin && !user.isAdmin) { 
+    user.isAdmin = true; 
+    await user.save();
+    logger.info('User granted admin privileges', {
+      email,
+      userId: user._id,
+      ip: req.ip,
+      requestId: req.id,
+    });
+  }
+
+  // Record successful login
+  recordLoginAttempt(email, true);
+
+  // Set session
+  req.session.userId = user._id;
+  req.session.isAdmin = isAdmin;
+  req.session.email = user.email;
+  req.session.loginTime = Date.now();
+  req.session.loginMethod = 'email';
+
+  req.session.save(err => {
+    if (err) {
+      logger.error('Session save error during login', {
+        error: err.message,
+        email,
+        userId: user._id,
+        ip: req.ip,
+        requestId: req.id,
+      });
+      return res.status(500).json({ 
+        success: false,
+        error: "Session save failed" 
+      });
+    }
+    
+    logger.info('User logged in successfully', {
+      email,
+      userId: user._id,
+      isAdmin,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    
+    res.json({ 
+      success: true, 
+      user: sanitizeUser({ 
+        _id: user._id, 
+        email: user.email, 
+        name: user.name, 
+        isAdmin,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      }),
+      sessionInfo: {
+        loginTime: req.session.loginTime,
+        loginMethod: req.session.loginMethod,
+        isAdmin: isAdmin
+      }
+    });
+  });
+});
+
+exports.googleLogin = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  
+  logger.info('Google login attempt', {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    requestId: req.id,
+  });
+
+  if (!token) {
+    logger.warn('Google login attempt without token', {
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(400).json({ 
+      success: false,
+      message: "Google token is required" 
+    });
+  }
+
+  // Verify Google token
+  const ticket = await client.verifyIdToken({ 
+    idToken: token, 
+    audience: process.env.GOOGLE_CLIENT_ID 
+  });
+  const payload = ticket.getPayload();
+  
+  if (!payload) {
+    logger.warn('Google login with invalid token', {
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(400).json({ 
+      success: false,
+      message: "Invalid Google token" 
+    });
+  }
+
+  const email = payload.email?.toLowerCase();
+  const name = payload.name || "Unknown User";
+  const avatar = payload.picture || "";
+
+  if (!email) {
+    logger.warn('Google login with account missing email', {
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.status(400).json({ 
+      success: false,
+      message: "Google account missing email" 
+    });
+  }
+
+  // Find or create user
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.create({ 
+      email, 
+      name, 
+      googleId: payload.sub, 
+      avatar, 
+      password: "", 
+      isAdmin: false 
+    });
+    logger.info('New user created via Google login', {
+      email,
+      userId: user._id,
+      ip: req.ip,
+      requestId: req.id,
+    });
+  } else {
+    // Update user info if needed
+    if (!user.avatar && avatar) user.avatar = avatar;
+    if (!user.name || user.name === "Unknown User") user.name = name;
+    await user.save();
+  }
+
+  // Check admin status
+  const isAdmin = isAdminEmail(email);
+  if (isAdmin && !user.isAdmin) { 
+    user.isAdmin = true; 
+    await user.save();
+    logger.info('User granted admin privileges via Google login', {
+      email,
+      userId: user._id,
+      ip: req.ip,
+      requestId: req.id,
+    });
+  }
+
+  // Set session
+  req.session.userId = user._id;
+  req.session.isAdmin = isAdmin;
+  req.session.email = user.email;
+  req.session.loginTime = Date.now();
+  req.session.loginMethod = 'google';
+
+  req.session.save(err => {
+    if (err) {
+      logger.error('Session save error during Google login', {
+        error: err.message,
+        email,
+        userId: user._id,
+        ip: req.ip,
+        requestId: req.id,
+      });
+      return res.status(500).json({ 
+        success: false,
+        message: "Session save failed" 
+      });
+    }
+    
+    logger.info('User logged in successfully via Google', {
+      email,
+      userId: user._id,
+      isAdmin,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    
+    res.json({ 
+      success: true, 
+      user: sanitizeUser({ 
+        _id: user._id, 
+        email: user.email, 
+        name: user.name, 
+        isAdmin,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      }),
+      sessionInfo: {
+        loginTime: req.session.loginTime,
+        loginMethod: req.session.loginMethod,
+        isAdmin: isAdmin
+      }
+    });
+  });
+});
 
 exports.requireLogin = (req, res, next) => {
   if (!req.session?.userId) {
+    logger.warn('Unauthorized access attempt', {
+      url: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestId: req.id,
+    });
     return res.status(401).json({ 
       success: false,
       error: "Unauthorized: Please login" 
@@ -293,6 +395,13 @@ exports.requireLogin = (req, res, next) => {
 
 exports.requireAdmin = (req, res, next) => {
   if (!req.session?.userId) {
+    logger.warn('Unauthorized admin access attempt', {
+      url: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestId: req.id,
+    });
     return res.status(401).json({ 
       success: false,
       error: "Unauthorized: Please login" 
@@ -302,6 +411,14 @@ exports.requireAdmin = (req, res, next) => {
   const url = req.originalUrl || "";
   if (url.startsWith("/api/admin") || url.startsWith("/admin")) {
     if (!req.session.isAdmin) {
+      logger.warn('Non-admin user attempted admin access', {
+        url: req.originalUrl,
+        method: req.method,
+        userId: req.session.userId,
+        email: req.session.email,
+        ip: req.ip,
+        requestId: req.id,
+      });
       return res.status(403).json({ 
         success: false,
         error: "Admin access only" 
@@ -319,6 +436,9 @@ exports.requireAdmin = (req, res, next) => {
 };
 
 exports.logoutUser = (req, res) => {
+  const userId = req.session?.userId;
+  const email = req.session?.email;
+  
   if (!req.session) {
     return res.json({ 
       success: true, 
@@ -328,12 +448,25 @@ exports.logoutUser = (req, res) => {
   
   req.session.destroy(err => {
     if (err) {
-      console.error("Logout error:", err);
+      logger.error('Logout error', {
+        error: err.message,
+        userId,
+        email,
+        ip: req.ip,
+        requestId: req.id,
+      });
       return res.status(500).json({ 
         success: false,
         message: "Logout failed" 
       });
     }
+    
+    logger.info('User logged out successfully', {
+      userId,
+      email,
+      ip: req.ip,
+      requestId: req.id,
+    });
     
     res.clearCookie("connect.sid");
     res.json({ 
@@ -343,59 +476,65 @@ exports.logoutUser = (req, res) => {
   });
 };
 
-exports.getSessionInfo = async (req, res) => {
-  try {
-    const { userId, email, isAdmin, loginTime } = req.session;
-    
-    if (!userId) {
-      return res.json({ 
-        success: false, 
-        user: null,
-        message: "No active session" 
-      });
-    }
-
-    // Fetch fresh user data
-    const user = await User.findById(userId).select("-password");
-    if (!user) {
-      // User was deleted, destroy session
-      req.session.destroy();
-      return res.json({ 
-        success: false, 
-        user: null,
-        message: "User not found" 
-      });
-    }
-
-    // Update admin status if needed
-    const currentAdminStatus = isAdminEmail(email);
-    if (currentAdminStatus !== isAdmin) {
-      user.isAdmin = currentAdminStatus;
-      await user.save();
-      req.session.isAdmin = currentAdminStatus;
-    }
-
-    res.json({ 
-      success: true, 
-      user: sanitizeUser({
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        isAdmin: currentAdminStatus,
-        avatar: user.avatar,
-        createdAt: user.createdAt
-      }),
-      sessionInfo: {
-        loginTime: loginTime,
-        isAdmin: currentAdminStatus,
-        sessionAge: loginTime ? Date.now() - loginTime : 0
-      }
-    });
-  } catch (err) {
-    console.error("Session info error:", err);
-    res.status(500).json({ 
-      success: false,
-      error: "Failed to get session info" 
+exports.getSessionInfo = asyncHandler(async (req, res) => {
+  const { userId, email, isAdmin, loginTime } = req.session;
+  
+  if (!userId) {
+    return res.json({ 
+      success: false, 
+      user: null,
+      message: "No active session" 
     });
   }
-};
+
+  // Fetch fresh user data
+  const user = await User.findById(userId).select("-password");
+  if (!user) {
+    // User was deleted, destroy session
+    req.session.destroy();
+    logger.warn('Session check failed - user not found in database', {
+      userId,
+      email,
+      ip: req.ip,
+      requestId: req.id,
+    });
+    return res.json({ 
+      success: false, 
+      user: null,
+      message: "User not found" 
+    });
+  }
+
+  // Update admin status if needed
+  const currentAdminStatus = isAdminEmail(email);
+  if (currentAdminStatus !== isAdmin) {
+    user.isAdmin = currentAdminStatus;
+    await user.save();
+    req.session.isAdmin = currentAdminStatus;
+    logger.info('User admin status updated during session check', {
+      userId,
+      email,
+      oldStatus: isAdmin,
+      newStatus: currentAdminStatus,
+      ip: req.ip,
+      requestId: req.id,
+    });
+  }
+
+  res.json({ 
+    success: true, 
+    user: sanitizeUser({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      isAdmin: currentAdminStatus,
+      avatar: user.avatar,
+      createdAt: user.createdAt
+    }),
+    sessionInfo: {
+      loginTime: loginTime,
+      isAdmin: currentAdminStatus,
+      sessionAge: loginTime ? Date.now() - loginTime : 0
+    }
+  });
+});
