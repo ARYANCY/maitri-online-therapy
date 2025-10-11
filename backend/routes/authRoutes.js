@@ -76,5 +76,16 @@ router.get("/logout", (req, res) => {
     return res.redirect(`${process.env.CLIENT_URL}/login`);
   });
 });
-
+router.get("/session-check", (req, res) => {
+  if (!req.session.userId || !req.session.isAdmin) 
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  res.json({
+    success: true,
+    user: {
+      _id: req.session.userId,
+      email: req.session.email,
+      isAdmin: req.session.isAdmin
+    }
+  });
+});
 module.exports = router;
