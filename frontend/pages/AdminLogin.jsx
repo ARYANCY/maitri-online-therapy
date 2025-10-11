@@ -7,11 +7,10 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- On mount: check existing admin session
+  // --- On mount: check session
   useEffect(() => {
     let isMounted = true;
 
@@ -32,63 +31,48 @@ export default function AdminLogin() {
     };
 
     checkSession();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [navigate]);
 
-  // --- Handle input change
+  // --- Handle password change
   const handleChange = (e) => {
     setPassword(e.target.value);
     if (error) setError("");
   };
 
-  // --- Submit password login
+  // --- Submit login
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading || attemptsLeft <= 0) return;
+    if (loading) return;
 
     setLoading(true);
     setError("");
 
     try {
-      // Send password to backend for verification
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
-        const remaining = attemptsLeft - 1;
-        setAttemptsLeft(remaining);
-        localStorage.setItem("adminAttempts", remaining);
-
-        if (remaining <= 0) {
-          localStorage.setItem("adminBlocked", "true");
-          setError("You have been blocked from further attempts.");
-        } else {
-          setError(`Incorrect password. ${remaining} attempt(s) remaining.`);
-        }
+        setError(res.message || "Incorrect password");
         return;
       }
 
-      // ✅ Password correct — fetch session info from backend
+      // Fetch session info
       const session = await API.auth.adminCheckSession();
       if (!session?.user?.isAdmin) {
-        setError("Session validation failed.");
+        setError("Session validation failed");
         localStorage.removeItem("isAdmin");
         localStorage.removeItem("adminEmail");
         return;
       }
 
-      // Store session info locally
+      // Save session locally
       localStorage.setItem("isAdmin", "true");
       localStorage.setItem("adminEmail", session.user.email || "");
-      localStorage.removeItem("adminAttempts");
-      localStorage.removeItem("adminBlocked");
 
       navigate("/admin", { replace: true });
     } catch (err) {
       console.error("Admin login error:", err);
-      setError(err.message || "Something went wrong. Try again.");
+      setError(err.message || "Something went wrong");
       localStorage.removeItem("isAdmin");
       localStorage.removeItem("adminEmail");
     } finally {
@@ -100,12 +84,10 @@ export default function AdminLogin() {
 
   return (
     <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
-      <h2 className="admin-login-title text-center mb-3">Admin Login</h2>
-      <p className="admin-login-warning text-center text-muted mb-4">
-        Restricted to authorized administrators only. Unauthorized attempts will be blocked.
-      </p>
+      <h2 className="text-center mb-3">Admin Login</h2>
+      <p className="text-center text-muted mb-4">Restricted to authorized administrators only.</p>
 
-      <form onSubmit={handleSubmit} className="admin-login-form mx-auto" style={{ maxWidth: "400px" }}>
+      <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: "400px" }}>
         <input
           type="password"
           placeholder="Enter Admin Password"
@@ -113,17 +95,12 @@ export default function AdminLogin() {
           onChange={handleChange}
           className="form-control"
           ref={inputRef}
-          disabled={loading || attemptsLeft <= 0}
           autoFocus
         />
 
-        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading || attemptsLeft <= 0}>
+        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
-
-        {attemptsLeft > 0 && !error && (
-          <div className="text-muted mt-2 text-center">Attempts remaining: {attemptsLeft}</div>
-        )}
 
         {error && <div className="text-danger mt-2 text-center">{error}</div>}
       </form>
