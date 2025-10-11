@@ -10,9 +10,10 @@ const API = axios.create({
 API.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    // Check if session expired or unauthorized
+    // Clear admin session on 401
     if (error.response?.status === 401) {
-      localStorage.removeItem("isAdmin"); // Clear admin session if unauthorized
+      localStorage.removeItem("isAdmin");
+      localStorage.removeItem("adminEmail");
     }
     const message =
       error.response?.data?.error ||
@@ -26,14 +27,18 @@ API.interceptors.response.use(
 // ---------------- Auth Endpoints ----------------
 API.auth = {
   login: (data) => API.post("/auth/login", data),
-  logout: () => API.post("/auth/logout").then(res => {
+  logout: async () => {
+    const res = await API.post("/auth/logout");
     localStorage.removeItem("isAdmin");
+    localStorage.removeItem("adminEmail");
     return res;
-  }),
+  },
   register: (data) => API.post("/auth/register", data),
   checkSession: () => API.get("/api/session-check"),
   adminCheckSession: () => API.get("/auth/session-check"),
   adminLogin: (data) => API.post("/auth/admin-login", data),
+  googleLogin: () => API.get("/auth/google"),
+  googleCallback: () => API.get("/auth/google/callback"),
 };
 
 // ---------------- Dashboard Endpoints ----------------
@@ -88,11 +93,14 @@ async function validateAdminSession() {
       const session = await API.auth.adminCheckSession();
       if (!session?.user?.isAdmin) {
         localStorage.removeItem("isAdmin");
+        localStorage.removeItem("adminEmail");
         return Promise.reject(new Error("Admin session invalid or expired."));
       }
       localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("adminEmail", session.user.email || "");
     } catch {
       localStorage.removeItem("isAdmin");
+      localStorage.removeItem("adminEmail");
       return Promise.reject(new Error("Admin session invalid or expired."));
     }
   }
