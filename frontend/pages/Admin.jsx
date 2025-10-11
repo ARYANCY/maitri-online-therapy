@@ -1,34 +1,35 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
 import Navbar from "../components/Navbar";
 import "../css/Admin.css";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Admin() {
   const [therapists, setTherapists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
-  const [user, setUser] = useState(null); // Session user
+  const [userName, setUserName] = useState("");
   const navigate = useNavigate();
-  const autoDeleteTimers = useRef({});
 
-  // --- Fetch session data
-  const fetchSession = useCallback(async () => {
-    try {
-      const session = await API.auth.checkSession();
-      if (!session?.user) throw new Error("No session found");
-      setUser(session.user);
-      if (!session.user.isAdmin) navigate("/login", { replace: true });
-    } catch {
-      localStorage.removeItem("isAdmin");
-      localStorage.removeItem("adminEmail");
-      navigate("/login", { replace: true });
-    }
+  useEffect(() => {
+    let mounted = true;
+    const checkAdmin = async () => {
+      try {
+        const session = await API.auth.checkSession();
+        if (!session?.user?.isAdmin) {
+          navigate("/admin-login", { replace: true });
+          return;
+        }
+        if (mounted) setUserName(session.user.name || "");
+      } catch {
+        navigate("/admin-login", { replace: true });
+      }
+    };
+    checkAdmin();
+    return () => { mounted = false; };
   }, [navigate]);
 
-  // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
     setError("");
     setLoading(true);
@@ -42,37 +43,14 @@ export default function Admin() {
     }
   }, []);
 
-  // --- Handle accept/reject/delete actions
   const handleAction = useCallback(
     async (id, action) => {
       if (!id || !action) return;
       setActionLoading(id);
-
       try {
-        switch (action) {
-          case "accept":
-            await API.adminTherapist.updateStatus(id, "accepted");
-            break;
-          case "reject":
-            await API.adminTherapist.updateStatus(id, "rejected");
-            // Schedule auto-delete after 2 hours
-            if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
-            autoDeleteTimers.current[id] = setTimeout(async () => {
-              try {
-                await API.adminTherapist.delete(id);
-                fetchTherapists();
-                delete autoDeleteTimers.current[id];
-              } catch (err) {
-                console.error("Auto-delete failed:", err);
-              }
-            }, 2 * 60 * 60 * 1000);
-            break;
-          case "delete":
-            await API.adminTherapist.delete(id);
-            break;
-          default:
-            break;
-        }
+        if (action === "accept") await API.adminTherapist.updateStatus(id, "accepted");
+        else if (action === "reject") await API.adminTherapist.updateStatus(id, "rejected");
+        else if (action === "delete") await API.adminTherapist.delete(id);
         await fetchTherapists();
       } catch (err) {
         setError(err.message || `Failed to ${action} therapist.`);
@@ -83,30 +61,15 @@ export default function Admin() {
     [fetchTherapists]
   );
 
-  // --- Load session and therapists on mount
-  useEffect(() => {
-    fetchSession();
-    fetchTherapists();
-
-    return () => {
-      Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
-      autoDeleteTimers.current = {};
-    };
-  }, [fetchTherapists, fetchSession]);
+  useEffect(() => { fetchTherapists(); }, [fetchTherapists]);
 
   return (
     <>
       <Navbar />
       <div className="admin-container container my-5 p-4">
         <div className="text-center mb-4">
-          <h1 className="text-primary fw-bold">Therapist Applications</h1>
-          {user && <p className="text-secondary mb-2">Hello, {user.name}</p>} {/* User greeting */}
-          <p className="text-muted lead">
-            Review therapist applications. Approve trusted professionals or reject unverified entries.
-          </p>
-          <button className="btn btn-outline-primary mt-3" onClick={() => navigate("/dashboard")}>
-            Go to Dashboard
-          </button>
+          <h1 className="text-primary fw-bold">Hello, {userName}</h1>
+          <p className="text-muted lead">Review therapist applications and manage your platform.</p>
         </div>
 
         {error && <div className="alert alert-danger text-center">{error}</div>}
@@ -114,12 +77,12 @@ export default function Admin() {
 
         {!loading && therapists.length > 0 ? (
           <div className="table-responsive shadow-sm glass-card p-3 rounded">
-            <table className="table table-hover align-middle text-center admin-table">
+            <table className="table table-hover align-middle text-center">
               <thead className="table-light">
                 <tr>
-                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(
-                    (header) => <th key={header}>{header}</th>
-                  )}
+                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(header => (
+                    <th key={header}>{header}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -131,48 +94,20 @@ export default function Admin() {
                     <td>{specialization}</td>
                     <td>{experience} yrs</td>
                     <td>{qualifications || "N/A"}</td>
-                    <td className={`status ${status}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</td>
-                    <td className="action-buttons">
-                      <button
-                        className="btn btn-sm mx-1 status-btn accepted"
-                        onClick={() => handleAction(_id, "accept")}
-                        disabled={status === "accepted" || actionLoading === _id}
-                      >
-                        {actionLoading === _id && status !== "accepted" ? "..." : "Accept"}
-                      </button>
-                      <button
-                        className="btn btn-sm mx-1 status-btn rejected"
-                        onClick={() => handleAction(_id, "reject")}
-                        disabled={status === "rejected" || actionLoading === _id}
-                      >
-                        {actionLoading === _id && status !== "rejected" ? "..." : "Reject"}
-                      </button>
-                      <button
-                        className="btn btn-sm mx-1 status-btn deleted"
-                        onClick={() => handleAction(_id, "delete")}
-                        disabled={actionLoading === _id}
-                      >
-                        Delete
-                      </button>
+                    <td>{status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                    <td>
+                      <button className="btn btn-sm btn-success mx-1" onClick={() => handleAction(_id, "accept")} disabled={status === "accepted" || actionLoading === _id}>Accept</button>
+                      <button className="btn btn-sm btn-warning mx-1" onClick={() => handleAction(_id, "reject")} disabled={status === "rejected" || actionLoading === _id}>Reject</button>
+                      <button className="btn btn-sm btn-danger mx-1" onClick={() => handleAction(_id, "delete")} disabled={actionLoading === _id}>Delete</button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : (
-          !loading && <div className="text-center py-4 text-muted">No therapist applications found.</div>
-        )}
-
-        <footer className="text-center mt-5">
-          <hr />
-          <Link to="/talk-to-counselor" className="btn btn-link me-3">
-            Talk to Counselor
-          </Link>
-          <Link to="/therapist-form" className="btn btn-link">
-            Therapist Form
-          </Link>
-        </footer>
+        ) : !loading ? (
+          <div className="text-center py-4 text-muted">No therapist applications found.</div>
+        ) : null}
       </div>
     </>
   );

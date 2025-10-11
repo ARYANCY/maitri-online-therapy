@@ -82,15 +82,20 @@ app.use("/api/therapists", requireLogin,therapistRoutes);
 app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
 app.get("/api/session-check", (req, res) => {
-  const isLoggedIn = !!req.user || !!req.session?.userId;
-  const user = req.user || (req.session?.userId
-    ? { _id: req.session.userId, isAdmin: req.session.isAdmin || false }
-    : null);
+  const userId = req.session?.userId;
+  const isAdmin = req.session?.isAdmin || false;
+
+  if (!userId) {
+    return res.json({ success: false, user: null });
+  }
+
+  const user = req.user || { _id: userId, isAdmin };
   res.json({
-    success: isLoggedIn,
-    user
+    success: true,
+    user,
   });
 });
+
 
 
 
