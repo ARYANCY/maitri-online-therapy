@@ -188,13 +188,22 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-    const LANGUAGE_MAP = {
-      hi: "Hindi",
-      as: "Assamese",
-      en: "English",
-    };
+  let userLanguage =
+    req.getLanguage?.() ||
+    req.headers["accept-language"]?.split(",")[0]?.split("-")[0] ||
+    "en";
 
-    const languageName = LANGUAGE_MAP[userLanguage] || "English";
+  // Default to English only if language is not supported
+  const supportedLanguages = ["hi", "as", "en"];
+  if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
+
+  const LANGUAGE_MAP = {
+    hi: "Hindi",
+    as: "Assamese",
+    en: "English",
+  };
+
+  const languageName = LANGUAGE_MAP[userLanguage];
 
     const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
