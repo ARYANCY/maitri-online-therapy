@@ -57,7 +57,7 @@ router.get(
         }
         
         // Always redirect to dashboard first, let frontend handle admin redirects
-        const redirectUrl = `${process.env.CLIENT_URL}/dashboard`;
+        const redirectUrl = `${process.env.CLIENT_URL}/splash`;
         
         console.log(`Google OAuth success: User ${req.user.email} redirected to ${redirectUrl}`);
         return res.redirect(redirectUrl);
