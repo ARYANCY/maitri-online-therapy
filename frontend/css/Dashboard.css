@@ -72,39 +72,40 @@ body {
   padding: var(--padding-tab-btn);
   font-weight: var(--font-weight-tab);
   font-size: var(--font-size-tab);
-  border-radius: var(--border-radius);
+  border-radius: 0; /* removed border radius */
   border: 1px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
   background: #ffffff;
   color: var(--text-primary);
   letter-spacing: 0.5px;
   box-shadow: 0 4px 10px var(--shadow-color);
-  transition: all 0.3s ease;
+  transition: all 0.4s ease; /* smooth animation */
   text-transform: uppercase;
 }
 
 .dashboard-tab-btn:hover {
-  background: linear-gradient(135deg, #dfe9f3, #ffffff);
-  box-shadow: 0 8px 16px var(--shadow-hover);
+  background: linear-gradient(135deg, #dfe9f3, #ffffff); 
+  box-shadow: 0 8px 18px var(--shadow-hover);
   transform: translateY(-2px) scale(1.02);
 }
-
 .dashboard-tab-btn.active {
   background: var(--accent-gradient);
   color: #fff;
   box-shadow: 0 0 20px rgba(142, 68, 173, 0.4);
+  border-radius: 0; 
 }
 
 .dashboard-tab-btn.active::after {
   content: "";
   position: absolute;
   inset: -4px;
-  border-radius: inherit;
+  border-radius: 0;
   background: linear-gradient(135deg, #8e44ad, #3498db);
   z-index: -1;
   filter: blur(12px);
   opacity: 0.85;
 }
+
 
 .dashboard-content {
   background: var(--bg-secondary);
