@@ -213,7 +213,6 @@ const LANGUAGE_MAP = {
 
 const languageName = LANGUAGE_MAP[userLanguage];
 
-  const languageName = LANGUAGE_MAP[userLanguage];
 
     const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
