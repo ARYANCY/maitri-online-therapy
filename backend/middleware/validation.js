@@ -48,12 +48,15 @@ const schemas = {
   }),
 
   adminLogin: Joi.object({
-    password: Joi.string().min(1).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
   }),
 
   reminder: Joi.object({
     message: Joi.string().min(1).max(500).trim().required(),
-    sendAt: Joi.date().greater('now').max(new Date(new Date().setFullYear(new Date().getFullYear() + 1))).required(),
+    sendAt: Joi.date()
+      .greater('now')
+      .max(new Date(new Date().setFullYear(new Date().getFullYear() + 1)))
+      .required(),
   }),
 
   therapistApplication: Joi.object({
@@ -84,8 +87,8 @@ const schemas = {
   }),
 
   search: Joi.object({
-    q: Joi.string().min(1).max(100).trim(),
-    status: Joi.string().valid('pending', 'accepted', 'rejected'),
+    q: Joi.string().min(1).max(100).trim().allow(''),
+    status: Joi.string().valid('pending', 'accepted', 'rejected').allow(''),
     dateFrom: Joi.date().allow(null),
     dateTo: Joi.date().allow(null),
   }),
@@ -103,10 +106,10 @@ const sanitizeInput = (req, res, next) => {
     if (obj === null || obj === undefined) return obj;
     if (typeof obj === 'string') return sanitizeString(obj);
     if (Array.isArray(obj)) return obj.map(sanitizeObject);
-    if (typeof obj === 'object') {
+    if (obj.constructor === Object) {
       const sanitized = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) sanitized[key] = sanitizeObject(obj[key]);
+        sanitized[key] = sanitizeObject(obj[key]);
       }
       return sanitized;
     }
