@@ -208,7 +208,7 @@ exports.postChatbot = asyncHandler(async (req, res) => {
     const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
 Context: You are helping with mental health support and emotional well-being.
-User's language preference: ${languageName}
+User's language preference: ${languageName}.Talk in this language even if the user writes in another language.
 
 Conversation so far:
 ${history}
