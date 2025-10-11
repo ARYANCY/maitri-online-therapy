@@ -90,15 +90,13 @@ exports.updateTherapistStatus = async (req, res) => {
 
     if (!updated) return res.status(404).json({ message: "Therapist not found" });
 
-    res.status(200).json({
-      message: "Status updated successfully",
-      updated,
-    });
+    res.status(200).json({ message: "Status updated successfully", updated });
   } catch (err) {
     console.error("Update Therapist Status Error:", err);
     res.status(500).json({ message: "Error updating therapist status" });
   }
 };
+
 
 // Admin: Delete therapist
 exports.deleteTherapist = async (req, res) => {
