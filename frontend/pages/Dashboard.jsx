@@ -12,7 +12,7 @@ import html2canvas from "html2canvas";
 import GuLogo from "@/images/logo.png";
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const reportRef = useRef();
 
@@ -24,10 +24,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState({ user: true, dashboard: true, todos: true });
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
   const [downloading, setDownloading] = useState(false);
-
   const [showFormatPopup, setShowFormatPopup] = useState(false);
-  const [reportFormat, setReportFormat] = useState("pdf");
 
+  // --- Fetch user and set language ---
   const fetchUser = useCallback(async () => {
     try {
       const data = await API.auth.checkSession();
@@ -35,7 +34,14 @@ export default function Dashboard() {
         navigate("/");
         return;
       }
+
       setUser(data.user);
+
+      // Only change language if needed
+      const prefLang = data.user.preferredLang || localStorage.getItem("preferredLang") || "en";
+      if (i18n.language !== prefLang) i18n.changeLanguage(prefLang);
+      localStorage.setItem("preferredLang", prefLang);
+
       setError(prev => ({ ...prev, user: null }));
     } catch (err) {
       console.error("Session check failed:", err);
@@ -44,11 +50,13 @@ export default function Dashboard() {
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
-  }, [navigate]);
+  }, [navigate, i18n]);
 
+  // --- Fetch dashboard data ---
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
     setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
+
     try {
       const data = await API.dashboard.get();
 
@@ -70,8 +78,9 @@ export default function Dashboard() {
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
     }
-  }, [user, navigate]);
+  }, [navigate, user]);
 
+  // --- Handle todos update ---
   const handleTodosUpdate = useCallback(
     async updatedTodos => {
       const prevTodos = [...todos];
@@ -92,6 +101,7 @@ export default function Dashboard() {
     [todos]
   );
 
+  // --- Download report (PDF/CSV/JSON) ---
 const handleDownloadReport = useCallback(async (format = "pdf") => {
   if (!user) return;
   setDownloading(true);
@@ -121,76 +131,45 @@ const handleDownloadReport = useCallback(async (format = "pdf") => {
       const pdf = new jsPDF("p", "mm", "a4");
       let yPos = margin;
 
-      // --- Logo ---
+      // --- Logo & Header ---
       pdf.addImage(GuLogo, "PNG", margin, yPos, 22, 22);
-
-      // --- Header ---
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
       pdf.text("Gauhati University", pageWidth / 2, yPos + 12, { align: "center" });
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal"); pdf.setFontSize(12);
       pdf.text("Guwahati, Assam, India", pageWidth / 2, yPos + 18, { align: "center" });
 
       yPos += 28;
-      pdf.setDrawColor(0);
-      pdf.setLineWidth(0.4);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 8;
+      pdf.setDrawColor(0); pdf.setLineWidth(0.4);
+      pdf.line(margin, yPos, pageWidth - margin, yPos); yPos += 8;
 
-      // --- Report Title ---
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(16);
+      // --- Report Title & User Info ---
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(16);
       pdf.text("Maitri Mental Health Summary Report", pageWidth / 2, yPos, { align: "center" });
       yPos += 10;
 
-      // --- User Info ---
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(13);
-      pdf.text("User Profile", margin, yPos);
-      yPos += 6;
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(11);
-      pdf.text(`Name: ${user?.name || "Guest User"}`, margin, yPos);
-      yPos += 6;
-      pdf.text(`Email: ${user?.email || "N/A"}`, margin, yPos);
-      yPos += 6;
-      pdf.text(`Preferred Language: ${localStorage.getItem("preferredLang") || "en"}`, margin, yPos);
-      yPos += 10;
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(13);
+      pdf.text("User Profile", margin, yPos); yPos += 6;
+      pdf.setFont("helvetica", "normal"); pdf.setFontSize(11);
+      pdf.text(`Name: ${user?.name || "Guest User"}`, margin, yPos); yPos += 6;
+      pdf.text(`Email: ${user?.email || "N/A"}`, margin, yPos); yPos += 6;
+      pdf.text(`Preferred Language: ${localStorage.getItem("preferredLang") || "en"}`, margin, yPos); yPos += 10;
 
       // --- Metrics Table ---
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(13);
-      pdf.text("Screening Metrics", margin, yPos);
-      yPos += 6;
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(11);
-      const col1 = 70;
-      const col2 = pageWidth - 2 * margin - col1;
-      const rowHeight = 8;
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(13);
+      pdf.text("Screening Metrics", margin, yPos); yPos += 6;
+      pdf.setFont("helvetica", "normal"); pdf.setFontSize(11);
+      const col1 = 70, col2 = pageWidth - 2 * margin - col1, rowHeight = 8;
 
       Object.entries(normalizedChartData).forEach(([key, values], index) => {
         const metric = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
         const value = values.join(", ");
-
-        if (yPos + rowHeight > pageHeight - 20) {
-          pdf.addPage();
-          yPos = margin;
-        }
-
-        // Alternate row background
+        if (yPos + rowHeight > pageHeight - 20) { pdf.addPage(); yPos = margin; }
         pdf.setFillColor(index % 2 === 0 ? 245 : 255);
         pdf.rect(margin, yPos - 6, col1, rowHeight, "F");
         pdf.rect(margin + col1, yPos - 6, col2, rowHeight, "F");
-
-        // Cell borders
         pdf.setDrawColor(200);
         pdf.rect(margin, yPos - 6, col1, rowHeight);
         pdf.rect(margin + col1, yPos - 6, col2, rowHeight);
-
         pdf.text(metric, margin + 2, yPos);
         pdf.text(value, margin + col1 + 2, yPos);
         yPos += rowHeight;
@@ -204,62 +183,32 @@ const handleDownloadReport = useCallback(async (format = "pdf") => {
         const canvas = await html2canvas(chartElement, { scale: 2 });
         const imgData = canvas.toDataURL("image/png");
         const maxWidth = pageWidth - 2 * margin;
-        const imgHeight = (canvas.height * maxWidth) / canvas.width;
-        if (yPos + imgHeight > pageHeight - 20) {
-          pdf.addPage();
-          yPos = margin;
-        }
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(13);
-        pdf.text("Visual Summary", margin, yPos);
-        yPos += 5;
-        pdf.addImage(imgData, "PNG", margin, yPos, maxWidth, Math.min(imgHeight, 100));
+        const imgHeight = Math.min((canvas.height * maxWidth) / canvas.width, 100); // max height
+        if (yPos + imgHeight > pageHeight - 20) { pdf.addPage(); yPos = margin; }
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(13);
+        pdf.text("Visual Summary", margin, yPos); yPos += 5;
+        pdf.addImage(imgData, "PNG", margin, yPos, maxWidth, imgHeight);
       }
 
       // --- Footer ---
-      pdf.setFont("times", "italic");
-      pdf.setFontSize(10);
-      pdf.setTextColor(100);
-      pdf.text(
-        `Generated via Maitri Dashboard | Gauhati University © ${new Date().getFullYear()}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: "center" }
-      );
-
+      pdf.setFont("times", "italic"); pdf.setFontSize(10); pdf.setTextColor(100);
+      pdf.text(`Generated via Maitri Dashboard | Gauhati University © ${new Date().getFullYear()}`, pageWidth / 2, pageHeight - 10, { align: "center" });
       pdf.save("maitri-report.pdf");
-    }
+    } 
 
-    // --- CSV ---
     else if (format === "csv") {
-      const rows = [["Metric", "Value"]];
-      Object.entries(normalizedChartData).forEach(([key, values]) => {
-        rows.push([key.replace(/_/g, " "), values.join(", ")]);
-      });
-      const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-      const encodedUri = encodeURI(csvContent);
+      const rows = [["Metric","Value"]];
+      Object.entries(normalizedChartData).forEach(([k,v]) => rows.push([k.replace(/_/g," "),v.join(",")]));
       const link = document.createElement("a");
-      link.href = encodedUri;
-      link.download = "maitri-report.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      link.href = encodeURI("data:text/csv;charset=utf-8,"+rows.map(e=>e.join(",")).join("\n"));
+      link.download = "maitri-report.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    } 
+
+    else if (format === "json") {
+      const blob = new Blob([JSON.stringify({user:{name:user?.name,email:user?.email,language:localStorage.getItem("preferredLang")},metrics:normalizedChartData},null,2)], {type:"application/json"});
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download="maitri-report.json"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
-    // --- JSON ---
-    else if (format === "json") {
-      const jsonData = {
-        user: { name: user?.name, email: user?.email, language: localStorage.getItem("preferredLang") },
-        metrics: normalizedChartData,
-      };
-      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "maitri-report.json";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
   } catch (err) {
     console.error("Report generation failed:", err);
   } finally {
@@ -268,100 +217,56 @@ const handleDownloadReport = useCallback(async (format = "pdf") => {
 }, [user]);
 
 
-
-
   useEffect(() => { fetchUser(); }, [fetchUser]);
   useEffect(() => { if (user) fetchDashboardData(); }, [user, fetchDashboardData]);
+  
+  // --- Update dashboard on language change ---
   useEffect(() => {
     window.updateDashboardChart = fetchDashboardData;
-    return () => { window.updateDashboardChart = null; };
+    const handleLangChange = () => fetchDashboardData();
+    window.addEventListener("languageChanged", handleLangChange);
+    return () => {
+      window.updateDashboardChart = null;
+      window.removeEventListener("languageChanged", handleLangChange);
+    };
   }, [fetchDashboardData]);
 
   const renderContent = () => {
     if (loading.user || loading.dashboard)
-      return <p className="dashboard-loading">{t("dashboard.loading", "Loading...")}</p>;
+      return <p className="dashboard-loading">{t("dashboard.loading","Loading...")}</p>;
     if (error.dashboard)
-      return <p className="dashboard-error">{t("dashboard.error", "An error occurred")}: {error.dashboard}</p>;
+      return <p className="dashboard-error">{t("dashboard.error","An error occurred")}: {error.dashboard}</p>;
 
     switch (activeTab) {
-      case "chatbot":
-        return <div className="dashboard-tab-content"><Chatbot onTodosUpdate={handleTodosUpdate} /></div>;
-      case "chart":
-        return <div className="dashboard-tab-content"><Chart chartData={chartData} chartLabels={chartLabels} /></div>;
-      case "todo":
-        return <div className="dashboard-tab-content"><Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} /></div>;
-      default:
-        return null;
+      case "chatbot": return <div className="dashboard-tab-content"><Chatbot onTodosUpdate={handleTodosUpdate} /></div>;
+      case "chart": return <div className="dashboard-tab-content"><Chart chartData={chartData} chartLabels={chartLabels} /></div>;
+      case "todo": return <div className="dashboard-tab-content"><Todo tasks={todos} onUpdate={handleTodosUpdate} loading={loading.todos} /></div>;
+      default: return null;
     }
   };
 
   return (
     <div className="dashboard-page">
-      <Navbar user={user} />
+      <Navbar user={user} downloadReport={handleDownloadReport} />
       <div className="dashboard-container" ref={reportRef}>
         <div className="dashboard-header">
           <div className="d-flex gap-2">
-            <button
-              className="dashboard-download-btn download-btn"
-              onClick={() => setShowFormatPopup(true)}
-              disabled={downloading}
-            >
-              {downloading
-                ? t("dashboard.downloading", "Generating Report...")
-                : t("dashboard.downloadReport", "Download Report")}
+            <button className="dashboard-download-btn download-btn" onClick={()=>setShowFormatPopup(true)} disabled={downloading}>
+              {downloading ? t("dashboard.downloading","Generating Report...") : t("dashboard.downloadReport","Download Report")}
             </button>
 
             {showFormatPopup && (
-              <div
-                className="report-popup-overlay"
-                onClick={() => setShowFormatPopup(false)}
-              >
-                <div
-                  className="report-popup"
-                  onClick={(e) => e.stopPropagation()} // prevent overlay click from closing modal
-                >
+              <div className="report-popup-overlay" onClick={()=>setShowFormatPopup(false)}>
+                <div className="report-popup" onClick={e=>e.stopPropagation()}>
                   <h6>Select Report Format</h6>
-
                   <div className="report-options">
-                    {[
-                      {
-                        fmt: "pdf",
-                        desc:
-                          "Generates a printable and shareable report file that includes all metrics, user details, and visual charts.",
-                      },
-                      {
-                        fmt: "csv",
-                        desc:
-                          "Exports your data in spreadsheet format for use in Excel or Google Sheets for further analysis.",
-                      },
-                      {
-                        fmt: "json",
-                        desc:
-                          "Provides a structured data file suitable for developers or API integration.",
-                      },
-                    ].map(({ fmt, desc }) => (
-                      <button
-                        key={fmt}
-                        className="report-option-btn"
-                        onClick={() => {
-                          handleDownloadReport(fmt);
-                          setShowFormatPopup(false);
-                        }}
-                      >
-                        {fmt.toUpperCase()}
-                        <span className="info-tooltip" title={desc}>
-                          ℹ
-                        </span>
+                    {["pdf","csv","json"].map(fmt => (
+                      <button key={fmt} className="report-option-btn" onClick={()=>{handleDownloadReport(fmt); setShowFormatPopup(false);}}>
+                        {fmt.toUpperCase()} <span className="info-tooltip" title={{pdf:"PDF",csv:"CSV",json:"JSON"}[fmt]}>ℹ</span>
                       </button>
                     ))}
                   </div>
-
-                  <button
-                    className="report-popup-close"
-                    onClick={() => setShowFormatPopup(false)}
-                  >
-                    ✕
-                  </button>
+                  <button className="report-popup-close" onClick={()=>setShowFormatPopup(false)}>✕</button>
                 </div>
               </div>
             )}
@@ -369,18 +274,10 @@ const handleDownloadReport = useCallback(async (format = "pdf") => {
         </div>
 
         <ul className="dashboard-tabs">
-          {["chatbot", "chart", "todo"].map((tab) => (
+          {["chatbot","chart","todo"].map(tab => (
             <li key={tab} className="dashboard-tab-item">
-              <button
-                className={`dashboard-tab-btn ${
-                  activeTab === tab ? "active" : ""
-                }`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {t(
-                  `dashboard.tab.${tab}`,
-                  tab.charAt(0).toUpperCase() + tab.slice(1)
-                )}
+              <button className={`dashboard-tab-btn ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
+                {t(`dashboard.tab.${tab}`, tab.charAt(0).toUpperCase()+tab.slice(1))}
               </button>
             </li>
           ))}
@@ -390,5 +287,4 @@ const handleDownloadReport = useCallback(async (format = "pdf") => {
       </div>
     </div>
   );
-
 }

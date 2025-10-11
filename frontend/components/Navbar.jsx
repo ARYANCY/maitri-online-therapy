@@ -23,21 +23,28 @@ export default function Navbar({ user, downloadReport }) {
     }
   }, [selectedLang, i18n]);
 
+  // Listen for languageChanged events (for dashboard/chatbot updates)
+  useEffect(() => {
+    const handleLangChange = () => {
+      i18n.changeLanguage(localStorage.getItem("preferredLang") || "en");
+    };
+    window.addEventListener("languageChanged", handleLangChange);
+    return () => window.removeEventListener("languageChanged", handleLangChange);
+  }, [i18n]);
+
   // Change language handler
   const changeLang = async (lng) => {
-    if (lng === selectedLang) return; // no action if same language
+    if (lng === selectedLang) return;
 
     setSelectedLang(lng);
     localStorage.setItem("preferredLang", lng);
 
     try {
       await API.post("/auth/update-language", { language: lng });
-      console.log(`Language preference updated to ${lng}`);
     } catch (err) {
       console.error("Failed to update language preference:", err);
     }
 
-    // Dispatch a custom event so components like Chatbot can refresh
     window.dispatchEvent(new Event("languageChanged"));
   };
 
@@ -74,18 +81,10 @@ export default function Navbar({ user, downloadReport }) {
           ))}
         </div>
 
-        {/* Hamburger Toggle */}
-        <input
-          type="checkbox"
-          id="checkbox"
-          checked={menuOpen}
-          onChange={() => setMenuOpen(!menuOpen)}
-        />
-        <label htmlFor="checkbox" className="toggle">
-          <div className="bars" id="bar1"></div>
-          <div className="bars" id="bar2"></div>
-          <div className="bars" id="bar3"></div>
-        </label>
+        {/* Side Tick Menu Toggle */}
+        <div className="side-tick-container" onClick={() => setMenuOpen(!menuOpen)}>
+          <span className={`tick ${menuOpen ? "active" : ""}`}></span>
+        </div>
       </div>
 
       {/* Bottom nav (links & user info) */}
