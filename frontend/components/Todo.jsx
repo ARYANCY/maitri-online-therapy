@@ -24,22 +24,27 @@ export default function Todo({ tasks: initialTasks = [], onUpdate, loading = fal
     else localStorage.removeItem("tasks");
   }, []);
 
-  const updateTasks = useCallback(
-    async updater => {
-      setTasks(prevTasks => {
-        const updatedTasks = typeof updater === "function" ? updater(prevTasks) : updater;
-        persistTasks(updatedTasks);
-        if (onUpdate && !cancelRef.current) {
-          Promise.resolve(onUpdate(updatedTasks)).catch(err => {
-            console.error("Failed to sync tasks:", err);
-            setError(t("todo.updateError", "Failed to update tasks on server."));
-          });
-        }
-        return updatedTasks;
-      });
-    },
-    [onUpdate, persistTasks, t]
-  );
+const updateTasks = useCallback(
+  (updater) => {
+    setTasks((prevTasks) => {
+      const updatedTasks = typeof updater === "function" ? updater(prevTasks) : updater;
+      persistTasks(updatedTasks);
+
+      if (onUpdate && !cancelRef.current) {
+        // Fire and forget, but handle errors
+        Promise.resolve(onUpdate(updatedTasks)).catch((err) => {
+          console.error("Failed to sync tasks:", err);
+          setError(t("todo.updateError", "Failed to update tasks on server."));
+        });
+      }
+
+      return updatedTasks;
+    });
+  },
+  [onUpdate, persistTasks, t]
+);
+
+
 
   const handleAdd = useCallback(() => {
     const trimmed = input.trim();
