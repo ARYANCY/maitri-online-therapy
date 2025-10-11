@@ -12,6 +12,7 @@ const cors = require("cors");
 const flash = require("connect-flash");
 const passport = require("./config/passport");
 const reminderScheduler = require("./jobs/reminderScheduler");
+const { i18nMiddleware } = require("./utils/i18n");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+app.use(i18nMiddleware);
 
 
 const authRoutes = require("./routes/authRoutes");

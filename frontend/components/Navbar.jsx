@@ -3,6 +3,7 @@ import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
 import GULogo from "../src/images/logo.png";
 import { Link, useNavigate } from "react-router-dom";
+import API from "../utils/axiosClient";
 import "../css/Navbar.css";
 
 export default function Navbar({ user, downloadReport }) {
@@ -10,10 +11,19 @@ export default function Navbar({ user, downloadReport }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const changeLang = (lng) => {
+  const changeLang = async (lng) => {
     if (i18n.language !== lng) {
       i18n.changeLanguage(lng);
       localStorage.setItem("preferredLang", lng);
+      
+      // Send language preference to backend
+      try {
+        await API.post("/auth/update-language", { language: lng });
+        console.log(`Language preference updated to ${lng}`);
+      } catch (err) {
+        console.error("Failed to update language preference:", err);
+        // Don't show error to user as this is not critical
+      }
     }
   };
 

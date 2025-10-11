@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require("../config/passport");
 const User = require("../models/User");
 const { getSessionInfo } = require("../controllers/authController");
+const { updateUserLanguage } = require("../utils/i18n");
 
 // Rate limiting middleware
 const rateLimit = require("express-rate-limit");
@@ -272,6 +273,48 @@ router.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development"
   });
+});
+
+// Language preference update route
+router.post("/update-language", async (req, res) => {
+  try {
+    const { language } = req.body;
+    const supportedLanguages = ['en', 'hi', 'as'];
+    
+    if (!language || !supportedLanguages.includes(language)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid language. Supported languages: en, hi, as"
+      });
+    }
+
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login first"
+      });
+    }
+
+    // Update user's language preference in database
+    await User.findByIdAndUpdate(req.session.userId, {
+      preferredLanguage: language
+    });
+
+    // Update session language
+    updateUserLanguage(req, language);
+
+    res.json({
+      success: true,
+      message: "Language preference updated successfully",
+      language: language
+    });
+  } catch (err) {
+    console.error("Language update error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update language preference"
+    });
+  }
 });
 
 module.exports = router;

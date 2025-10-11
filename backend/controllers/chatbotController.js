@@ -2,6 +2,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Metrics = require("../models/metrics");
 const Screening = require("../models/Screening");
 const Todo = require("../models/todo");
+const User = require("../models/User");
 
 const apiKeys = process.env.GEMINI_API_KEYS?.split(",").map(k => k.trim()) || [];
 if (!apiKeys.length) console.error("[Init] No GEMINI_API_KEYS found in .env");
@@ -63,7 +64,7 @@ exports.getChatbot = (req, res) => {
   const user = req.user;
   if (!user?._id) {
     console.error("[getChatbot] Unauthorized access attempt");
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: req.t("auth.unauthorized") });
   }
 
   const userId = user._id.toString();
@@ -73,7 +74,7 @@ exports.getChatbot = (req, res) => {
   if (!session.messages.length) {
     session.messages.push({
       sender: "bot",
-      text: "Hello! I’m your therapist chatbot. How are you feeling today?",
+      text: req.t("chatbot.welcome"),
       timestamp: new Date().toISOString()
     });
     console.log(`[getChatbot] Started session for user ${userId}`);
@@ -86,7 +87,7 @@ exports.postChatbot = async (req, res) => {
   const user = req.user;
   if (!user?._id) {
     console.error("[postChatbot] Unauthorized access attempt");
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: req.t("auth.unauthorized") });
   }
 
   const userId = user._id.toString();
@@ -96,7 +97,7 @@ exports.postChatbot = async (req, res) => {
   const { message } = req.body;
   if (!message?.trim()) {
     console.warn(`[postChatbot] Empty message received from user ${userId}`);
-    return res.status(400).json({ error: "Message cannot be empty" });
+    return res.status(400).json({ error: req.t("chatbot.emptyMessage") });
   }
 
   session.messages.push({ sender: "user", text: message, timestamp: new Date().toISOString() });
@@ -109,18 +110,19 @@ exports.postChatbot = async (req, res) => {
   let todosData = [];
 
   try {
-    const chatbotPrompt = `You are a friendly therapist chatbot.
+    const userLanguage = req.getLanguage();
+    const chatbotPrompt = `You are a friendly therapist chatbot. Respond in ${userLanguage === 'hi' ? 'Hindi' : userLanguage === 'as' ? 'Assamese' : 'English'}.
 Conversation so far:
 ${history}
 User just said: "${message}"
 Respond empathetically and naturally.`;
 
-    console.log(`[postChatbot] Generating chatbot response for user ${userId}`);
+    console.log(`[postChatbot] Generating chatbot response for user ${userId} in ${userLanguage}`);
     botResponse = await safeGenerate(chatbotPrompt);
     session.messages.push({ sender: "bot", text: botResponse, timestamp: new Date().toISOString() });
     console.log(`[postChatbot] Bot response generated successfully for user ${userId}`);
   } catch (err) {
-    botResponse = "Sorry, I couldn't process that message.";
+    botResponse = req.t("chatbot.error");
     session.messages.push({ sender: "bot", text: botResponse });
     console.error(`[postChatbot] Bot response generation failed for user ${userId}: ${err.message || err}`);
   }

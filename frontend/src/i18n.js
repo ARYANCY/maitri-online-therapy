@@ -672,9 +672,12 @@ as: {
 
 };
 
+// Initialize with stored language preference or default to English
+const storedLang = localStorage.getItem("preferredLang") || "en";
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: "en",
+  lng: storedLang,
   fallbackLng: "en",
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
