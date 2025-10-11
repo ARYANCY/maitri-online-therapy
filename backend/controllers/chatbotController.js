@@ -188,7 +188,14 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-    const languageName = userLanguage === 'hi' ? 'Hindi' : userLanguage === 'as' ? 'Assamese' : 'English';
+    const LANGUAGE_MAP = {
+      hi: "Hindi",
+      as: "Assamese",
+      en: "English",
+    };
+
+    const languageName = LANGUAGE_MAP[userLanguage] || "English";
+
     const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
     
 Context: You are helping with mental health support and emotional well-being.
