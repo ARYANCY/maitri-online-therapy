@@ -188,20 +188,30 @@ exports.postChatbot = asyncHandler(async (req, res) => {
 
   // Generate chatbot response
   try {
-  let userLanguage =
-    req.getLanguage?.() ||
-    req.headers["accept-language"]?.split(",")[0]?.split("-")[0] ||
-    "en";
+// Use i18njs instance (assuming it's imported as `i18n`)
+const i18n = req.i18n || require('i18njs'); // adjust import if needed
 
-  // Default to English only if language is not supported
-  const supportedLanguages = ["hi", "as", "en"];
-  if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
+// Determine user language
+let userLanguage =
+  req.getLanguage?.() ||                     // use middleware-detected language
+  req.headers["accept-language"]?.split(",")[0]?.split("-")[0] || // fallback to header
+  "en";                                     // final fallback
 
-  const LANGUAGE_MAP = {
-    hi: "Hindi",
-    as: "Assamese",
-    en: "English",
-  };
+// Only allow supported languages
+const supportedLanguages = ["hi", "as", "en"];
+if (!supportedLanguages.includes(userLanguage)) userLanguage = "en";
+
+// Set language in i18n explicitly
+i18n.setLocale(userLanguage);
+
+// Map to language name using i18n labels (optional)
+const LANGUAGE_MAP = {
+  hi: i18n.t("language.hindi") || "Hindi",
+  as: i18n.t("language.assamese") || "Assamese",
+  en: i18n.t("language.english") || "English",
+};
+
+const languageName = LANGUAGE_MAP[userLanguage];
 
   const languageName = LANGUAGE_MAP[userLanguage];
 
