@@ -112,74 +112,135 @@ export default function Dashboard() {
       });
 
       try {
-        if (format === "pdf") {
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          let yPos = 20;
-          const leftMargin = 12;
+          if (format === "pdf") {
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 14;
+            let yPos = 22;
 
-          pdf.setFontSize(20);
-          pdf.setFont("helvetica", "bold");
-          pdf.text("Maitri Report", pageWidth / 2, yPos, { align: "center" });
-          yPos += 10;
+            // === HEADER ===
+            const logo = new Image();
+            logo.src = "/src/images/logo.png";
+            await new Promise(resolve => { logo.onload = resolve; });
 
-          pdf.setFontSize(12);
-          pdf.setFont("helvetica", "normal");
-          pdf.text(
-            pdf.splitTextToSize(
-              "This report summarizes your mental health screening metrics.\nIt is AI-generated; please consult a qualified counselor for professional guidance.",
-              pageWidth - 2 * leftMargin
-            ),
-            leftMargin,
-            yPos
-          );
-          yPos += 24;
+            const logoWidth = 22;
+            const logoHeight = 22;
+            pdf.addImage(logo, "PNG", margin, yPos - 12, logoWidth, logoHeight);
 
-          // User info
-          pdf.setFontSize(14);
-          pdf.text("User Information:", leftMargin, yPos);
-          yPos += 8;
-          pdf.setFontSize(12);
-          pdf.text(`Name: ${user?.name || "Guest"}`, leftMargin + 2, yPos);
-          yPos += 8;
-          pdf.text(`Email: ${user?.email || "N/A"}`, leftMargin + 2, yPos);
-          yPos += 8;
-          pdf.text(`Language: ${localStorage.getItem("preferredLang") || "en"}`, leftMargin + 2, yPos);
-          yPos += 12;
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(18);
+            pdf.text("Gauhati University", pageWidth / 2, yPos, { align: "center" });
 
-          // Metrics table
-          const tableColWidths = [50, 50, pageWidth - leftMargin - 50 - 50 - 12];
-          const rowPadding = 2;
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(12);
+            pdf.text("Guwahati, Assam, India", pageWidth / 2, yPos + 7, { align: "center" });
 
-          Object.keys(normalizedChartData).forEach(key => {
-            const value = normalizedChartData[key].join(", ");
-            const rowHeight = 10;
-            if (yPos + rowHeight > 280) { pdf.addPage(); yPos = 20; }
+            yPos += 20;
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.4);
+            pdf.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 12;
 
-            pdf.rect(leftMargin, yPos - 6, tableColWidths[0], rowHeight);
-            pdf.rect(leftMargin + tableColWidths[0], yPos - 6, tableColWidths[1], rowHeight);
-            pdf.rect(leftMargin + tableColWidths[0] + tableColWidths[1], yPos - 6, tableColWidths[2], rowHeight);
+            // === REPORT TITLE ===
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(16);
+            pdf.text("Maitri Mental Health Summary Report", pageWidth / 2, yPos, { align: "center" });
+            yPos += 10;
 
-            pdf.text(key.replace(/_/g, " ").toUpperCase(), leftMargin + 2, yPos);
-            pdf.text(value, leftMargin + tableColWidths[0] + 2, yPos);
+            // === DISCLAIMER (professional) ===
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(11);
+            const disclaimer = 
+              "This document presents an AI-assisted analysis of your recent mental health screening metrics. It is intended for self-reflection and educational insight only. The findings herein do not constitute a clinical diagnosis or psychological evaluation. For professional advice or treatment, please consult a certified mental health practitioner.";
+            const disclaimerLines = pdf.splitTextToSize(disclaimer, pageWidth - 2 * margin);
+            pdf.text(disclaimerLines, margin, yPos);
+            yPos += disclaimerLines.length * 5 + 8;
 
-            yPos += rowHeight;
-          });
+            // === USER INFORMATION ===
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(13);
+            pdf.text("User Profile", margin, yPos);
+            yPos += 8;
 
-          // Chart snapshot
-          const chartElement = document.querySelector(".dashboard-tab-content canvas");
-          if (chartElement) {
-            const canvas = await html2canvas(chartElement, { scale: 2 });
-            const imgData = canvas.toDataURL("image/png");
-            const maxImgWidth = pageWidth - leftMargin * 2 - 18;
-            const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
-            const finalHeight = imgHeight > 100 ? 100 : imgHeight;
-            if (yPos > 200) { pdf.addPage(); yPos = 20; }
-            pdf.addImage(imgData, "PNG", leftMargin, yPos, maxImgWidth, finalHeight);
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(11);
+            pdf.text(`Name: ${user?.name || "Guest User"}`, margin + 2, yPos);
+            yPos += 6;
+            pdf.text(`Email: ${user?.email || "N/A"}`, margin + 2, yPos);
+            yPos += 6;
+            pdf.text(`Preferred Language: ${localStorage.getItem("preferredLang") || "en"}`, margin + 2, yPos);
+            yPos += 10;
+
+            // === METRIC DATA ===
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(13);
+            pdf.text("Screening Metrics", margin, yPos);
+            yPos += 6;
+
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(11);
+            const col1 = 70;
+            const tableWidth = pageWidth - 2 * margin;
+            const col2 = tableWidth - col1;
+            const rowHeight = 8;
+
+            Object.entries(normalizedChartData).forEach(([key, values]) => {
+              const metric = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              const value = values.join(", ");
+
+              if (yPos + rowHeight > pageHeight - 20) {
+                pdf.addPage();
+                yPos = margin;
+              }
+
+              pdf.setFillColor(245, 245, 245);
+              pdf.rect(margin, yPos - 6, col1, rowHeight, "F");
+              pdf.rect(margin + col1, yPos - 6, col2, rowHeight, "F");
+              pdf.setDrawColor(200);
+              pdf.rect(margin, yPos - 6, col1, rowHeight);
+              pdf.rect(margin + col1, yPos - 6, col2, rowHeight);
+
+              pdf.text(metric, margin + 3, yPos - 1);
+              pdf.text(value, margin + col1 + 3, yPos - 1);
+              yPos += rowHeight;
+            });
+
+            yPos += 10;
+
+            // === CHART SNAPSHOT ===
+            const chartElement = document.querySelector(".dashboard-tab-content canvas");
+            if (chartElement) {
+              const canvas = await html2canvas(chartElement, { scale: 2 });
+              const imgData = canvas.toDataURL("image/png");
+              const maxWidth = pageWidth - 2 * margin;
+              const imgHeight = (canvas.height * maxWidth) / canvas.width;
+              if (yPos + imgHeight > pageHeight - 20) {
+                pdf.addPage();
+                yPos = margin;
+              }
+              pdf.setFont("helvetica", "bold");
+              pdf.setFontSize(13);
+              pdf.text("Visual Summary", margin, yPos);
+              yPos += 5;
+              pdf.addImage(imgData, "PNG", margin, yPos, maxWidth, Math.min(imgHeight, 100));
+              yPos += 110;
+            }
+
+            // === FOOTER ===
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(10);
+            pdf.setTextColor(100);
+            pdf.text(
+              "Generated securely via Maitri Dashboard | Gauhati University © " + new Date().getFullYear(),
+              pageWidth / 2,
+              pageHeight - 10,
+              { align: "center" }
+            );
+
+            pdf.save("maitri-report.pdf");
           }
 
-          pdf.save(`maitri-report.pdf`);
-        }
 
         else if (format === "csv") {
           // CSV format
