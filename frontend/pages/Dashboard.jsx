@@ -9,7 +9,7 @@ import "../css/Dashboard.css";
 import { useTranslation } from "react-i18next";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import GuLogo from "../src/css/logo.png"
+import GuLogo from "../src/images/logo.png";
 
 export default function Dashboard() {
   const { t } = useTranslation();
