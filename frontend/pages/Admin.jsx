@@ -15,9 +15,9 @@ export default function Admin() {
 
   // --- Fetch therapist applications
   const fetchTherapists = useCallback(async () => {
+    setError("");
+    setLoading(true);
     try {
-      setError("");
-      setLoading(true);
       const data = await API.adminTherapist.getAll();
       setTherapists(data.map(t => ({ ...t, status: t.status || "pending" })));
     } catch (err) {
@@ -27,50 +27,54 @@ export default function Admin() {
     }
   }, []);
 
-  // --- Handle therapist actions
-  const handleAction = async (id, action) => {
-    if (!id || !action) return;
-    setActionLoading(id);
+  // --- Handle accept/reject/delete actions
+  const handleAction = useCallback(
+    async (id, action) => {
+      if (!id || !action) return;
+      setActionLoading(id);
 
-    try {
-      switch (action) {
-        case "accept":
-          await API.adminTherapist.updateStatus(id, "accepted");
-          break;
-        case "reject":
-          await API.adminTherapist.updateStatus(id, "rejected");
+      try {
+        switch (action) {
+          case "accept":
+            await API.adminTherapist.updateStatus(id, "accepted");
+            break;
+          case "reject":
+            await API.adminTherapist.updateStatus(id, "rejected");
 
-          // Schedule auto-delete after 2 hours
-          if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
-          autoDeleteTimers.current[id] = setTimeout(async () => {
-            try {
-              await API.adminTherapist.delete(id);
-              fetchTherapists();
-              delete autoDeleteTimers.current[id];
-            } catch (err) {
-              console.error("Auto-delete failed:", err);
-            }
-          }, 2 * 60 * 60 * 1000);
-          break;
-        case "delete":
-          await API.adminTherapist.delete(id);
-          break;
-        default:
-          break;
+            // Schedule auto-delete after 2 hours
+            if (autoDeleteTimers.current[id]) clearTimeout(autoDeleteTimers.current[id]);
+            autoDeleteTimers.current[id] = setTimeout(async () => {
+              try {
+                await API.adminTherapist.delete(id);
+                fetchTherapists();
+                delete autoDeleteTimers.current[id];
+              } catch (err) {
+                console.error("Auto-delete failed:", err);
+              }
+            }, 2 * 60 * 60 * 1000);
+            break;
+          case "delete":
+            await API.adminTherapist.delete(id);
+            break;
+          default:
+            break;
+        }
+        await fetchTherapists();
+      } catch (err) {
+        setError(err.message || `Failed to ${action} therapist.`);
+      } finally {
+        setActionLoading(null);
       }
-      await fetchTherapists();
-    } catch (err) {
-      setError(err.message || `Failed to ${action} therapist.`);
-    } finally {
-      setActionLoading(null);
-    }
-  };
+    },
+    [fetchTherapists]
+  );
 
-  // --- Load data once
+  // --- Load therapists once
   useEffect(() => {
     fetchTherapists();
 
     return () => {
+      // Clear all scheduled auto-delete timers
       Object.values(autoDeleteTimers.current).forEach(timer => clearTimeout(timer));
       autoDeleteTimers.current = {};
     };
@@ -85,10 +89,7 @@ export default function Admin() {
           <p className="text-muted lead">
             Review therapist applications. Approve trusted professionals or reject unverified entries.
           </p>
-          <button
-            className="btn btn-outline-primary mt-3"
-            onClick={() => navigate("/dashboard")}
-          >
+          <button className="btn btn-outline-primary mt-3" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </button>
         </div>
@@ -101,41 +102,42 @@ export default function Admin() {
             <table className="table table-hover align-middle text-center admin-table">
               <thead className="table-light">
                 <tr>
-                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"]
-                    .map(h => <th key={h}>{h}</th>)}
+                  {["Name", "Email", "Phone", "Specialization", "Experience", "Qualifications", "Status", "Actions"].map(
+                    (header) => (
+                      <th key={header}>{header}</th>
+                    )
+                  )}
                 </tr>
               </thead>
               <tbody>
-                {therapists.map(t => (
-                  <tr key={t._id}>
-                    <td>{t.name}</td>
-                    <td>{t.email}</td>
-                    <td>{t.phone}</td>
-                    <td>{t.specialization}</td>
-                    <td>{t.experience} yrs</td>
-                    <td>{t.qualifications || "N/A"}</td>
-                    <td className={`status ${t.status}`}>
-                      {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
-                    </td>
+                {therapists.map(({ _id, name, email, phone, specialization, experience, qualifications, status }) => (
+                  <tr key={_id}>
+                    <td>{name}</td>
+                    <td>{email}</td>
+                    <td>{phone}</td>
+                    <td>{specialization}</td>
+                    <td>{experience} yrs</td>
+                    <td>{qualifications || "N/A"}</td>
+                    <td className={`status ${status}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</td>
                     <td className="action-buttons">
                       <button
                         className="btn btn-sm mx-1 status-btn accepted"
-                        onClick={() => handleAction(t._id, "accept")}
-                        disabled={t.status === "accepted" || actionLoading === t._id}
+                        onClick={() => handleAction(_id, "accept")}
+                        disabled={status === "accepted" || actionLoading === _id}
                       >
-                        {actionLoading === t._id && t.status !== "accepted" ? "..." : "Accept"}
+                        {actionLoading === _id && status !== "accepted" ? "..." : "Accept"}
                       </button>
                       <button
                         className="btn btn-sm mx-1 status-btn rejected"
-                        onClick={() => handleAction(t._id, "reject")}
-                        disabled={t.status === "rejected" || actionLoading === t._id}
+                        onClick={() => handleAction(_id, "reject")}
+                        disabled={status === "rejected" || actionLoading === _id}
                       >
-                        {actionLoading === t._id && t.status !== "rejected" ? "..." : "Reject"}
+                        {actionLoading === _id && status !== "rejected" ? "..." : "Reject"}
                       </button>
                       <button
                         className="btn btn-sm mx-1 status-btn deleted"
-                        onClick={() => handleAction(t._id, "delete")}
-                        disabled={actionLoading === t._id}
+                        onClick={() => handleAction(_id, "delete")}
+                        disabled={actionLoading === _id}
                       >
                         Delete
                       </button>

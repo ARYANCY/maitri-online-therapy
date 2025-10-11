@@ -6,41 +6,30 @@ import "../css/AdminLogin.css";
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- Initialize: check stored attempts and admin session
+  // --- On mount: check existing admin session
   useEffect(() => {
     let isMounted = true;
 
-    const initialize = async () => {
-      const blocked = localStorage.getItem("adminBlocked") === "true";
-      const storedAttempts = parseInt(localStorage.getItem("adminAttempts"), 10);
-
-      if (blocked) setAttemptsLeft(0);
-      else if (!isNaN(storedAttempts)) setAttemptsLeft(storedAttempts);
-
+    const checkSession = async () => {
       try {
-        // 1️⃣ Check existing admin session
         const session = await API.auth.adminCheckSession();
         if (isMounted && session?.user?.isAdmin) {
           localStorage.setItem("isAdmin", "true");
           navigate("/admin", { replace: true });
-          return;
         }
       } catch {
         localStorage.removeItem("isAdmin");
       } finally {
-        if (isMounted) {
-          setLoading(false);
-          inputRef.current?.focus();
-        }
+        if (isMounted) inputRef.current?.focus();
       }
     };
 
-    initialize();
+    checkSession();
 
     return () => {
       isMounted = false;
@@ -53,7 +42,7 @@ export default function AdminLogin() {
     if (error) setError("");
   };
 
-  // --- Form submission: check DB, then verify session
+  // --- Submit password login
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || attemptsLeft <= 0) return;
@@ -62,7 +51,6 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      // 1️⃣ Verify admin password (MongoDB check)
       const res = await API.auth.adminLogin({ password });
 
       if (!res.success) {
@@ -79,19 +67,10 @@ export default function AdminLogin() {
         return;
       }
 
-      // ✅ Password correct — set admin session locally
+      // ✅ Password correct — session already saved in backend
       localStorage.setItem("isAdmin", "true");
-
-      // 2️⃣ Verify backend session (secondary confirmation)
-      const session = await API.auth.adminCheckSession();
-      if (session?.user?.isAdmin) {
-        localStorage.removeItem("adminAttempts");
-        localStorage.removeItem("adminBlocked");
-        navigate("/admin", { replace: true });
-        return;
-      }
-
-      // 🔁 Fallback: navigate even if session validation fails but password was correct
+      localStorage.removeItem("adminAttempts");
+      localStorage.removeItem("adminBlocked");
       navigate("/admin", { replace: true });
     } catch (err) {
       console.error("Admin login error:", err);
@@ -111,11 +90,7 @@ export default function AdminLogin() {
         Restricted to authorized administrators only. Unauthorized attempts will be blocked.
       </p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="admin-login-form mx-auto"
-        style={{ maxWidth: "400px" }}
-      >
+      <form onSubmit={handleSubmit} className="admin-login-form mx-auto" style={{ maxWidth: "400px" }}>
         <input
           type="password"
           placeholder="Enter Admin Password"
@@ -127,18 +102,12 @@ export default function AdminLogin() {
           autoFocus
         />
 
-        <button
-          type="submit"
-          className="btn btn-primary w-100 mt-3"
-          disabled={loading || attemptsLeft <= 0}
-        >
+        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading || attemptsLeft <= 0}>
           {loading ? "Logging in..." : "Login"}
         </button>
 
         {attemptsLeft > 0 && !error && (
-          <div className="text-muted mt-2 text-center">
-            Attempts remaining: {attemptsLeft}
-          </div>
+          <div className="text-muted mt-2 text-center">Attempts remaining: {attemptsLeft}</div>
         )}
 
         {error && <div className="text-danger mt-2 text-center">{error}</div>}
