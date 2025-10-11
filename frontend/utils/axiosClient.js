@@ -7,19 +7,24 @@ const API = axios.create({
 });
 
 API.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    if (error.response?.status === 401 && error.config?.url?.includes("/admin")) {
-      localStorage.removeItem("isAdmin");
-      localStorage.removeItem("adminEmail");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userName");
+  response => response.data,
+  error => {
+    const { response, config } = error;
+    if (response?.status === 401 && config?.url?.includes("/admin")) {
+      ["isAdmin", "adminEmail", "userId", "userName"].forEach(key =>
+        localStorage.removeItem(key)
+      );
+      console.warn("Admin session expired or unauthorized. Cleared admin localStorage.");
     }
+
     const message =
-      error.response?.data?.error ||
-      error.response?.data?.message ||
+      response?.data?.error ||
+      response?.data?.message ||
       error.message ||
       "Unknown error occurred";
+
+    console.error(`[API Error] ${config?.method?.toUpperCase()} ${config?.url}:`, message);
+
     return Promise.reject(new Error(message));
   }
 );
