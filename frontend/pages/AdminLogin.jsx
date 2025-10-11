@@ -24,6 +24,7 @@ export default function AdminLogin() {
         const session = await API.auth.checkSession();
         if (isMounted) {
           if (session?.user?.isAdmin) {
+            // User is already admin, redirect to admin panel
             navigate("/admin", { replace: true });
             return;
           }

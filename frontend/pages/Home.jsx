@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/Home.css"; 
 import homeImage from "../src/images/home.jpg"
@@ -6,6 +6,8 @@ import API from "../utils/axiosClient";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -13,12 +15,15 @@ export default function Home() {
       try {
         const data = await API.auth.checkSession();
         if (data?.user) {
-          // User is authenticated, redirect to dashboard
+          setUser(data.user);
+          // User is authenticated, redirect to dashboard (not admin)
           navigate("/dashboard");
         }
       } catch (err) {
         // User is not authenticated, stay on home page
         console.log("User not authenticated, staying on home page");
+      } finally {
+        setIsCheckingSession(false);
       }
     };
     
@@ -28,6 +33,33 @@ export default function Home() {
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
+
+  const handleAdminAccess = async () => {
+    if (user?.isAdmin) {
+      // User is already admin, go directly to admin panel
+      navigate("/admin");
+    } else {
+      // User is not admin, go to admin login
+      navigate("/admin-login");
+    }
+  };
+
+  if (isCheckingSession) {
+    return (
+      <div className="home" style={{ backgroundImage: `url(${homeImage})` }}>
+        <div className="home-overlay">
+          <div className="home-content">
+            <div className="text-center">
+              <div className="spinner-border text-light mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="text-light">Checking authentication...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home" style={{ backgroundImage: `url(${homeImage})` }}>
@@ -42,7 +74,7 @@ export default function Home() {
           </button>
           <div className="mt-3">
             <button 
-              onClick={() => navigate("/admin-login")} 
+              onClick={handleAdminAccess} 
               className="btn btn-outline-light btn-sm"
             >
               Admin Access

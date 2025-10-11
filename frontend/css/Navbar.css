@@ -132,6 +132,19 @@
   border-bottom: 2px solid #4A90E2;
 }
 
+.navbar-link.admin-link {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.navbar-link.admin-link:hover {
+  background: linear-gradient(135deg, #ff5252, #d63031);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
 .button-row {
   display: flex;
   gap: 1rem;

@@ -56,9 +56,8 @@ router.get(
           return res.redirect(`${process.env.CLIENT_URL}/login?error=session_failed`);
         }
         
-        const redirectUrl = req.user.isAdmin 
-          ? `${process.env.CLIENT_URL}/admin` 
-          : `${process.env.CLIENT_URL}/dashboard`;
+        // Always redirect to dashboard first, let frontend handle admin redirects
+        const redirectUrl = `${process.env.CLIENT_URL}/dashboard`;
         
         console.log(`Google OAuth success: User ${req.user.email} redirected to ${redirectUrl}`);
         return res.redirect(redirectUrl);

@@ -23,17 +23,23 @@ export default function Admin() {
       try {
         const session = await API.auth.checkSession();
         if (!session?.user?.isAdmin) {
+          // User is not admin, redirect to admin login
           navigate("/admin-login", { replace: true });
           return;
         }
-        if (mounted) setUserName(session.user.name || "");
-      } catch {
+        if (mounted) {
+          setUserName(session.user.name || "");
+          // User is admin, proceed to load admin data
+          fetchTherapists();
+        }
+      } catch (err) {
+        console.error("Admin session check failed:", err);
         navigate("/admin-login", { replace: true });
       }
     };
     checkAdmin();
     return () => { mounted = false; };
-  }, [navigate]);
+  }, [navigate, fetchTherapists]);
 
   const fetchTherapists = useCallback(async () => {
     setError("");
@@ -132,7 +138,6 @@ export default function Admin() {
       }
     });
 
-  useEffect(() => { fetchTherapists(); }, [fetchTherapists]);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {

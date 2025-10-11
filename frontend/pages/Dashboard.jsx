@@ -270,13 +270,25 @@ if (chartElement) {
       <Navbar user={user} />
       <div className="dashboard-container" ref={reportRef}>
         <div className="dashboard-header">
-          <button
-            className="dashboard-download-btn download-btn"
-            onClick={handleDownloadReport}
-            disabled={downloading}
-          >
-            {downloading ? t("dashboard.downloading", "Generating Report...") : t("dashboard.downloadReport", "Download Report")}
-          </button>
+          <div className="d-flex gap-2">
+            {user?.isAdmin && (
+              <button
+                className="btn btn-outline-primary"
+                onClick={() => navigate("/admin")}
+                title="Access Admin Panel"
+              >
+                <i className="bi bi-gear me-1"></i>
+                Admin Panel
+              </button>
+            )}
+            <button
+              className="dashboard-download-btn download-btn"
+              onClick={handleDownloadReport}
+              disabled={downloading}
+            >
+              {downloading ? t("dashboard.downloading", "Generating Report...") : t("dashboard.downloadReport", "Download Report")}
+            </button>
+          </div>
         </div>
 
         <ul className="dashboard-tabs">

@@ -88,6 +88,12 @@ export default function Navbar({ user, downloadReport }) {
           <Link to="/talk-to-counselor" className="navbar-link ww">
             {t("navbar.talkToCounselor", "Talk to Counselor")}
           </Link>
+          {user?.isAdmin && (
+            <Link to="/admin" className="navbar-link ww admin-link">
+              <i className="bi bi-gear me-1"></i>
+              {t("navbar.adminPanel", "Admin Panel")}
+            </Link>
+          )}
           <a
             href="https://chat-app-ashen-phi.vercel.app/"
             target="_blank"
