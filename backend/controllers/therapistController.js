@@ -9,6 +9,7 @@ const therapistSchema = Joi.object({
   email: Joi.string().email().required(),
   phone: Joi.string().optional(),
   specialization: Joi.string().optional(),
+  experience: Joi.number().optional(),
   status: Joi.string().valid("pending", "accepted", "rejected").default("pending")
 });
 
