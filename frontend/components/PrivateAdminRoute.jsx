@@ -9,9 +9,14 @@ export default function PrivateAdminRoute({ children }) {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const user = await API.auth.checkSession(); // should return { isAdmin: true/false }
-        if (user?.isAdmin) setIsAdmin(true);
+        const response = await API.auth.checkSession();
+        if (response?.success && response?.user?.isAdmin) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
       } catch (err) {
+        console.error("Admin check failed:", err);
         setIsAdmin(false);
       } finally {
         setLoading(false);

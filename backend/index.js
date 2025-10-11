@@ -81,20 +81,7 @@ app.use("/api/reminders", requireLogin, reminderRoutes);
 app.use("/api/therapists", requireLogin,therapistRoutes);
 app.use("/api/admin/therapists", therapistAdminRoutes);
 reminderScheduler.init();
-app.get("/api/session-check", (req, res) => {
-  const userId = req.session?.userId;
-  const isAdmin = req.session?.isAdmin || false;
-
-  if (!userId) {
-    return res.json({ success: false, user: null });
-  }
-
-  const user = req.user || { _id: userId, isAdmin };
-  res.json({
-    success: true,
-    user,
-  });
-});
+// Removed duplicate session-check endpoint - using auth routes version instead
 
 
 

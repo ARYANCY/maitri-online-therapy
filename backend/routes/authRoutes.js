@@ -62,14 +62,37 @@ router.get("/logout", (req, res) => {
   });
 });
 
-router.get("/session-check", (req, res) => {
-  const { userId, email, isAdmin } = req.session;
-  const referer = req.get("Referer") || "";
-  const onAdminPage = referer.includes("/admin");
+router.get("/session-check", async (req, res) => {
+  try {
+    const { userId, email, isAdmin } = req.session;
+    const referer = req.get("Referer") || "";
+    const onAdminPage = referer.includes("/admin");
 
-  if (!userId || (onAdminPage && !isAdmin)) return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!userId || (onAdminPage && !isAdmin)) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
 
-  res.json({ success: true, user: { _id: userId, email, isAdmin: !!isAdmin } });
+    // Fetch user details from database for complete user info
+    const User = require("../models/User");
+    const user = await User.findById(userId).select("-password");
+    
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ 
+      success: true, 
+      user: { 
+        _id: user._id, 
+        email: user.email, 
+        name: user.name,
+        isAdmin: !!isAdmin 
+      } 
+    });
+  } catch (err) {
+    console.error("Session check error:", err);
+    res.status(500).json({ success: false, message: "Session check failed" });
+  }
 });
 
 module.exports = router;

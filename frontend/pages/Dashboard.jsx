@@ -28,7 +28,7 @@ export default function Dashboard() {
     try {
       const data = await API.auth.checkSession();
       if (!data?.user) {
-        navigate("/login");
+        navigate("/");
         return;
       }
       setUser(data.user);
@@ -36,7 +36,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Session check failed:", err);
       setError(prev => ({ ...prev, user: err.message }));
-      navigate("/login");
+      navigate("/");
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
@@ -61,7 +61,7 @@ export default function Dashboard() {
       setError(prev => ({ ...prev, dashboard: null }));
     } catch (err) {
       console.error("Dashboard fetch failed:", err);
-      if (err.message.includes("401")) navigate("/login");
+      if (err.message.includes("401")) navigate("/");
       else setError(prev => ({ ...prev, dashboard: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));

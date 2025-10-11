@@ -15,14 +15,22 @@ export default function AdminLogin() {
     const checkSession = async () => {
       try {
         const session = await API.auth.checkSession();
-        if (isMounted && session?.user?.isAdmin) navigate("/admin", { replace: true });
-      } catch {
-        localStorage.removeItem("isAdmin");
-        localStorage.removeItem("adminEmail");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userName");
-      } finally {
-        if (isMounted) inputRef.current?.focus();
+        if (isMounted) {
+          if (session?.user?.isAdmin) {
+            navigate("/admin", { replace: true });
+            return;
+          }
+          // User is logged in but not admin - allow admin login
+          inputRef.current?.focus();
+        }
+      } catch (err) {
+        // User is not logged in - redirect to home for Google login
+        if (isMounted) {
+          setError("Please login with Google first, then return here for admin access.");
+          setTimeout(() => {
+            navigate("/", { replace: true });
+          }, 3000);
+        }
       }
     };
     checkSession();
@@ -62,7 +70,9 @@ export default function AdminLogin() {
   return (
     <div className="admin-login-container container my-5 p-4 shadow-sm rounded">
       <h2 className="text-center mb-3">Admin Login</h2>
-      <p className="text-muted text-center mb-4">Restricted to authorized administrators only.</p>
+      <p className="text-muted text-center mb-4">
+        You must be logged in with Google first. Enter the admin password below to gain admin privileges.
+      </p>
       <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: 400 }}>
         <input
           type="password"
@@ -81,9 +91,18 @@ export default function AdminLogin() {
           className="btn btn-primary w-100 mt-3"
           disabled={loading || !password}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Logging in..." : "Login as Admin"}
         </button>
         {error && <div className="text-danger mt-2 text-center">{error}</div>}
+        <div className="text-center mt-3">
+          <button 
+            type="button" 
+            className="btn btn-link" 
+            onClick={() => navigate("/")}
+          >
+            ← Back to Home
+          </button>
+        </div>
       </form>
     </div>
   );
