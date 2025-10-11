@@ -16,7 +16,7 @@ const isEmailConfigured = () => {
 // Create transporter with better error handling
 let transporter = null;
 if (isEmailConfigured()) {
-  transporter = nodemailer.createTransporter({
+  transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 465),
     secure: (process.env.SMTP_SECURE === "true") || (process.env.SMTP_PORT == 465),
