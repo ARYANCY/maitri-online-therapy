@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReminderBell from "./ReminderBell";
 import { useTranslation } from "react-i18next";
 import GULogo from "../src/images/logo.png";
@@ -11,17 +11,34 @@ export default function Navbar({ user, downloadReport }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const changeLang = async (lng) => {
-    if (i18n.language !== lng) {
-      i18n.changeLanguage(lng);
-      localStorage.setItem("preferredLang", lng);
-      try {
-        await API.post("/auth/update-language", { language: lng });
-        console.log(`Language preference updated to ${lng}`);
-      } catch (err) {
-        console.error("Failed to update language preference:", err);
-      }
+  // Track selected language with localStorage fallback
+  const [selectedLang, setSelectedLang] = useState(
+    localStorage.getItem("preferredLang") || i18n.language || "en"
+  );
+
+  // Apply language on mount
+  useEffect(() => {
+    if (i18n.language !== selectedLang) {
+      i18n.changeLanguage(selectedLang);
     }
+  }, [selectedLang, i18n]);
+
+  // Change language handler
+  const changeLang = async (lng) => {
+    if (lng === selectedLang) return; // no action if same language
+
+    setSelectedLang(lng);
+    localStorage.setItem("preferredLang", lng);
+
+    try {
+      await API.post("/auth/update-language", { language: lng });
+      console.log(`Language preference updated to ${lng}`);
+    } catch (err) {
+      console.error("Failed to update language preference:", err);
+    }
+
+    // Dispatch a custom event so components like Chatbot can refresh
+    window.dispatchEvent(new Event("languageChanged"));
   };
 
   const handleLogout = () => {
@@ -40,21 +57,24 @@ export default function Navbar({ user, downloadReport }) {
           <h1 className="navbar-title">{t("navbar.title")}</h1>
         </div>
 
+        {/* Language Switcher */}
         <div className="lang-switcher">
           {["en", "hi", "as"].map((lng) => (
             <button
               key={lng}
               onClick={() => changeLang(lng)}
-              className={`lang-btn ${i18n.language === lng ? "active" : ""}`}
+              className={`lang-btn ${selectedLang === lng ? "active" : ""}`}
               aria-label={`Switch language to ${lng}`}
             >
               {lng === "en" && "EN"}
               {lng === "hi" && "हिं"}
               {lng === "as" && "অসমীয়া"}
+              {selectedLang === lng && <span className="tick-mark">✔</span>}
             </button>
           ))}
         </div>
 
+        {/* Hamburger Toggle */}
         <input
           type="checkbox"
           id="checkbox"
