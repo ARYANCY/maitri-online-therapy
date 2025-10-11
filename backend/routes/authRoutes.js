@@ -35,34 +35,49 @@ router.get(
   }
 );
 
-// --- Admin password login (only for existing admin users)
 router.post("/admin-login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password)
-      return res.status(400).json({ success: false, message: "Email and password required" });
-
-    const user = await User.findOne({ email: email.toLowerCase(), isAdmin: true }).select("+password");
-
-    if (!user)
-      return res.status(401).json({ success: false, message: "Admin user not found" });
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch)
+    const { password } = req.body;
+    if (!password || password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ success: false, message: "Invalid password" });
+    }
 
-    // Store unified session data
-    req.session.userId = user._id;
-    req.session.email = user.email;
+    // --- Use the first admin email from ENV or fallback
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+    const adminEmail = adminEmails[0] || "admin@example.com";
+
+    // --- Find user by email
+    let adminUser = await User.findOne({ email: adminEmail }).select("+password");
+
+    // --- Create admin user if not exists
+    if (!adminUser) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      adminUser = new User({
+        name: "Admin",
+        email: adminEmail,
+        password: hashedPassword,
+        isAdmin: true,
+      });
+      await adminUser.save();
+    } else if (!adminUser.isAdmin) {
+      // If the user exists but is not admin, update it
+      adminUser.isAdmin = true;
+      await adminUser.save();
+    }
+
+    // --- Store unified session info
+    req.session.userId = adminUser._id;
+    req.session.email = adminUser.email;
     req.session.isAdmin = true;
 
-    req.session.save(err => {
-      if (err)
+    req.session.save((err) => {
+      if (err) {
+        console.error("Admin session save error:", err);
         return res.status(500).json({ success: false, message: "Session save failed" });
-
-      return res.json({ success: true });
+      }
+      return res.json({ success: true, message: "Admin logged in successfully" });
     });
+
   } catch (err) {
     console.error("Admin login error:", err);
     return res.status(500).json({ success: false, message: "Login failed" });
