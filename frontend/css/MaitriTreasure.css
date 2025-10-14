@@ -1,0 +1,242 @@
+.maitri-treasure-page {
+  font-family: "Poppins", sans-serif;
+  color: #1a1a1a;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.treasure-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.treasure-intro {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.treasure-intro h1 {
+  font-size: 2.5rem;
+  color: #0077b6;
+  margin-bottom: 1rem;
+}
+
+.treasure-intro p {
+  font-size: 1.15rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.treasure-carousel {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  height: 450px;
+  margin-bottom: 3rem;
+  border-radius: 15px;
+}
+
+.carousel-image {
+  position: absolute;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-image.active {
+  opacity: 1;
+}
+
+.treasure-text {
+  margin-bottom: 3rem;
+}
+
+.treasure-text h2 {
+  color: #0077b6;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.faq-item {
+  background: #ffffff;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.faq-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.faq-item h3 {
+  margin-bottom: 0.5rem;
+  color: #023e8a;
+}
+
+.faq-item p {
+  color: #333;
+  line-height: 1.5;
+}
+
+.treasure-action {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.treasure-start-btn {
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.treasure-start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 480px) {
+  .treasure-intro h1 {
+    font-size: 1.75rem;
+  }
+
+  .treasure-intro p {
+    font-size: 0.95rem;
+    padding: 0 1rem;
+  }
+
+  .treasure-carousel {
+    height: 300px;
+  }
+
+  .carousel-image {
+    max-width: 100%;
+    border-radius: 10px;
+  }
+
+  .treasure-text h2 {
+    font-size: 1.3rem;
+  }
+
+  .faq-item h3 {
+    font-size: 1rem;
+  }
+
+  .faq-item p {
+    font-size: 0.9rem;
+  }
+
+  .treasure-start-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .treasure-intro h1 {
+    font-size: 2rem;
+  }
+
+  .treasure-intro p {
+    font-size: 1rem;
+    padding: 0 1.5rem;
+  }
+
+  .treasure-carousel {
+    height: 350px;
+  }
+
+  .treasure-text h2 {
+    font-size: 1.5rem;
+  }
+
+  .faq-item h3 {
+    font-size: 1.1rem;
+  }
+
+  .faq-item p {
+    font-size: 1rem;
+  }
+
+  .treasure-start-btn {
+    font-size: 1rem;
+    padding: 0.8rem 1.5rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .treasure-intro h1 {
+    font-size: 2.25rem;
+  }
+
+  .treasure-intro p {
+    font-size: 1.1rem;
+  }
+
+  .treasure-carousel {
+    height: 400px;
+  }
+
+  .treasure-text h2 {
+    font-size: 1.75rem;
+  }
+
+  .faq-item h3 {
+    font-size: 1.2rem;
+  }
+
+  .faq-item p {
+    font-size: 1rem;
+  }
+
+  .treasure-start-btn {
+    font-size: 1.05rem;
+    padding: 0.9rem 2rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .treasure-intro h1 {
+    font-size: 2.5rem;
+  }
+
+  .treasure-intro p {
+    font-size: 1.15rem;
+  }
+
+  .treasure-carousel {
+    height: 450px;
+  }
+
+  .treasure-text h2 {
+    font-size: 2rem;
+  }
+
+  .faq-item h3 {
+    font-size: 1.25rem;
+  }
+
+  .faq-item p {
+    font-size: 1.1rem;
+  }
+
+  .treasure-start-btn {
+    font-size: 1.1rem;
+    padding: 1rem 2.5rem;
+  }
+}
