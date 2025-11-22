@@ -1,0 +1,503 @@
+export default {
+  splash: {
+    tagline: "Not just a chatbot — a safe, warm space for your well-being.",
+    welcome: "Welcome — supporting your well-being every step of the way.",
+    startButton: "Tap to Start",
+    continue: "Continue",
+    skip: "Skip Intro",
+    loading: "Loading...",
+    videoLabel: "Maitri introduction video",
+    videoNotSupported: "Your browser does not support the video tag.",
+    mobileTagline: "Your caring companion for mental well-being.",
+    tapToPlay: "Tap the video to play"
+  },
+  navbar: {
+    title: "Maitri",
+    feelingDown: "Feeling low? Find a new friend with Maitri!",
+    hello: "Hello, {{name}} 👋",
+    home: "Home",
+    dashboard: "Dashboard",
+    about: "About Maitri",
+    talkToCounselor: "Talk to a Counselor",
+    logout: "Logout",
+  },
+  dashboard: {
+    tab: {
+      chatbot: "Chatbot",
+      chart: "Progress",
+      todo: "To-Do",
+      reminder: "Reminders",
+      dementia: "Dementia Checker",
+      treasure: "Campus Highlights",
+      notFound: "Tab not found",
+    },
+    loading: "Loading your space...",
+    error: {
+      generic: "Something went wrong. Please try again.",
+      sessionCheckFailed: "Session check failed:",
+      fetchFailed: "Could not load dashboard data:",
+      updateTodosFailed: "Unable to update your tasks:",
+    },
+    downloadReport: "Download Report",
+    downloading: "Generating Report..."
+  },
+  maitriTreasure: {
+    title: "Explore Gauhati University",
+    description: "Discover the best canteens, food spots, and hangout places on campus. Meet friends, enjoy meals, and explore the vibrant life of Gauhati University.",
+    faqsTitle: "FAQs",
+    startButton: "Start Exploring",
+    carouselAlt0: "Gauhati University Spot 1",
+    carouselAlt1: "Gauhati University Spot 2",
+    carouselAlt2: "Gauhati University Spot 3",
+    faqs: [
+      { question: "What is Maitri Treasure?", answer: "A platform to explore Gauhati University, discover its canteens, food spots, and social hangouts." },
+      { question: "Who can participate?", answer: "All students and staff of Gauhati University are welcome." },
+      { question: "Is it free?", answer: "Yes, it's completely free to use and enjoy." },
+      { question: "How do I start?", answer: "Click the 'Start Exploring' button to begin exploring the campus." }
+    ]
+  },
+  todo: {
+    title: "My To-Dos",
+    placeholder: "Add a new task...",
+    maxTasks: "You can only add up to 10 tasks.",
+    empty: "No tasks yet. Start by adding one!",
+    completedAll: "All tasks done! You're amazing 🎉",
+    add: "Add",
+    updateError: "Could not sync tasks with the server.",
+    loading: "Loading your tasks...",
+    deleteTask: "Delete task: {{title}}?",
+  },
+  chatbot: {
+    inputPlaceholder: "Type your thoughts here...",
+    sendButton: "Send",
+    loginPrompt: "Please log in to start chatting.",
+    connectionError: "Unable to connect to the server.",
+    sendError: "Sorry, I couldn't send that message.",
+  },
+  chart: {
+    emotionalMetrics: "Emotional Well-being Metrics",
+    screeningMetrics: "Screening Assessment Metrics",
+    barChart: "Bar Chart View",
+    lineChart: "Line Chart View",
+    noMetrics: "No data available to display yet.",
+    stress: "Stress Level",
+    happiness: "Happiness Level",
+    anxiety: "Anxiety Level",
+    overallMood: "Overall Mood",
+    phq9: "PHQ-9 Score",
+    gad7: "GAD-7 Score",
+    ghq: "GHQ Score",
+    title: "User Metrics",
+    dementiaMetrics: "Dementia Progress",
+    dementiaRisk: "Dementia Risk Score",
+    progressReport: "Progress Report"
+  },
+  reminder: {
+    title: "Reminders",
+    message: "Message",
+    when: "When",
+    customOption: "Choose date & time",
+    schedule: "Set Reminder",
+    scheduling: "Setting your reminder...",
+    scheduled: "Reminder added successfully!",
+    cancelled: "Reminder cancelled.",
+    empty: "You have no reminders yet.",
+    invalidDate: "Please select a valid date and time.",
+    cancel: "Cancel",
+    manage: "Manage Reminders",
+    fetchError: "Could not load reminders.",
+    scheduleError: "Failed to set reminder.",
+    cancelError: "Failed to cancel reminder.",
+    defaultMessage: "A gentle reminder from Maitri 💙",
+    presets: {
+      "1day": "In 1 day",
+      "2day": "In 2 days",
+      "3day": "In 3 days",
+      "1week": "In 1 week",
+    },
+    quickAddPlaceholder: "Quick add reminder...",
+    predefinedMessages: {
+      takeMedicine: "Take medicine",
+      doctorAppointment: "Doctor appointment",
+      exercise: "Exercise",
+      drinkWater: "Drink water"
+    },
+    repeat: {
+      none: "One-time",
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      custom: "Custom Interval"
+    },
+    addQuickReminder: "Add Quick Reminder",
+    reminderMessagePlaceholder: "Reminder message",
+    emailPlaceholder: "Your email",
+    selectDateTime: "Select date & time",
+    time: "Time",
+    optionalEndDate: "Optional end date",
+    selected: "Selected:",
+    processing: "Processing...",
+    addReminder: "Add Reminder",
+    stats: "Stats",
+    totalReminders: "Total Reminders",
+    dailyReminders: "Daily Reminders",
+    weeklyReminders: "Weekly Reminders",
+    monthlyReminders: "Monthly Reminders",
+    nextReminder: "Next Reminder",
+    allRepeats: "All repeats",
+    byEmail: "By Email",
+    byMessage: "By Message",
+    searchPlaceholder: "Search reminders...",
+    emailLabel: "Email:",
+    dateTimeLabel: "Date & Time:",
+    repeatLabel: "Repeat:",
+    intervalLabel: "Interval:",
+    endsLabel: "Ends:",
+    statusLabel: "Status:",
+    delete: "Delete",
+    loadingReminders: "Loading reminders...",
+    noReminders: "No reminders yet.",
+    benefitsTitle: "Benefits for Patients with Dementia",
+    benefitsText1: "Regular reminders help dementia patients maintain daily routines, reduce confusion, and support memory retention.",
+    benefitsText2: "Scheduled alerts for medication, appointments, and daily activities provide structure, promote independence, and lower anxiety.",
+    allFieldsRequired: "All fields are required.",
+    validDateTimeRequired: "Please select a valid date and time.",
+    failedToAdd: "Failed to add reminder.",
+    confirmDelete: "Are you sure you want to delete this reminder?",
+    failedToDelete: "Failed to delete reminder.",
+    quickAddRequired: "Message and email are required for quick add.",
+    failedQuickAdd: "Failed to quick add reminder.",
+    none: "None"
+  },
+  dementia: {
+    title: "Dementia Checker",
+    start: "Start",
+    starting: "Starting...",
+    timeLeft: "Time Left: {{seconds}}s",
+    intro: "Click Start to fetch 5–6 timed questions. If time runs out, an empty answer is saved automatically.",
+    placeholder: "Type your answer...",
+    next: "Next",
+    submit: "Submit",
+    progress: "Question {{current}} of {{total}}",
+    draftTitle: "Draft Answers (Local)",
+    emptyAnswer: "(empty)",
+    record: "Record",
+    stopRecording: "Stop",
+    recording: "Recording...",
+    preview: "Preview",
+    hasAudio: "with audio",
+    games: {
+      clockTest: "Clock Test",
+      colorSequence: "Color Sequence",
+      matchingCards: "Matching Cards",
+      textRecall: "Text Recall",
+      reactionTime: "Reaction Time",
+      numberOrder: "Number Order",
+      wordMemory: "Word Memory",
+      stroopTest: "Stroop Test",
+      patternGrid: "Pattern Grid",
+      symbolMatch: "Symbol Match",
+      oddColor: "Odd Color",
+      digitSpan: "Digit Span",
+      nBack: "N-Back",
+      memory: "Memory Match",
+      descriptions: {
+        clockTest: "Recognize and set clock times accurately. Tests temporal awareness and visual-spatial processing.",
+        colorSequence: "Remember and repeat color sequences in order. Tests working memory and sequential processing.",
+        matchingCards: "Match pairs of cards by remembering their positions. Evaluates visual memory and recall ability.",
+        textRecall: "Read and recall text passages under time pressure. Assesses verbal memory and comprehension.",
+        reactionTime: "Respond quickly to visual stimuli. Measures processing speed and attention.",
+        numberOrder: "Remember and recall number sequences. Tests short-term memory and numerical processing.",
+        wordMemory: "Memorize and recall word lists. Evaluates verbal memory and retention capacity.",
+        stroopTest: "Identify color names while ignoring conflicting text colors. Assesses cognitive flexibility and inhibition.",
+        patternGrid: "Remember and recreate visual patterns on a grid. Tests spatial memory and visual processing.",
+        symbolMatch: "Match symbols and patterns. Evaluates pattern recognition and visual-spatial skills.",
+        oddColor: "Identify the different colored item among similar ones. Tests attention to detail and visual discrimination.",
+        digitSpan: "Remember and recall sequences of digits. Tests working memory capacity and attention.",
+        nBack: "Identify items that appeared N steps back in a sequence. Tests working memory and executive function.",
+        memory: "Match pairs of cards from memory. Evaluates visual memory, pattern recognition, and recall ability."
+      },
+      benefits: {
+        clockTest: "Assesses temporal orientation and visual-spatial skills, often impaired in dementia patients.",
+        colorSequence: "Helps detect early signs of memory decline and executive function impairment.",
+        matchingCards: "Identifies visual memory deficits and spatial processing issues common in dementia.",
+        textRecall: "Reveals verbal memory problems and language comprehension difficulties.",
+        reactionTime: "Detects slowed cognitive processing, an early indicator of cognitive decline.",
+        numberOrder: "Assesses working memory capacity, often affected in early dementia stages.",
+        wordMemory: "Evaluates verbal memory retention, crucial for detecting memory-related cognitive issues.",
+        stroopTest: "Measures executive function and cognitive control, impaired in dementia patients.",
+        patternGrid: "Tests spatial memory and visual processing, areas often affected by dementia.",
+        symbolMatch: "Assesses pattern recognition abilities, which decline with cognitive impairment.",
+        oddColor: "Evaluates attention and visual discrimination, skills that deteriorate in dementia.",
+        digitSpan: "Measures working memory span, a key indicator of cognitive health and early dementia signs.",
+        nBack: "Evaluates working memory and executive control, critical functions affected by cognitive decline.",
+        memory: "Tests visual memory and pattern recognition, essential skills that deteriorate with dementia progression."
+      }
+    },
+    completed: "Completed",
+    play: "Play",
+    completedCount: "Completed {{count}} / 5",
+    calculating: "Calculating...",
+    viewResults: "View Results",
+    reset: "Reset",
+    riskAssessmentResults: "Risk Assessment Results",
+    calculatingAssessment: "Calculating your risk assessment...",
+    riskScore: "Risk Score",
+    riskLevel: "Risk Level",
+    averageScore: "Average Score",
+    averageTime: "Average Time",
+    explanation: "Explanation",
+    suggestions: "Suggestions",
+    gameResultsSummary: "Game Results Summary",
+    failedAssessment: "Failed to calculate risk assessment. Please try again.",
+    score: "Score",
+    time: "Time",
+    howItHelps: "How it helps:",
+    testCompleted: "Test Completed!",
+    saveContinue: "Save & Continue",
+    close: "Close",
+    exit: "Exit",
+    points: "points",
+    totalTime: "total time",
+    rounds: "Rounds",
+    attempts: "Attempts",
+    accuracy: "Accuracy",
+    errors: "Errors",
+    round: "Round",
+    selectDifficulty: "Select Difficulty:",
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+    submit: "Submit",
+    submitAnswer: "Submit Answer",
+    next: "Next",
+    timer: "Timer",
+    digits: "digits",
+    performance: {
+      excellent: "Excellent performance!",
+      good: "Good performance!",
+      fair: "Fair performance!",
+      practice: "Keep practicing!"
+    },
+    performanceDesc: {
+      excellent: "Outstanding cognitive performance! Keep up the great work.",
+      good: "Solid performance! You're doing well with your cognitive exercises.",
+      fair: "Good effort! Regular practice will help improve your scores.",
+      practice: "Don't give up! Practice regularly to see improvement."
+    }
+  },
+  login: {
+    googleLogin: "Continue with Google",
+    loading: "Loading, please wait...",
+  },
+  talk: {
+    title: "Talk to a Counselor",
+    subtitle: "Our verified counselors are ready to assist you professionally.",
+    loading: "Loading counselors...",
+    noCounselors: "No counselors available right now.",
+    email: "Email",
+    phone: "Phone",
+    specialization: "Specialization",
+    experience: "Experience",
+    years: "yrs",
+    qualifications: "Qualifications",
+    callNow: "Call Now",
+    footer: "Empowering mental wellness",
+    therapistForm: "Therapist Form",
+    adminDashboard: "Admin Dashboard",
+    errorFetching: "Error fetching counselors"
+  },
+  aboutMaitri: {
+    heroTitle: "About Maitri",
+    heroDescription: "Maitri is dedicated to promoting mental health awareness and providing tools for emotional well-being. We strive to create a safe, supportive, and accessible space where everyone feels heard and valued.",
+    missionTitle: "Our Mission",
+    missionDescription: "To empower individuals to take charge of their mental health through journaling, guided resources, and compassionate community support. We aim to break the stigma around mental health and encourage open, meaningful conversations.",
+    visionTitle: "Our Vision",
+    visionDescription: "A world where mental health is treated with the same importance as physical health, and where every individual has access to the care and support they need.",
+    featuresTitle: "What We Offer",
+    features: [
+      "Guided journaling to reflect on your emotions and track your progress.",
+      "An interactive chatbot for real-time support and guidance.",
+      "Personalized emotional insights and screening tools.",
+      "Educational articles, videos, and resources on well-being.",
+      "A supportive community space with expert advice and peer encouragement.",
+      "Accessible, stigma-free tools designed for everyone."
+    ],
+    videosTitle: "Helpful Videos",
+    tipsTitle: "Mental Health Tips",
+    tips: [
+      "Practice daily gratitude by writing down things you're thankful for.",
+      "Exercise regularly to boost your mood and reduce stress.",
+      "Stay connected with friends and family for emotional support.",
+      "Break big goals into small, achievable steps.",
+      "Take digital detox breaks from social media to recharge.",
+      "Practice mindfulness, meditation, or deep breathing each day.",
+      "Seek professional help when you need it—asking for support is a strength."
+    ],
+    faqsTitle: "FAQs",
+    faq1: {
+      question: "What is Maitri?",
+      answer: "Maitri is a digital platform that supports mental health through journaling, guided resources, and community care."
+    },
+    faq2: {
+      question: "Is Maitri free to use?",
+      answer: "Yes! Maitri is completely free and accessible to everyone."
+    },
+    faq3: {
+      question: "Can I track my mental health progress?",
+      answer: "Absolutely. Maitri helps you reflect on your emotions over time, so you can see your growth and patterns."
+    },
+    faq4: {
+      question: "Is my data private and secure?",
+      answer: "Yes. Your privacy matters to us. All your data is encrypted, kept secure, and never shared without your consent."
+    },
+    faq5: {
+      question: "Who can benefit from Maitri?",
+      answer: "Maitri is designed for anyone seeking to improve their mental well-being—students, professionals, caregivers, or anyone on their self-care journey."
+    },
+    testimonialsTitle: "What Our Users Say",
+    testimonials: [
+      "Maitri has helped me manage stress and anxiety in a simple, effective way.",
+      "The journaling tool makes self-reflection easier and more meaningful.",
+      "I love the supportive community—it makes me feel less alone.",
+      "The chatbot is so helpful when I just need someone to listen.",
+      "Maitri has become an important part of my self-care routine."
+    ],
+    contactTitle: "Get Started with Maitri",
+    contactDescription: "Take the first step toward better mental health today. Start journaling, explore our guided tools, and connect with a supportive community.",
+    startButton: "Start Your Journey",
+    treasureTitle: "Discover Maitri Treasure",
+    treasureDescription: "Students can explore hidden gems around campus—cafes, study spots, canteens, and chill zones. Connect with friends, join communities, and make every day an adventure!",
+    treasureFeature1: "Find the best cafes and hangout spots around Gauhati University, Guwahati",
+    treasureFeature2: "Meet like-minded friends and grow your network",
+    treasureFeature3: "Track your favorite study corners and campus events",
+    treasureFeature4: "Share tips, stories, and hidden gems with peers",
+    treasureButton: "Start the Treasure Hunt",
+    medicoTitle: "Maitri Medico",
+    medicoDescription: "Reliable guidance and resources for mental health concerns. Tools, information, and support to improve your well-being anytime you need it.",
+    medicoButton: "Visit Maitri Medico",
+    medicoLink: "https://maitri-medico.vercel.app"
+  },
+  report: {
+    title: "Maitri Mental Health Report",
+    "disclaimer.1": "This report is AI-generated for self-assessment purposes only.",
+    "disclaimer.2": "Consult a licensed mental health professional for any medical evaluation.",
+    disclaimerShort: "AI-generated self-assessment, not a clinical diagnosis.",
+    generatedAt: "Generated at",
+    institution: "Institution",
+    dementiaWarning: "AI-Generated Assessment Warning",
+    dementiaWarningText: "The dementia risk assessment results below are calculated using AI technology. These results are for informational and self-assessment purposes only and should not be considered a clinical diagnosis. Please consult a licensed healthcare professional for any medical evaluation or concerns.",
+    riskLevel: {
+      low: "Low",
+      moderate: "Moderate",
+      high: "High"
+    },
+    risk: "Risk",
+    assessmentDate: "Assessment Date",
+    difficulty: "Difficulty Level",
+    explanation: "Risk Explanation",
+    suggestions: "Recommendations & Suggestions",
+    selectFormat: "Select Report Format",
+    formatTooltip: {
+      pdf: "Download a professionally formatted PDF report with colored metrics and interpretations",
+      csv: "Export data to CSV format for spreadsheet analysis with detailed descriptions",
+      json: "Export structured data in JSON format for technical analysis or integration"
+    }
+  },
+  university: { 
+    name: "Gauhati University", 
+    location: "Guwahati, Assam, India" 
+  },
+  section: { 
+    userProfile: "User Profile" 
+  },
+  user: { 
+    name: "Name", 
+    email: "Email", 
+    language: "Preferred Language", 
+    guest: "Guest User" 
+  },
+  table: { 
+    metric: "Metric", 
+    value: "Value", 
+    interpretation: "Interpretation", 
+    description: "Description", 
+    ideal: "Ideal Range / Meaning" 
+  },
+  footer: { 
+    text: "Generated by Maitri Dashboard | Gauhati University ©" 
+  },
+  interpretation: { 
+    unavailable: "Not available", 
+    healthy: "Healthy range", 
+    moderate: "Moderate concern", 
+    severe: "Requires attention" 
+  },
+  metrics: {
+    anxiety: { 
+      label: "Anxiety", 
+      description: "Measures the level of worry, nervousness, and unease.", 
+      ideal: "≤ 5 indicates low anxiety (healthy range)." 
+    },
+    depression: { 
+      label: "Depression", 
+      description: "Reflects sadness, hopelessness, and disinterest levels.", 
+      ideal: "≤ 5 indicates stable mood (healthy range)." 
+    },
+    stress: { 
+      label: "Stress", 
+      description: "Assesses mental strain, tension, and irritability.", 
+      ideal: "≤ 7 suggests manageable stress levels." 
+    },
+    sleep_quality: { 
+      label: "Sleep Quality", 
+      description: "Represents overall sleep satisfaction and restfulness.", 
+      ideal: "≥ 7 indicates good sleep quality." 
+    },
+    social_support: { 
+      label: "Social Support", 
+      description: "Measures perceived emotional and social backing.", 
+      ideal: "≥ 7 suggests strong support network." 
+    },
+    resilience: { 
+      label: "Resilience", 
+      description: "Reflects recovery ability after setbacks or stress.", 
+      ideal: "≥ 8 indicates strong resilience." 
+    },
+    self_esteem: { 
+      label: "Self Esteem", 
+      description: "Represents self-confidence and perceived self-worth.", 
+      ideal: "≥ 7 indicates healthy self-image." 
+    },
+    life_satisfaction: { 
+      label: "Life Satisfaction", 
+      description: "Represents overall contentment with life and direction.", 
+      ideal: "≥ 8 suggests strong satisfaction with life." 
+    }
+  },
+  admin: {
+    title: "Therapist Applications",
+    description: "Manage and review therapist applications submitted by professionals. Approve trusted therapists to connect faster, or reject unverified entries for quality assurance.",
+    goDashboard: "Go to Dashboard",
+    table: {
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      specialization: "Specialization",
+      experience: "Experience",
+      qualifications: "Qualifications",
+      status: "Status",
+      actions: "Actions"
+    },
+    noApplications: "No applications found.",
+    years: "yrs",
+    accept: "Accept",
+    reject: "Reject",
+    talkCounselor: "Talk to Counselor",
+    therapistForm: "Therapist Form",
+    errorFetch: "Error fetching therapist applications",
+    errorReject: "Error rejecting therapist",
+    errorAccept: "Error accepting therapist"
+  }
+};
+

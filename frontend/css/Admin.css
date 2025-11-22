@@ -1,0 +1,306 @@
+/* ---------------- Admin Container ---------------- */
+.admin-container.light-version {
+  max-width: 1140px;
+  margin: 40px auto;
+  padding: 40px 30px;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: #ffffff;
+  color: #111;
+  line-height: 1.6;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-container.light-version:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* ---------------- Header ---------------- */
+.admin-container h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #111;
+  position: relative;
+}
+
+.admin-container h1::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #007bff;
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+/* ---------------- Error Message ---------------- */
+.error-msg {
+  color: #c62828;
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* ---------------- Table Styling ---------------- */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 40px;
+  font-size: 0.95rem;
+  background-color: #fff;
+  color: #111;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.admin-table th {
+  background-color: #f3f3f3;
+  font-weight: 600;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f9f9f9;
+  transition: background-color 0.2s ease;
+}
+
+/* ---------------- No Data ---------------- */
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* ---------------- Status Badges ---------------- */
+.status {
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+  text-align: center;
+}
+
+.status.accepted {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+.status.rejected {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.status.pending {
+  background-color: #f1c40f;
+  color: #111;
+}
+
+/* ---------------- Action Buttons ---------------- */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.action-buttons button {
+  padding: 7px 14px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-buttons .accepted {
+  background-color: #2ecc71;
+}
+.action-buttons .accepted:hover {
+  background-color: #27ae60;
+}
+
+.action-buttons .rejected {
+  background-color: #e74c3c;
+}
+.action-buttons .rejected:hover {
+  background-color: #c0392b;
+}
+
+.action-buttons .deleted {
+  background-color: #e67e22;
+}
+.action-buttons .deleted:hover {
+  background-color: #d35400;
+}
+
+/* ---------------- Footer ---------------- */
+.admin-footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.admin-footer a {
+  margin: 0 12px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.admin-footer a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+@media (max-width: 992px) {
+  .admin-container.light-version {
+    margin: 30px 20px;
+    padding: 30px 20px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 8px;
+    font-size: 0.9rem;
+  }
+
+  .action-buttons button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container.light-version {
+    margin: 20px 15px;
+    padding: 25px 15px;
+  }
+
+  .admin-table,
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tr {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .admin-table td {
+    border: none;
+    padding: 6px 0;
+    text-align: right;
+    position: relative;
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    width: 50%;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .action-buttons {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .action-buttons button {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    flex: 1 1 auto;
+  }
+
+  .admin-footer {
+    font-size: 0.85rem;
+  }
+
+  .admin-footer a {
+    margin: 4px 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-container.light-version {
+    margin: 15px 10px;
+    padding: 20px 12px;
+  }
+
+  .admin-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .action-buttons {
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .action-buttons button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .no-data {
+    font-size: 0.85rem;
+    padding: 15px;
+  }
+
+  .admin-footer a {
+    display: block;
+    margin: 4px 0;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-container.light-version {
+    margin: 10px 5px;
+    padding: 15px 10px;
+  }
+
+  .admin-container h1 {
+    font-size: 1.3rem;
+  }
+
+  .action-buttons button {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 0.65rem;
+  }
+
+  .admin-footer {
+    font-size: 0.8rem;
+  }
+}

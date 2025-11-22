@@ -1,0 +1,119 @@
+/* Container */
+.nback-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #222;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* Header */
+.nback-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #d9e6f2; /* soft blue */
+  border-radius: 8px;
+}
+
+.btn-exit {
+  padding: 6px 12px;
+  border: none;
+  background-color: #ff8a65; /* soft orange */
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-exit:hover {
+  background-color: #ff7043;
+}
+
+/* Instructions */
+.nback-instructions {
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.show-phase {
+  color: #0b5394; /* dark blue */
+}
+
+.input-phase {
+  color: #0b5345; /* dark green */
+}
+
+/* Grid buttons */
+.nback-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.nback-grid button {
+  width: 80px;
+  height: 80px;
+  font-size: 24px;
+  border-radius: 10px;
+  border: 2px solid #999;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nback-grid button:hover {
+  background-color: #b3cde0;
+}
+
+/* Submit button */
+.nback-actions {
+  margin-top: 10px;
+}
+
+.btn-submit {
+  padding: 10px 20px;
+  border: none;
+  background-color: #4ade80; /* soft green */
+  color: white;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background-color: #22c55e;
+}
+
+/* Menu */
+.nback-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+}
+
+.nback-difficulty button {
+  margin: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: #a3c4f3; /* soft blue */
+  cursor: pointer;
+  color: #222;
+}
+
+.nback-difficulty button:hover {
+  background-color: #6497b1;
+}
+
+/* Result Popup overrides (optional if using same ResultPopup.css) */

@@ -1,0 +1,140 @@
+/* ROOT WRAPPER */
+.game-wrapper {
+  width: 100%;
+  padding: 30px 20px;
+  background: #f2f7ff;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+/* HEADER */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.game-header h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0b2347;
+}
+
+/* GRID OF GAME CARDS */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 10px;
+}
+
+/* CARD STYLE */
+.game-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.10);
+}
+
+/* CARD TITLE */
+.game-card h4 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0b2347;
+  margin: 0;
+}
+
+/* BUTTONS */
+.game-card button,
+.game-header button {
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 15px;
+}
+
+/* BADGES */
+.badge {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.bg-info {
+  background: #e2f2ff;
+  color: #0074c7;
+}
+
+.bg-success {
+  background: #e6f8ed;
+  color: #1c8f44;
+}
+
+.bg-primary {
+  background: #eaf0ff;
+  color: #3957d1;
+}
+
+/* POPUP OVERLAY */
+.report-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 999;
+}
+
+/* POPUP WINDOW */
+.report-popup {
+  background: #ffffff;
+  width: min(500px, 92vw);
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.report-popup h4 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0b2347;
+  margin: 0;
+}
+
+.report-popup ul {
+  margin-top: 14px;
+  padding-left: 18px;
+}
+
+.report-popup-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: #444;
+}
+
+/* RESPONSIVE */
+@media (max-width: 540px) {
+  .game-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .game-header h2 {
+    font-size: 22px;
+  }
+}

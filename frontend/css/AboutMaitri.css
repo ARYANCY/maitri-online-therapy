@@ -1,0 +1,322 @@
+.about-maitri-page {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85));
+  background-size: cover;
+  color: #1e1e1e;
+  min-height: 100vh;
+  padding: 0rem 0rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; 
+}
+
+.about-maitri-container {
+  max-width: 1200px;
+  margin: 0 auto; 
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+.maitri-treasure {
+  background: linear-gradient(145deg, #fffbea, #fff3c4);
+  padding: 3rem 2rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin: 3rem 0;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.maitri-treasure:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+}
+
+.maitri-treasure h2 {
+  font-size: 2.1rem;
+  color: #222;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.maitri-treasure p {
+  font-size: 1.05rem;
+  color: #555;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  max-width: 650px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.treasure-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.treasure-features li {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+  position: relative;
+  padding-left: 28px;
+  text-align: left;
+}
+
+.treasure-features li::before {
+  content: "★";
+  position: absolute;
+  left: 0;
+  color: #f59e0b;
+  font-size: 1.3rem;
+  top: 0;
+  line-height: 1;
+}
+.maitri-medico {
+  background: #f5f8fa;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.maitri-medico h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: #0d6efd; /* Matches Bootstrap primary */
+}
+
+.maitri-medico p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  color: #555;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.maitri-medico-btn {
+  background: #0d6efd;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.maitri-medico-btn:hover {
+  background: #0b5ed7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.maitri-treasure-btn {
+  background: linear-gradient(145deg, #ffba7a, #ff7e5f);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.85rem 2.2rem;
+  border: none;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.maitri-treasure-btn:hover {
+  background: linear-gradient(145deg, #ff7e5f, #ffba7a);
+  transform: scale(1.06) translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Optional: subtle pulse animation for button on hover */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.maitri-treasure-btn:hover {
+  animation: pulse 0.6s ease-in-out;
+}
+
+
+.maitri-hero {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, rgba(106,17,203,0.85), rgba(37,117,252,0.85));
+  border-radius: 2rem;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  color: #fff;
+  animation: fadeInUp 0.8s ease forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.maitri-hero:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.3);
+}
+
+.maitri-hero h1 {
+  font-size: clamp(2.5rem, 6vw, 3.8rem);
+  margin-bottom: 1rem;
+  font-weight: 900;
+  text-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
+
+.maitri-hero p {
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  line-height: 1.7;
+  color: #e0e0ff;
+}
+
+.maitri-mission h2,
+.maitri-features h2,
+.maitri-videos h2,
+.maitri-tips h2,
+.maitri-faqs h2,
+.maitri-testimonials h2,
+.maitri-contact h2 {
+  font-size: clamp(1.8rem, 4vw, 2.2rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.maitri-mission p,
+.maitri-features li,
+.maitri-tips li,
+.faq-item p,
+.maitri-contact p {
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 1.7;
+  color: #333;
+}
+
+.maitri-features ul,
+.maitri-tips ul {
+  padding-left: 2rem;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.video-grid iframe {
+  width: 100%;
+  height: 220px;
+  border-radius: 1.2rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-grid iframe:hover {
+  transform: scale(1.04);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.22);
+}
+
+.faq-item {
+  margin-bottom: 1.8rem;
+  background: rgba(255,255,255,0.45);
+  border-radius: 1.2rem;
+  padding: 1.2rem 1.8rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.faq-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.2);
+}
+
+.testimonial-card {
+  background: rgba(255,255,255,0.4);
+  padding: 1.8rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+}
+
+.maitri-start-btn {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: #fff;
+  padding: 1rem 2.5rem;
+  border-radius: 1.2rem;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+
+.maitri-start-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 35px rgba(0,0,0,0.28);
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .about-maitri-container {
+    padding: 2rem 1rem;
+    gap: 3rem;
+  }
+
+  .maitri-hero {
+    padding: 4rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .maitri-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .maitri-hero p {
+    font-size: 1.05rem;
+  }
+
+  .video-grid iframe {
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .maitri-hero {
+    padding: 3rem 1rem;
+  }
+
+  .maitri-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .maitri-hero p {
+    font-size: 0.95rem;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

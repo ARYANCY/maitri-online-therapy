@@ -1,0 +1,225 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(120deg, #e0f2fe, #f9fafb, #dbeafe, #fef3c7);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+  color: #0f172a;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.talk-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.talk-header {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.talk-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #004aad, #00b7ff, #ff00a8);
+  background-clip: text; 
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  color: transparent; 
+  letter-spacing: 0.5px;
+}
+
+
+.talk-subtitle {
+  font-size: 1.15rem;
+  color: #334155;
+  margin-top: 10px;
+}
+
+.counselor-filters {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.counselor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 2rem 1rem 4rem;
+}
+
+.counselor-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  transition: all 0.35s ease;
+  padding: 2rem;
+}
+
+.counselor-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.counselor-name {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #004aad;
+  margin-bottom: 0.6rem;
+}
+
+.counselor-card p {
+  margin: 0.4rem 0;
+  color: #1e293b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.btn-call {
+  display: inline-block;
+  background: linear-gradient(90deg, #004aad, #00b7ff);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.7rem 1.8rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.btn-call:hover {
+  background: linear-gradient(90deg, #00b7ff, #ff00a8);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+}
+
+.footer-section {
+  margin-top: auto;
+  background: linear-gradient(135deg, #004aad, #00b7ff, #ff00a8);
+  background-size: 300% 300%;
+  animation: gradientMove 10s ease infinite;
+  color: #fff;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.footer-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+.footer-subtitle {
+  font-size: 1rem;
+  margin: 0.7rem 0 1.5rem;
+  color: #f0f9ff;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.footer-link {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #fff;
+  transition: width 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #ffe6f2;
+}
+
+.footer-link:hover::after {
+  width: 100%;
+}
+
+.footer-copy {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .talk-title {
+    font-size: 2.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .talk-title {
+    font-size: 2rem;
+  }
+  .talk-subtitle {
+    font-size: 1rem;
+  }
+  .counselor-card {
+    padding: 1.5rem;
+  }
+  .btn-call {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .talk-title {
+    font-size: 1.6rem;
+  }
+  .talk-subtitle {
+    font-size: 0.95rem;
+  }
+  .counselor-grid {
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .counselor-card {
+    padding: 1.2rem;
+  }
+  .btn-call {
+    width: 100%;
+    padding: 0.8rem;
+  }
+  .footer-title {
+    font-size: 1.5rem;
+  }
+  .footer-links {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}

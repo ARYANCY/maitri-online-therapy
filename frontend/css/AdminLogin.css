@@ -1,0 +1,182 @@
+/* ---------------- Admin Login Container ---------------- */
+.admin-login-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 80px auto;
+  padding: 40px 35px;
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  color: #111; /* Dark text for readability */
+  letter-spacing: 0.3px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.admin-login-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------------- Title ---------------- */
+.admin-login-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111; /* Dark header */
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.admin-login-title::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #2563eb; /* Blue accent */
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+/* ---------------- Warning Message ---------------- */
+.admin-login-warning {
+  font-size: 0.95rem;
+  color: #1e293b; /* Dark slate text */
+  margin-bottom: 25px;
+  line-height: 1.6;
+  background: rgba(99, 102, 241, 0.1); /* Soft blue background */
+  padding: 14px 16px;
+  border-left: 3px solid #2563eb; /* Blue accent */
+  text-align: left;
+  border-radius: 6px;
+}
+
+/* ---------------- Form Inputs ---------------- */
+.admin-login-form input.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 1rem;
+  color: #111;
+  outline: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.admin-login-form input.form-control:focus {
+  border-bottom: 2px solid #2563eb;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------------- Buttons ---------------- */
+.admin-login-form button.btn {
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin-login-form button.btn:hover:enabled {
+  background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+  transform: translateY(-2px);
+}
+
+/* ---------------- Error Text ---------------- */
+.text-danger {
+  font-size: 0.9rem;
+  color: #e53935;
+  margin-top: 10px;
+}
+
+/* ---------------- Responsive Media Queries ---------------- */
+@media (max-width: 768px) {
+  .admin-login-container {
+    margin: 60px 20px;
+    padding: 35px 25px;
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .admin-login-title {
+    font-size: 1.8rem;
+  }
+
+  .admin-login-warning {
+    font-size: 0.9rem;
+    padding: 12px 14px;
+  }
+
+  .admin-login-form input.form-control {
+    font-size: 0.95rem;
+    padding: 11px 13px;
+  }
+
+  .admin-login-form button.btn {
+    font-size: 0.95rem;
+    padding: 11px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-login-container {
+    margin: 40px 15px;
+    padding: 30px 20px;
+  }
+
+  .admin-login-title {
+    font-size: 1.6rem;
+  }
+
+  .admin-login-warning {
+    font-size: 0.85rem;
+  }
+
+  .admin-login-form input.form-control {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+
+  .admin-login-form button.btn {
+    font-size: 0.9rem;
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-login-container {
+    margin: 30px 10px;
+    padding: 25px 15px;
+  }
+
+  .admin-login-title {
+    font-size: 1.4rem;
+  }
+
+  .admin-login-warning {
+    font-size: 0.8rem;
+    padding: 10px 12px;
+  }
+
+  .admin-login-form input.form-control {
+    font-size: 0.85rem;
+    padding: 9px 10px;
+  }
+
+  .admin-login-form button.btn {
+    font-size: 0.85rem;
+    padding: 9px 0;
+  }
+}

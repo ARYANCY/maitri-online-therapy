@@ -1,0 +1,106 @@
+.clock-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.clock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-exit {
+  padding: 6px 12px;
+  background-color: #d9534f; /* soft red */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.clock-instructions {
+  margin-bottom: 20px;
+}
+
+.clock-instructions h3 {
+  font-size: 32px;
+  color: #0ea5e9; /* soft blue */
+  margin-top: 10px;
+}
+
+.clock-input {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.clock-input label {
+  font-size: 16px;
+}
+
+.clock-input input {
+  width: 60px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  text-align: center;
+  font-size: 16px;
+}
+
+.btn-submit {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #10b981; /* soft green */
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-submit:hover {
+  background-color: #059669;
+}
+
+.clock-menu {
+  text-align: center;
+  padding: 20px;
+}
+
+.clock-menu h2 {
+  margin-bottom: 15px;
+}
+
+.clock-difficulty button {
+  padding: 10px 16px;
+  margin: 6px;
+  border-radius: 6px;
+  border: none;
+  background-color: #0ea5e9; /* soft blue */
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.clock-difficulty button:hover {
+  background-color: #0284c7;
+}
+
+.btn-outline-secondary {
+  padding: 8px 16px;
+  margin-top: 12px;
+  border: 2px solid #6b7280;
+  background-color: white;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f3f4f6;
+}

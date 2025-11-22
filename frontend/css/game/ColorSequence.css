@@ -1,0 +1,106 @@
+.colorseq-wrapper {
+  padding: 20px;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.colorseq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-exit {
+  padding: 6px 12px;
+  background-color: #d9534f; /* soft red */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.colorseq-instructions {
+  margin-bottom: 20px;
+}
+
+.colorseq-display {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.colorseq-block {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+}
+
+.colorseq-block.hidden {
+  background-color: #e0e0e0; /* light gray when hidden */
+}
+
+.colorseq-grid {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.colorseq-grid button {
+  width: 80px;
+  height: 50px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.1s;
+}
+
+.colorseq-grid button:hover {
+  transform: scale(1.05);
+}
+
+.colorseq-menu {
+  text-align: center;
+  padding: 20px;
+}
+
+.colorseq-menu h2 {
+  margin-bottom: 15px;
+}
+
+.colorseq-difficulty button {
+  padding: 10px 16px;
+  margin: 6px;
+  border-radius: 6px;
+  border: none;
+  background-color: #0ea5e9; /* soft blue */
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.colorseq-difficulty button:hover {
+  background-color: #0284c7;
+}
+
+.btn-outline-secondary {
+  padding: 8px 16px;
+  margin-top: 12px;
+  border: 2px solid #6b7280;
+  background-color: white;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f3f4f6;
+}

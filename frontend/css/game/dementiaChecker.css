@@ -1,0 +1,192 @@
+.game-wrapper {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  color: #1b1b1b;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.game-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.game-header h2 {
+  font-size: 2rem;
+  color: #0f3d75;
+  transition: all 0.3s ease;
+}
+
+.start-btn {
+  background: linear-gradient(45deg,#0f3d75,#0c315f);
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+
+.difficulty-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.difficulty-selector .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary { background-color: #0f3d75; color: #fff; }
+.btn-primary:hover { background-color: #0c315f; transform: scale(1.05); }
+
+.btn-secondary { background-color: #555; color: #fff; }
+.btn-secondary:hover { background-color: #333; transform: scale(1.05); }
+
+.timer {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ff4d4f;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); color: #ff1a1a; }
+}
+
+.game-card {
+  background: #faf9f6;
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+}
+
+.game-card.empty { animation: shake 0.4s; border: 2px solid #dc3545; }
+.game-card.correct { border: 2px solid #28a745; }
+.game-card.wrong { border: 2px solid #ff4d4d; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60% { transform: translateX(-10px); }
+  40%,80% { transform: translateX(10px); }
+}
+
+.question-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: #0f3d75;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.question-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.question-text.show { opacity: 1; transition: opacity 0.6s ease; }
+.question-text.hidden { opacity: 0.2; font-style: italic; transition: opacity 0.6s ease; }
+
+.game-input {
+  width: 100%;
+  border: 2px solid #ccc;
+  border-radius: 0.35rem;
+  padding: 0.6rem;
+  font-size: 1rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.game-input.empty-answer {
+  border-color: #dc3545;
+  animation: shake 0.4s;
+}
+
+.game-input:focus { border-color: #0f3d75; outline: none; }
+
+.recording-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.recording-status {
+  color: #dc3545;
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,50%,100% { opacity: 1; }
+  25%,75% { opacity: 0; }
+}
+
+.game-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.next-btn { background: #0f3d75; color: #fff; transition: all 0.2s; }
+.next-btn:hover { transform: scale(1.05); }
+
+.submit-btn { background: #555; color: #fff; transition: all 0.2s; }
+.submit-btn:hover { transform: scale(1.05); }
+
+.game-progress {
+  font-size: 0.9rem;
+  color: #555;
+  text-align: right;
+}
+
+.game-summary {
+  background: #eef2f7;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.game-summary ul { list-style: none; padding-left: 0; }
+.game-summary li { margin-bottom: 0.5rem; }
+
+.empty-answer-text { color: #dc3545; font-weight: bold; }
+
+.start-btn, .next-btn, .submit-btn {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.start-btn:active, .next-btn:active, .submit-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .game-wrapper { padding: 0.5rem; }
+  .game-header h2 { font-size: 1.5rem; }
+  .timer { font-size: 1.2rem; }
+  .game-input { font-size: 0.95rem; }
+  .btn { font-size: 0.9rem; padding: 0.4rem 0.8rem; }
+  .question-text { font-size: 1rem; }
+}
