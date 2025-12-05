@@ -545,17 +545,21 @@ export default function Game({ onDataUpdate }) {
                 </p>
               </div>
               
-              <div className="d-flex justify-content-center align-items-center gap-3 gap-md-4 flex-wrap mb-3 mb-md-4">
+              <div className="d-flex justify-content-center align-items-stretch gap-3 gap-md-4 flex-wrap mb-3 mb-md-4">
                 <div className="card border-0 shadow-sm" style={{ 
                   background: "linear-gradient(135deg, #667eea15, #764ba215)",
                   borderRadius: "16px",
-                  padding: "1rem 1.5rem",
-                  minWidth: "180px"
+                  padding: "1.25rem 1.5rem",
+                  minWidth: "180px",
+                  flex: "1 1 auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center"
                 }}>
                   <div className="d-flex align-items-center gap-3">
                     <div className="fs-1">📊</div>
                     <div className="text-start">
-                      <div className="text-muted small">{t("dementia.gamesCompleted", "Games Completed")}</div>
+                      <div className="text-muted small fw-semibold mb-1">{t("dementia.gamesCompleted", "Games Completed")}</div>
                       <div className="h4 mb-0 fw-bold text-primary">{results.length}</div>
                     </div>
                   </div>
@@ -564,8 +568,12 @@ export default function Game({ onDataUpdate }) {
                 <div className="card border-0 shadow-sm" style={{ 
                   background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
                   borderRadius: "16px",
-                  padding: "1rem 1.5rem",
-                  minWidth: "200px"
+                  padding: "1.25rem 1.5rem",
+                  minWidth: "200px",
+                  flex: "1 1 auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center"
                 }}>
                   <div className="d-flex flex-column gap-2">
                     <label htmlFor="age-group-select" className="text-muted small fw-semibold mb-0">
@@ -593,65 +601,107 @@ export default function Game({ onDataUpdate }) {
                 </div>
                 
                 {canViewResults ? (
-                  <button
-                    type="button"
-                    className="btn btn-lg shadow-sm"
-                    onClick={handleViewResults}
-                    disabled={loadingAssessment || isSubmittingRef.current}
-                    style={{
-                      background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "12px",
-                      padding: "0.875rem 2rem",
-                      fontWeight: 600,
-                      transition: "all 0.3s ease"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = "translateY(-2px)";
-                      e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.3)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = "translateY(0)";
-                      e.target.style.boxShadow = "none";
-                    }}
-                  >
-                    {loadingAssessment ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        {t("dementia.calculating", "Calculating...")}
-                      </>
-                    ) : (
-                      <>
-                        📈 {t("dementia.viewResults", "View Results")}
-                      </>
-                    )}
-                  </button>
-                ) : results.length > 0 && (
-                  <div className="card border-0 shadow-sm bg-warning bg-opacity-10" style={{ 
+                  <div className="card border-0 shadow-sm" style={{ 
+                    background: "linear-gradient(135deg, #22c55e15, #16a34a15)",
                     borderRadius: "16px",
-                    padding: "1rem 2rem",
-                    minWidth: "250px"
+                    padding: "1.25rem 1.5rem",
+                    minWidth: "200px",
+                    flex: "1 1 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center"
                   }}>
-                    <div className="text-warning-emphasis fw-semibold">
+                    <button
+                      type="button"
+                      className="btn w-100 border-0"
+                      onClick={handleViewResults}
+                      disabled={loadingAssessment || isSubmittingRef.current}
+                      style={{
+                        background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                        color: "white",
+                        borderRadius: "10px",
+                        padding: "0.75rem 1.5rem",
+                        fontWeight: 600,
+                        fontSize: "0.95rem",
+                        transition: "all 0.3s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!e.target.disabled) {
+                          e.target.style.transform = "translateY(-2px)";
+                          e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "none";
+                      }}
+                    >
+                      {loadingAssessment ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          {t("dementia.calculating", "Calculating...")}
+                        </>
+                      ) : (
+                        <>
+                          📈 {t("dementia.viewResults", "View Results")}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : results.length > 0 && (
+                  <div className="card border-0 shadow-sm" style={{ 
+                    background: "linear-gradient(135deg, #fef3c715, #fde68a15)",
+                    borderRadius: "16px",
+                    padding: "1.25rem 1.5rem",
+                    minWidth: "200px",
+                    flex: "1 1 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    border: "2px solid #fbbf24"
+                  }}>
+                    <div className="text-warning-emphasis fw-semibold text-center">
                       {t("dementia.gamesRemaining", { count: MIN_GAMES_FOR_ASSESSMENT - results.length })}{" "}
                       {t("dementia.gamesRemainingText", "more games needed")}
                     </div>
                   </div>
                 )}
                 
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-lg shadow-sm"
-                  onClick={resetProgress}
-                  style={{ 
-                    borderRadius: "12px",
-                    padding: "0.875rem 2rem",
-                    fontWeight: 600
-                  }}
-                >
-                  🔄 {t("dementia.reset", "Reset")}
-                </button>
+                <div className="card border-0 shadow-sm" style={{ 
+                  background: "linear-gradient(135deg, #fee2e215, #fecaca15)",
+                  borderRadius: "16px",
+                  padding: "1.25rem 1.5rem",
+                  minWidth: "180px",
+                  flex: "1 1 auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center"
+                }}>
+                  <button
+                    type="button"
+                    className="btn w-100 border-0"
+                    onClick={resetProgress}
+                    style={{ 
+                      background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                      color: "white",
+                      borderRadius: "10px",
+                      padding: "0.75rem 1.5rem",
+                      fontWeight: 600,
+                      fontSize: "0.95rem",
+                      transition: "all 0.3s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "translateY(-2px)";
+                      e.target.style.boxShadow = "0 8px 20px rgba(239, 68, 68, 0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "translateY(0)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  >
+                    🔄 {t("dementia.reset", "Reset")}
+                  </button>
+                </div>
               </div>
             </div>
 
