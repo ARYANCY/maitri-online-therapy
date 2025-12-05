@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function ResultPopup({ score, time, onNext, onRetry, detail = {} }) {

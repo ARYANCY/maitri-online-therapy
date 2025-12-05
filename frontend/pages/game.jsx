@@ -60,19 +60,31 @@ export default function Game({ onDataUpdate }) {
   const [current, setCurrent] = useState(null);
   const [results, setResults] = useState(() => {
     try {
-      const stored = localStorage.getItem(LS_PROGRESS);
-      return stored ? JSON.parse(stored).results || [] : [];
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(LS_PROGRESS);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return Array.isArray(parsed?.results) ? parsed.results : [];
+        }
+      }
+      return [];
     } catch (err) {
-      console.warn("Failed to load progress:", err);
+      console.warn("[Game] Failed to load progress:", err);
       return [];
     }
   });
   const [completedKeys, setCompletedKeys] = useState(() => {
     try {
-      const stored = localStorage.getItem(LS_PROGRESS);
-      return stored ? JSON.parse(stored).completed || [] : [];
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(LS_PROGRESS);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return Array.isArray(parsed?.completed) ? parsed.completed : [];
+        }
+      }
+      return [];
     } catch (err) {
-      console.warn("Failed to load completed games:", err);
+      console.warn("[Game] Failed to load completed games:", err);
       return [];
     }
   });
@@ -170,12 +182,28 @@ export default function Game({ onDataUpdate }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        LS_PROGRESS,
-        JSON.stringify({ results, completed: completedKeys })
-      );
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(
+          LS_PROGRESS,
+          JSON.stringify({ results, completed: completedKeys })
+        );
+      }
     } catch (err) {
-      console.warn("Failed to save progress:", err);
+      console.warn("[Game] Failed to save progress:", err);
+      // Handle quota exceeded error
+      if (err.name === 'QuotaExceededError') {
+        console.error("[Game] Storage quota exceeded. Clearing old data...");
+        try {
+          // Keep only last 10 results
+          const limitedResults = results.slice(-10);
+          localStorage.setItem(
+            LS_PROGRESS,
+            JSON.stringify({ results: limitedResults, completed: completedKeys })
+          );
+        } catch (retryErr) {
+          console.error("[Game] Failed to save limited progress:", retryErr);
+        }
+      }
     }
   }, [results, completedKeys]);
 
@@ -231,7 +259,9 @@ export default function Game({ onDataUpdate }) {
         setResults((prev) => {
           const newResults = [...prev, resultEntry];
           try {
-            localStorage.removeItem(LS_ASSESSMENT);
+            if (typeof window !== 'undefined' && window.localStorage) {
+              localStorage.removeItem(LS_ASSESSMENT);
+            }
           } catch (err) {
             console.warn("[Game] Failed to clear assessment cache:", err);
           }
@@ -256,10 +286,12 @@ export default function Game({ onDataUpdate }) {
       setCompletedKeys([]);
       setRiskAssessment(null);
       try {
-        localStorage.removeItem(LS_PROGRESS);
-        localStorage.removeItem(LS_ASSESSMENT);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.removeItem(LS_PROGRESS);
+          localStorage.removeItem(LS_ASSESSMENT);
+        }
       } catch (err) {
-        console.warn("Failed to clear progress:", err);
+        console.warn("[Game] Failed to clear progress:", err);
       }
     }
   }, [t]);
@@ -308,11 +340,13 @@ export default function Game({ onDataUpdate }) {
       
       let cachedAssessment = null;
       try {
-        const cached = localStorage.getItem(LS_ASSESSMENT);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.resultsHash === resultsHash && parsed.assessment) {
-            cachedAssessment = parsed.assessment;
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const cached = localStorage.getItem(LS_ASSESSMENT);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.resultsHash === resultsHash && parsed.assessment) {
+              cachedAssessment = parsed.assessment;
+            }
           }
         }
       } catch (err) {
@@ -350,13 +384,18 @@ export default function Game({ onDataUpdate }) {
         setLoadingAssessment(false);
 
         try {
-          localStorage.setItem(LS_ASSESSMENT, JSON.stringify({
-            resultsHash: resultsHash,
-            assessment: assessmentData,
-            timestamp: Date.now()
-          }));
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem(LS_ASSESSMENT, JSON.stringify({
+              resultsHash: resultsHash,
+              assessment: assessmentData,
+              timestamp: Date.now()
+            }));
+          }
         } catch (err) {
           console.warn("[Game] Failed to cache assessment:", err);
+          if (err.name === 'QuotaExceededError') {
+            console.error("[Game] Storage quota exceeded. Cannot cache assessment.");
+          }
         }
 
       } else {
