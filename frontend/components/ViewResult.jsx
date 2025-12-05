@@ -15,13 +15,12 @@ export default function ViewResult({
 
   useEffect(() => {
     if (showModal) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       if (overlayRef.current) {
-        overlayRef.current.scrollTo({ top: 0, behavior: 'auto' });
+        overlayRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
   }, [showModal]);
-  
   
   const isNetworkError = assessmentError && (
     assessmentError.includes("Network") || 
@@ -30,12 +29,10 @@ export default function ViewResult({
     assessmentError.includes("internet")
   );
 
-  
   useEffect(() => {
     if (!showModal) return;
 
     const preventRefresh = (e) => {
-      
       if (e && e.type === 'submit') {
         e.preventDefault();
         e.stopPropagation();
@@ -46,7 +43,6 @@ export default function ViewResult({
       }
     };
 
-    
     document.addEventListener('submit', preventRefresh, true);
 
     return () => {
@@ -54,7 +50,6 @@ export default function ViewResult({
     };
   }, [showModal]);
 
-  
   const handleClose = (e) => {
     if (e) {
       e.preventDefault();
@@ -67,9 +62,8 @@ export default function ViewResult({
     }, 300);
   };
 
-  
   const getRiskLevelStyle = () => {
-    if (!riskAssessment) return { color: "#666", emoji: "📊" };
+    if (!riskAssessment) return { color: "#666", emoji: "📊", bgGradient: "linear-gradient(135deg, #f3f4f6, #e5e7eb)" };
     
     const level = riskAssessment.riskLevel || "low";
     if (level === "high") {
@@ -77,18 +71,24 @@ export default function ViewResult({
         color: "#ef4444",
         emoji: "⚠️",
         message: t("dementia.riskLevelHigh", "High Risk"),
+        bgGradient: "linear-gradient(135deg, #fee2e2, #fecaca)",
+        borderColor: "#ef4444"
       };
     } else if (level === "moderate") {
       return {
         color: "#f59e0b",
         emoji: "⚡",
         message: t("dementia.riskLevelModerate", "Moderate Risk"),
+        bgGradient: "linear-gradient(135deg, #fef3c7, #fde68a)",
+        borderColor: "#f59e0b"
       };
     } else {
       return {
         color: "#22c55e",
         emoji: "✅",
         message: t("dementia.riskLevelLow", "Low Risk"),
+        bgGradient: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
+        borderColor: "#22c55e"
       };
     }
   };
@@ -103,10 +103,17 @@ export default function ViewResult({
   return (
     <div
       ref={overlayRef}
-      className={`result-overlay ${fadeOut ? "fade-out" : "fade-in"}`}
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        zIndex: 9999,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: '1rem',
+        transition: 'opacity 0.3s ease',
+        opacity: fadeOut ? 0 : 1
+      }}
       onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
         if (e.target === e.currentTarget) {
           handleClose(e);
         }
@@ -114,395 +121,444 @@ export default function ViewResult({
       role="dialog"
       aria-modal="true"
       aria-labelledby="results-modal-title"
-      style={{
-        alignItems: 'flex-start',
-        paddingTop: '2rem'
-      }}
     >
       <div 
-        className="result-card"
-        onClick={(e) => {
-          
-          if (e.target === e.currentTarget || e.target.closest('.result-close-btn') || e.target.closest('.result-btn')) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onMouseDown={(e) => {
-          
-          if (e.target === e.currentTarget || e.target.closest('.result-close-btn') || e.target.closest('.result-btn')) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-        }}
+        className="card shadow-lg border-0"
+        onClick={(e) => e.stopPropagation()}
         style={{ 
-          top: '-68rem',
-          maxWidth: "800px",
-          width: "90%",
-          maxHeight: "166vh",
-          overflow: "auto",
+          maxWidth: "900px",
+          width: "100%",
+          maxHeight: "90vh",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          borderRadius: "12px",
+          borderRadius: "24px",
+          background: "white"
         }}
       >
+        {/* Close Button */}
         <button
           type="button"
-          className="result-close-btn"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleClose(e);
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          className="btn-close position-absolute"
+          onClick={handleClose}
           aria-label={t("dementia.close", "Close")}
+          style={{
+            top: "1rem",
+            right: "1rem",
+            zIndex: 10,
+            background: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            padding: "0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            border: "2px solid rgba(0,0,0,0.1)"
+          }}
         >
           ×
         </button>
 
-        {loadingAssessment && (
+        {loadingAssessment ? (
           <div style={{ 
-            padding: "2rem", 
+            padding: "4rem 2rem", 
             textAlign: "center", 
-            height: "100%", 
+            minHeight: "400px",
             display: "flex", 
             flexDirection: "column", 
             justifyContent: "center",
             alignItems: "center"
           }}>
-            <div className="result-icon" style={{
-              background: "linear-gradient(135deg, #3b82f620, #3b82f610)",
-              border: "3px solid #3b82f640",
-              width: "80px",
-              height: "80px",
-            }}>
-              <div style={{ fontSize: "48px" }}>⏳</div>
+            <div 
+              className="rounded-circle d-flex align-items-center justify-content-center mb-4"
+              style={{
+                background: "linear-gradient(135deg, #3b82f620, #3b82f610)",
+                border: "4px solid #3b82f640",
+                width: "120px",
+                height: "120px",
+                animation: "pulse 2s infinite"
+              }}
+            >
+              <div style={{ fontSize: "64px" }}>⏳</div>
             </div>
-            <h2 className="result-title" style={{ color: "#3b82f6", fontSize: "1.5rem", marginTop: "1rem" }}>
+            <h2 className="h3 mb-3 fw-bold" style={{ color: "#3b82f6" }}>
               {t("dementia.calculatingAssessment", "Calculating assessment...")}
             </h2>
-            <p style={{ color: "#666", marginTop: "1rem", fontSize: "0.875rem" }}>
+            <p className="text-muted mb-2" style={{ fontSize: "1rem" }}>
               {t("dementia.pleaseWait", "Please wait while we analyze your results...")}
             </p>
-            <p style={{ color: "#999", marginTop: "0.5rem", fontSize: "0.75rem", fontStyle: "italic" }}>
+            <p className="text-muted" style={{ fontSize: "0.875rem", fontStyle: "italic" }}>
               {t("dementia.aiEvaluationNote", "AI evaluation may take up to 2 minutes. Please be patient.")}
             </p>
             <div style={{
               width: "80%",
-              maxWidth: "300px",
-              height: "4px",
+              maxWidth: "400px",
+              height: "6px",
               background: "#e5e7eb",
-              borderRadius: "2px",
-              marginTop: "1.5rem",
+              borderRadius: "10px",
+              marginTop: "2rem",
               overflow: "hidden"
             }}>
               <div style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(90deg, #3b82f6, #8b5cf6)",
-                animation: "shimmer 1.5s infinite",
+                background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6)",
+                backgroundSize: "200% 100%",
+                animation: "shimmer 2s infinite linear"
               }} />
             </div>
           </div>
         ) : assessmentError ? (
           <div style={{ 
-            padding: "1rem", 
+            padding: "3rem 2rem", 
             textAlign: "center", 
-            height: "100%", 
+            minHeight: "400px",
             display: "flex", 
             flexDirection: "column", 
             justifyContent: "center",
             alignItems: "center"
           }}>
-            <div className="result-icon" style={{
-              background: "linear-gradient(135deg, #ef444420, #ef444410)",
-              border: "3px solid #ef444440",
-              width: "80px",
-              height: "80px",
-            }}>
-              <div style={{ fontSize: "48px" }}>
+            <div 
+              className="rounded-circle d-flex align-items-center justify-content-center mb-4"
+              style={{
+                background: "linear-gradient(135deg, #ef444420, #ef444410)",
+                border: "4px solid #ef444440",
+                width: "120px",
+                height: "120px"
+              }}
+            >
+              <div style={{ fontSize: "64px" }}>
                 {isNetworkError ? "🌐" : "⚠️"}
               </div>
             </div>
-            <h2 className="result-title" style={{ color: "#ef4444", fontSize: "1.5rem", marginTop: "1rem" }}>
+            <h2 className="h3 mb-3 fw-bold" style={{ color: "#ef4444" }}>
               {t("dementia.error", "Error")}
             </h2>
-            <div className="result-message" style={{
-              background: "linear-gradient(135deg, #ef444415, #ef444408)",
-              border: "1px solid #ef444430",
-              color: "#ef4444",
-              padding: "0.75rem",
-              fontSize: "0.875rem",
-              marginTop: "1rem",
-              maxWidth: "90%"
-            }}>
-              <div className="result-message-text">{assessmentError}</div>
+            <div 
+              className="rounded p-3 mb-4"
+              style={{
+                background: "linear-gradient(135deg, #ef444415, #ef444408)",
+                border: "2px solid #ef444430",
+                color: "#ef4444",
+                maxWidth: "90%",
+                fontSize: "0.95rem",
+                lineHeight: 1.6
+              }}
+            >
+              {assessmentError}
             </div>
-            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem", width: "90%", maxWidth: "400px" }}>
-              {isNetworkError && onRetry && (
+            <div className="d-flex gap-3" style={{ width: "100%", maxWidth: "400px" }}>
+              {isNetworkError && onRetry && typeof onRetry === 'function' && (
                 <button
                   type="button"
-                  className="result-btn"
+                  className="btn btn-primary flex-fill"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onRetry(e);
+                    try {
+                      onRetry(e);
+                    } catch (err) {
+                      console.error("[ViewResult] Error in onRetry:", err);
+                    }
                   }}
-                  style={{ background: "linear-gradient(135deg, #3b82f6, #3b82f6dd)", flex: 1 }}
+                  style={{ 
+                    borderRadius: "12px",
+                    padding: "0.875rem",
+                    fontWeight: 600
+                  }}
                 >
-                  <span>{t("dementia.retry", "Retry")}</span>
+                  🔄 {t("dementia.retry", "Retry")}
                 </button>
               )}
               <button
                 type="button"
-                className="result-btn"
+                className="btn btn-secondary flex-fill"
                 onClick={handleClose}
-                style={{ background: "linear-gradient(135deg, #6b7280, #6b7280dd)", flex: 1 }}
+                style={{ 
+                  borderRadius: "12px",
+                  padding: "0.875rem",
+                  fontWeight: 600
+                }}
               >
-                <span>{t("dementia.close", "Close")}</span>
+                {t("dementia.close", "Close")}
               </button>
             </div>
           </div>
         ) : riskAssessment && riskAssessment.success !== false && typeof riskAssessment.riskScore === 'number' ? (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-            
+            {/* Header with Risk Level */}
             <div 
-              className="result-content-scrollable"
+              className="text-center p-4"
+              style={{
+                background: riskStyle.bgGradient,
+                borderBottom: `4px solid ${riskStyle.borderColor}`,
+                position: "relative"
+              }}
+            >
+              <div 
+                className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  border: `4px solid ${riskStyle.borderColor}`,
+                  width: "100px",
+                  height: "100px",
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.1)"
+                }}
+              >
+                <div style={{ fontSize: "56px" }}>
+                  {riskStyle.emoji}
+                </div>
+              </div>
+              <h2 className="h3 mb-2 fw-bold" style={{ color: riskStyle.color }}>
+                {t("dementia.riskAssessmentResults", "Risk Assessment Results")}
+              </h2>
+              <div 
+                className="badge rounded-pill px-4 py-2"
+                style={{
+                  background: riskStyle.color,
+                  color: "white",
+                  fontSize: "1rem",
+                  fontWeight: 600
+                }}
+              >
+                {riskStyle.message}
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div 
               style={{ 
                 flex: "1", 
                 overflowY: "auto", 
                 overflowX: "hidden",
                 minHeight: 0, 
-                display: "flex", 
-                flexDirection: "column", 
-                padding: "1rem",
-                gap: "0.75rem"
+                padding: "2rem",
+                background: "#f8fafc"
               }}
             >
-              <div className="result-icon" style={{
-                background: `linear-gradient(135deg, ${riskStyle.color}20, ${riskStyle.color}10)`,
-                border: `3px solid ${riskStyle.color}40`,
-                width: "70px",
-                height: "70px",
-                margin: "0 auto",
-                flexShrink: 0
-              }}>
-                <div className="result-emoji" style={{ fontSize: "40px" }}>
-                  {riskStyle.emoji}
-                </div>
-              </div>
-
-              <h2 className="result-title" style={{ color: riskStyle.color, fontSize: "1.25rem", marginBottom: "0.25rem", flexShrink: 0 }}>
-                {t("dementia.riskAssessmentResults", "Risk Assessment Results")}
-              </h2>
-
-            <div className="result-message" style={{
-              background: `linear-gradient(135deg, ${riskStyle.color}15, ${riskStyle.color}08)`,
-              border: `1px solid ${riskStyle.color}30`,
-              color: riskStyle.color,
-              padding: "0.625rem",
-              fontSize: "0.8125rem",
-              flexShrink: 0
-            }}>
-              <div className="result-message-text" style={{ fontWeight: 600, fontSize: "0.875rem" }}>{riskStyle.message}</div>
-              <div className="result-message-desc" style={{ fontSize: "0.75rem", marginTop: "0.375rem", lineHeight: "1.4" }}>
-                {riskAssessment.explanation || t("dementia.assessmentComplete", "Assessment completed successfully.")}
-              </div>
-            </div>
-
-            <div className="result-stats" style={{ gap: "0.75rem", justifyContent: "center", flexShrink: 0 }}>
-              <div className="stat-box" style={{ padding: "0.625rem", minWidth: "100px" }}>
-                <div className="stat-icon" style={{ fontSize: "1.25rem" }}>📊</div>
-                <div className="stat-label" style={{ fontSize: "0.7rem" }}>{t("dementia.riskScore", "Risk Score")}</div>
-                <div className="stat-value" style={{ color: riskStyle.color, fontSize: "1.25rem" }}>
-                  {riskScorePercent}%
-                </div>
-                <div className="stat-sublabel" style={{ fontSize: "0.65rem" }}>{t("dementia.percentage", "percentage")}</div>
-              </div>
-
-              <div className="stat-box" style={{ padding: "0.625rem", minWidth: "100px" }}>
-                <div className="stat-icon" style={{ fontSize: "1.25rem" }}>🎯</div>
-                <div className="stat-label" style={{ fontSize: "0.7rem" }}>{t("dementia.riskLevel", "Risk Level")}</div>
-                <div className="stat-value" style={{ color: riskStyle.color, fontSize: "1.1rem" }}>
-                  {riskAssessment.riskLevel ? riskAssessment.riskLevel.charAt(0).toUpperCase() + riskAssessment.riskLevel.slice(1) : "N/A"}
-                </div>
-                <div className="stat-sublabel" style={{ fontSize: "0.65rem" }}>{t("dementia.level", "level")}</div>
-              </div>
-            </div>
-
-            
-            {riskAssessment.cognitiveMetrics?.cognitiveDomains && (
-              <div style={{
-                marginBottom: "0.75rem",
-                padding: "0.75rem",
-                background: "rgba(59, 130, 246, 0.05)",
-                borderRadius: "8px",
-                border: "1px solid rgba(59, 130, 246, 0.2)",
-                flexShrink: 0
-              }}>
-                <h3 style={{ fontSize: "0.75rem", fontWeight: 600, marginBottom: "0.5rem", color: "#1e40af" }}>
-                  🧠 {t("dementia.cognitiveDomains", "Cognitive Domain Scores")}
-                </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem", fontSize: "0.7rem" }}>
-                  {Object.entries(riskAssessment.cognitiveMetrics.cognitiveDomains).filter(([key]) => 
-                    !['domainWeights', 'weightedRiskScore'].includes(key)
-                  ).map(([domain, score]) => {
-                    const weight = riskAssessment.cognitiveMetrics.cognitiveDomains.domainWeights?.[domain] || 0;
-                    const domainLabels = {
-                      memory: t("dementia.domainMemory", "Memory"),
-                      language: t("dementia.domainLanguage", "Language"),
-                      attention: t("dementia.domainAttention", "Attention"),
-                      orientation: t("dementia.domainOrientation", "Orientation"),
-                      executive: t("dementia.domainExecutive", "Executive")
-                    };
-                    return (
-                      <div key={domain} style={{
-                        padding: "0.5rem",
-                        background: "white",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(0,0,0,0.1)"
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                          <span style={{ fontWeight: 500 }}>{domainLabels[domain] || domain}</span>
-                          <span style={{ fontWeight: 600, color: score >= 7 ? "#22c55e" : score >= 5 ? "#f59e0b" : "#ef4444" }}>
-                            {typeof score === 'number' ? score.toFixed(1) : score}/10
-                          </span>
-                        </div>
-                        <div style={{ fontSize: "0.65rem", color: "#666" }}>
-                          Weight: {(weight * 100).toFixed(0)}%
-                        </div>
+              {/* Risk Score Display */}
+              <div className="row g-3 mb-4">
+                <div className="col-6">
+                  <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-2">📊</div>
+                      <div className="text-muted small mb-2">{t("dementia.riskScore", "Risk Score")}</div>
+                      <div className="h2 mb-0 fw-bold" style={{ color: riskStyle.color }}>
+                        {riskScorePercent}%
                       </div>
-                    );
-                  })}
-                </div>
-                {riskAssessment.cognitiveMetrics.cognitiveDomains.weightedRiskScore !== undefined && (
-                  <div style={{
-                    marginTop: "0.5rem",
-                    padding: "0.5rem",
-                    background: "rgba(139, 92, 246, 0.1)",
-                    borderRadius: "6px",
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    color: "#6b21a8"
-                  }}>
-                    {t("dementia.weightedRiskScore", "Weighted Risk Score")}: {Math.round(riskAssessment.cognitiveMetrics.cognitiveDomains.weightedRiskScore * 100)}%
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-
-            {typeof riskAssessment.averageScore === 'number' && !isNaN(riskAssessment.averageScore) && (
-              <div className="result-additional-stats" style={{ gap: "0.625rem", marginBottom: "0.375rem", flexShrink: 0 }}>
-                <div className="additional-stat-item" style={{ padding: "0.5rem 0.875rem", fontSize: "0.75rem" }}>
-                  <div className="additional-stat-label" style={{ fontSize: "0.65rem" }}>{t("dementia.averageScore", "Average Score")}</div>
-                  <div className="additional-stat-value" style={{ fontSize: "0.9rem" }}>{riskAssessment.averageScore.toFixed(1)}</div>
                 </div>
-                {typeof riskAssessment.averageTime === 'number' && !isNaN(riskAssessment.averageTime) && (
-                  <div className="additional-stat-item" style={{ padding: "0.5rem 0.875rem", fontSize: "0.75rem" }}>
-                    <div className="additional-stat-label" style={{ fontSize: "0.65rem" }}>{t("dementia.averageTime", "Average Time")}</div>
-                    <div className="additional-stat-value" style={{ fontSize: "0.9rem" }}>{`${Math.round(Math.max(0, riskAssessment.averageTime))}s`}</div>
+                <div className="col-6">
+                  <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-2">🎯</div>
+                      <div className="text-muted small mb-2">{t("dementia.riskLevel", "Risk Level")}</div>
+                      <div className="h4 mb-0 fw-bold" style={{ color: riskStyle.color }}>
+                        {riskAssessment.riskLevel ? riskAssessment.riskLevel.charAt(0).toUpperCase() + riskAssessment.riskLevel.slice(1) : "N/A"}
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
-            )}
 
-            {Array.isArray(riskAssessment.suggestions) && riskAssessment.suggestions.length > 0 && (
-              <div style={{
-                marginBottom: "0.375rem",
-                padding: "0.625rem",
-                background: "rgba(0, 0, 0, 0.02)",
-                borderRadius: "8px",
-                textAlign: "left",
-                flexShrink: 0
-              }}>
-                <h3 style={{ fontSize: "0.7rem", fontWeight: 600, marginBottom: "0.375rem", color: "#333" }}>
-                  {t("dementia.recommendations", "Recommendations")}
-                </h3>
-                <ul style={{ margin: 0, paddingLeft: "0.875rem", fontSize: "0.65rem", lineHeight: "1.4" }}>
-                  {riskAssessment.suggestions.map((suggestion, idx) => (
-                    <li key={idx} style={{ marginBottom: "0.25rem", color: "#666" }}>
-                      {suggestion}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-              
-              {riskAssessment.cognitiveMetrics?.cognitiveDomains && (
-                <div style={{
-                  padding: "0.625rem",
-                  marginBottom: "0.375rem",
-                  borderRadius: "8px",
-                  backgroundColor: "#e7f3ff",
-                  border: "1px solid #b3d9ff",
-                  fontSize: "0.7rem",
-                  color: "#004085",
-                  textAlign: "left",
-                  lineHeight: "1.4",
-                  flexShrink: 0
-                }}>
-                  <strong style={{ fontSize: "0.75rem" }}>📊 {t("dementia.assessmentMethodology", "Assessment Methodology")}:</strong>
-                  <div style={{ fontSize: "0.6875rem", marginTop: "0.25rem" }}>
-                    {t("dementia.methodologyText", "Scores calculated using weighted cognitive domain model. Games map to specific cognitive domains (Memory, Language, Attention, Orientation, Executive) with clinical justification. Scores normalized by difficulty level for fair comparison.")}
+              {/* Explanation */}
+              {riskAssessment.explanation && (
+                <div 
+                  className="card border-0 shadow-sm mb-4"
+                  style={{ 
+                    borderRadius: "16px",
+                    background: "white",
+                    borderLeft: `4px solid ${riskStyle.borderColor}`
+                  }}
+                >
+                  <div className="card-body p-4">
+                    <h5 className="fw-bold mb-3">📝 Assessment Summary</h5>
+                    <p className="text-muted mb-0" style={{ lineHeight: 1.7 }}>
+                      {riskAssessment.explanation}
+                    </p>
                   </div>
                 </div>
               )}
 
-              <div style={{
-                padding: "0.625rem",
-                marginBottom: "0.375rem",
-                borderRadius: "8px",
-                backgroundColor: "#fff3cd",
-                border: "2px solid #ffc107",
-                fontSize: "0.7rem",
-                color: "#856404",
-                textAlign: "left",
-                lineHeight: "1.4",
-                flexShrink: 0
-              }}>
-                <strong style={{ fontSize: "0.75rem" }}>⚠️ {t("dementia.disclaimer", "Important Disclaimer")}:</strong>{" "}
-                <span style={{ fontSize: "0.6875rem" }}>
-                  {t(
-                    "dementia.disclaimerText",
-                    "This assessment is AI-generated for self-assessment purposes only. It should not be considered a clinical diagnosis. Please consult a licensed healthcare professional for any medical evaluation or concerns."
+              {/* Cognitive Domains */}
+              {riskAssessment.cognitiveMetrics?.cognitiveDomains && (
+                <div 
+                  className="card border-0 shadow-sm mb-4"
+                  style={{ borderRadius: "16px", background: "white" }}
+                >
+                  <div className="card-body p-4">
+                    <h5 className="fw-bold mb-3">
+                      🧠 {t("dementia.cognitiveDomains", "Cognitive Domain Scores")}
+                    </h5>
+                    <div className="row g-3">
+                      {Object.entries(riskAssessment.cognitiveMetrics.cognitiveDomains).filter(([key]) => 
+                        !['domainWeights', 'weightedRiskScore'].includes(key)
+                      ).map(([domain, score]) => {
+                        const weight = riskAssessment.cognitiveMetrics.cognitiveDomains.domainWeights?.[domain] || 0;
+                        const domainLabels = {
+                          memory: t("dementia.domainMemory", "Memory"),
+                          language: t("dementia.domainLanguage", "Language"),
+                          attention: t("dementia.domainAttention", "Attention"),
+                          orientation: t("dementia.domainOrientation", "Orientation"),
+                          executive: t("dementia.domainExecutive", "Executive")
+                        };
+                        const scoreColor = score >= 7 ? "#22c55e" : score >= 5 ? "#f59e0b" : "#ef4444";
+                        return (
+                          <div key={domain} className="col-12 col-md-6">
+                            <div 
+                              className="p-3 rounded"
+                              style={{
+                                background: "#f8fafc",
+                                border: "1px solid #e2e8f0"
+                              }}
+                            >
+                              <div className="d-flex justify-content-between align-items-center mb-2">
+                                <span className="fw-semibold">{domainLabels[domain] || domain}</span>
+                                <span className="fw-bold" style={{ color: scoreColor, fontSize: "1.1rem" }}>
+                                  {typeof score === 'number' ? score.toFixed(1) : score}/10
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: "8px", borderRadius: "10px" }}>
+                                <div 
+                                  className="progress-bar"
+                                  role="progressbar"
+                                  style={{ 
+                                    width: `${(score / 10) * 100}%`,
+                                    background: scoreColor,
+                                    borderRadius: "10px"
+                                  }}
+                                />
+                              </div>
+                              <div className="text-muted small mt-1">
+                                Weight: {(weight * 100).toFixed(0)}%
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {riskAssessment.cognitiveMetrics.cognitiveDomains.weightedRiskScore !== undefined && (
+                      <div 
+                        className="mt-3 p-3 rounded"
+                        style={{
+                          background: "linear-gradient(135deg, #8b5cf610, #3b82f610)",
+                          border: "2px solid #8b5cf6"
+                        }}
+                      >
+                        <div className="fw-bold text-center" style={{ color: "#6b21a8" }}>
+                          {t("dementia.weightedRiskScore", "Weighted Risk Score")}: {Math.round(riskAssessment.cognitiveMetrics.cognitiveDomains.weightedRiskScore * 100)}%
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Stats */}
+              {(typeof riskAssessment.averageScore === 'number' || typeof riskAssessment.averageTime === 'number') && (
+                <div className="row g-3 mb-4">
+                  {typeof riskAssessment.averageScore === 'number' && !isNaN(riskAssessment.averageScore) && (
+                    <div className="col-6">
+                      <div className="card border-0 shadow-sm" style={{ borderRadius: "16px", background: "white" }}>
+                        <div className="card-body text-center p-3">
+                          <div className="text-muted small mb-1">{t("dementia.averageScore", "Average Score")}</div>
+                          <div className="h5 mb-0 fw-bold text-primary">{riskAssessment.averageScore.toFixed(1)}</div>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </span>
+                  {typeof riskAssessment.averageTime === 'number' && !isNaN(riskAssessment.averageTime) && (
+                    <div className="col-6">
+                      <div className="card border-0 shadow-sm" style={{ borderRadius: "16px", background: "white" }}>
+                        <div className="card-body text-center p-3">
+                          <div className="text-muted small mb-1">{t("dementia.averageTime", "Average Time")}</div>
+                          <div className="h5 mb-0 fw-bold text-info">{Math.round(Math.max(0, riskAssessment.averageTime))}s</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {Array.isArray(riskAssessment.suggestions) && riskAssessment.suggestions.length > 0 && (
+                <div 
+                  className="card border-0 shadow-sm mb-4"
+                  style={{ borderRadius: "16px", background: "white" }}
+                >
+                  <div className="card-body p-4">
+                    <h5 className="fw-bold mb-3">
+                      💡 {t("dementia.recommendations", "Recommendations")}
+                    </h5>
+                    <ul className="mb-0" style={{ paddingLeft: "1.5rem" }}>
+                      {riskAssessment.suggestions.map((suggestion, idx) => (
+                        <li key={idx} className="mb-2" style={{ lineHeight: 1.6, color: "#475569" }}>
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Disclaimer */}
+              <div 
+                className="card border-0 mb-4"
+                style={{ 
+                  borderRadius: "16px",
+                  background: "linear-gradient(135deg, #fff3cd, #ffe69c)",
+                  border: "2px solid #ffc107"
+                }}
+              >
+                <div className="card-body p-4">
+                  <h6 className="fw-bold mb-2">⚠️ {t("dementia.disclaimer", "Important Disclaimer")}</h6>
+                  <p className="mb-0 small" style={{ lineHeight: 1.7, color: "#856404" }}>
+                    {t(
+                      "dementia.disclaimerText",
+                      "This assessment is AI-generated for self-assessment purposes only. It should not be considered a clinical diagnosis. Please consult a licensed healthcare professional for any medical evaluation or concerns."
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
 
-            
-            <button
-              type="button"
-              className="result-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleClose(e);
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              style={{ 
-                background: `linear-gradient(135deg, ${riskStyle.color}, ${riskStyle.color}dd)`,
-                marginTop: "0.5rem",
-                flexShrink: 0,
-                padding: "0.75rem 1.5rem",
-                fontSize: "0.875rem"
-              }}
-            >
-              <span>{t("dementia.close", "Close")}</span>
-              <span className="result-btn-arrow">→</span>
-            </button>
+            {/* Footer Button */}
+            <div className="p-4 border-top" style={{ background: "white" }}>
+              <button
+                type="button"
+                className="btn w-100"
+                onClick={handleClose}
+                style={{ 
+                  background: `linear-gradient(135deg, ${riskStyle.color}, ${riskStyle.color}dd)`,
+                  color: "white",
+                  borderRadius: "12px",
+                  padding: "1rem",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                  border: "none"
+                }}
+              >
+                {t("dementia.close", "Close")} →
+              </button>
+            </div>
           </div>
         ) : null}
       </div>
+      
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.9; }
+        }
+      `}</style>
     </div>
   );
 }

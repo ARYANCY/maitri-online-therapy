@@ -54,10 +54,8 @@ const ErrorBoundary = ({ children, fallback }) => {
 export default function Game({ onDataUpdate }) {
   const { t } = useTranslation();
   
-  
   const lastDataUpdateRef = useRef(0);
   const isSubmittingRef = useRef(false);
-  
   
   const [current, setCurrent] = useState(null);
   const [results, setResults] = useState(() => {
@@ -87,18 +85,16 @@ export default function Game({ onDataUpdate }) {
 
   useEffect(() => {
     if (showInstructions) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [showInstructions]);
 
   useEffect(() => {
     if (current) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [current]);
 
-  // Games array is static - no need for dependencies
-  // Title and icon are computed dynamically via getGameTitle/getGameIcon
   const games = useMemo(() => {
     return [
       {
@@ -142,9 +138,8 @@ export default function Game({ onDataUpdate }) {
         i18nKey: "clockDrawing",
       },
     ];
-  }, []); // No dependencies - games structure is static
+  }, []);
   
-  // Compute titles and icons dynamically for rendering
   const getGameTitle = useCallback((game) => {
     const titles = {
       color_sequence: t("dementia.games.colorSequence", "Color Sequence"),
@@ -173,7 +168,6 @@ export default function Game({ onDataUpdate }) {
     return icons[game.key] || "🎮";
   }, []);
 
-  
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -191,7 +185,6 @@ export default function Game({ onDataUpdate }) {
     setShowInstructions(false);
   }, []);
 
-  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && current) {
@@ -203,20 +196,26 @@ export default function Game({ onDataUpdate }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [current, handleExit]);
 
-  
-
   const handleFinish = useCallback(
     (payload) => {
       try {
-        const key = payload?.key || current?.key;
-        if (!key) {
-          console.warn("No game key provided in finish payload");
+        if (!payload || typeof payload !== 'object') {
+          console.warn("[Game] Invalid finish payload:", payload);
           return;
         }
 
-        const score = payload?.score ?? 0;
-        const detail = payload?.detail ?? null;
-        const time = payload?.time ?? detail?.time ?? 0;
+        const key = payload?.key || current?.key;
+        if (!key || typeof key !== 'string') {
+          console.warn("[Game] No valid game key provided in finish payload");
+          return;
+        }
+
+        const score = typeof payload?.score === 'number' ? Math.max(0, payload.score) : 0;
+        const detail = payload?.detail && typeof payload.detail === 'object' ? payload.detail : null;
+        const time = typeof payload?.time === 'number' 
+          ? Math.max(0, payload.time) 
+          : (detail && typeof detail.time === 'number' ? Math.max(0, detail.time) : 0);
+        
         const found = games.find((g) => g.key === key);
         const title = found ? getGameTitle(found) : key || "Game";
 
@@ -234,14 +233,14 @@ export default function Game({ onDataUpdate }) {
           try {
             localStorage.removeItem(LS_ASSESSMENT);
           } catch (err) {
-            console.warn("Failed to clear assessment cache:", err);
+            console.warn("[Game] Failed to clear assessment cache:", err);
           }
           return newResults;
         });
         setCompletedKeys((prev) => Array.from(new Set([...prev, key])));
         setCurrent(null);
       } catch (err) {
-        console.error("Error handling game finish:", err);
+        console.error("[Game] Error handling game finish:", err);
       }
     },
     [current, games, getGameTitle]
@@ -265,7 +264,6 @@ export default function Game({ onDataUpdate }) {
     }
   }, [t]);
 
-  
   const currentConf = current ? games.find((g) => g.key === current.key) : null;
   const CurrentComp = currentConf?.component || null;
   const canViewResults = results.length >= MIN_GAMES_FOR_ASSESSMENT;
@@ -330,7 +328,6 @@ export default function Game({ onDataUpdate }) {
 
       const response = await API.dementia.submitGameResults({ gameResults });
       
-      
       const responseData = response?.data || response;
       
       if (response && response.success === true && responseData) {
@@ -346,7 +343,6 @@ export default function Game({ onDataUpdate }) {
           averageScore: typeof responseData.averageScore === 'number' ? responseData.averageScore : 0,
           averageTime: typeof responseData.averageTime === 'number' ? responseData.averageTime : 0,
           cognitiveMetrics: responseData.cognitiveMetrics || null,
-          
           cognitiveDomains: responseData.cognitiveMetrics?.cognitiveDomains || null,
         };
         setRiskAssessment(assessmentData);
@@ -371,13 +367,10 @@ export default function Game({ onDataUpdate }) {
       console.error("[Game] Error in handleViewResults:", error);
       let errorMessage = t("dementia.failedAssessment", "Failed to generate assessment");
       
-      
       if (error.message === "Network Error" || error.code === "ERR_NETWORK" || error.message?.includes("Network") || error.code === "ECONNABORTED") {
         errorMessage = t("dementia.networkError", "Network connection error. Please check your internet connection and try again.");
       } else if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -403,7 +396,7 @@ export default function Game({ onDataUpdate }) {
     if (selectedGame) {
       setShowInstructions(false);
       setSelectedGame(null);
-          setCurrent({ key: selectedGame.key });
+      setCurrent({ key: selectedGame.key });
     }
   }, [selectedGame]);
 
@@ -431,269 +424,351 @@ export default function Game({ onDataUpdate }) {
     }
   }, [onDataUpdate]);
 
-  
   if (!t || !games || games.length === 0) {
     return (
-      <div className="game-wrapper d-flex align-items-center justify-content-center" style={{ minHeight: "400px", padding: "2rem" }}>
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh", padding: "3rem" }}>
         <div className="text-center">
-          <div className="spinner-border text-primary mb-3" role="status" style={{ width: "3rem", height: "3rem" }}>
+          <div className="spinner-border text-primary mb-4" role="status" style={{ width: "3rem", height: "3rem" }}>
             <span className="visually-hidden">Loading games...</span>
           </div>
-          <p className="text-muted fs-5">Loading games...</p>
+          <p className="text-muted fs-5 mt-3">Loading games...</p>
         </div>
       </div>
     );
   }
 
-    return (
-      <ErrorBoundary
-        fallback={
-          <div className="game-wrapper d-flex align-items-center justify-content-center" style={{ minHeight: "400px", padding: "2rem" }}>
-            <div className="text-center">
-              <div className="alert alert-danger" role="alert">
-                <h4 className="alert-heading">Error Loading Games</h4>
-                <p>Something went wrong. Please refresh the page.</p>
-                <button 
-                  className="btn btn-primary mt-3"
-                  onClick={() => window.location.reload()}
-                >
-                  Refresh Page
-                </button>
-              </div>
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh", padding: "3rem" }}>
+          <div className="text-center">
+            <div className="alert alert-danger shadow-sm" role="alert" style={{ maxWidth: "500px" }}>
+              <h4 className="alert-heading">⚠️ Error Loading Games</h4>
+              <p className="mb-3">Something went wrong. Please refresh the page.</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Refresh Page
+              </button>
             </div>
           </div>
-        }
-      >
-        <div className="container-fluid py-4">
-          {!current && (
-            <>
-              <header className="card shadow-sm border-0 mb-4" role="banner">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h2 className="h3 mb-0">{t("dementia.title", "Cognitive Games")}</h2>
-                    <div className="d-flex gap-2 align-items-center flex-wrap">
-                <span className="badge bg-info" style={{ fontSize: "1rem", padding: "0.625rem 1.25rem" }}>
-                {t("dementia.completedCount", { count: results.length })}
-              </span>
-              {canViewResults && (
+        </div>
+      }
+    >
+      <div className="container-fluid py-5" style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        {!current && (
+          <>
+            {/* Hero Header Section */}
+            <div className="text-center mb-5">
+              <div className="mb-4">
+                <h1 className="display-4 fw-bold mb-3" style={{ 
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text"
+                }}>
+                  {t("dementia.title", "Cognitive Games")}
+                </h1>
+                <p className="lead text-muted mb-4">
+                  {t("dementia.subtitle", "Assess and improve your cognitive abilities through engaging games")}
+                </p>
+              </div>
+              
+              {/* Stats Bar */}
+              <div className="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-4">
+                <div className="card border-0 shadow-sm" style={{ 
+                  background: "linear-gradient(135deg, #667eea15, #764ba215)",
+                  borderRadius: "16px",
+                  padding: "1rem 2rem",
+                  minWidth: "200px"
+                }}>
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="fs-1">📊</div>
+                    <div className="text-start">
+                      <div className="text-muted small">Games Completed</div>
+                      <div className="h4 mb-0 fw-bold text-primary">{results.length}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {canViewResults ? (
+                  <button
+                    type="button"
+                    className="btn btn-lg shadow-sm"
+                    onClick={handleViewResults}
+                    disabled={loadingAssessment || isSubmittingRef.current}
+                    style={{
+                      background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "12px",
+                      padding: "0.875rem 2rem",
+                      fontWeight: 600,
+                      transition: "all 0.3s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "translateY(-2px)";
+                      e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "translateY(0)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  >
+                    {loadingAssessment ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        {t("dementia.calculating", "Calculating...")}
+                      </>
+                    ) : (
+                      <>
+                        📈 {t("dementia.viewResults", "View Results")}
+                      </>
+                    )}
+                  </button>
+                ) : results.length > 0 && (
+                  <div className="card border-0 shadow-sm bg-warning bg-opacity-10" style={{ 
+                    borderRadius: "16px",
+                    padding: "1rem 2rem",
+                    minWidth: "250px"
+                  }}>
+                    <div className="text-warning-emphasis fw-semibold">
+                      {t("dementia.gamesRemaining", { count: MIN_GAMES_FOR_ASSESSMENT - results.length })}{" "}
+                      {t("dementia.gamesRemainingText", "more games needed")}
+                    </div>
+                  </div>
+                )}
+                
                 <button
                   type="button"
-                  className="btn btn-success"
-                    onClick={handleViewResults}
-                  disabled={loadingAssessment || isSubmittingRef.current}
-                  style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
+                  className="btn btn-outline-danger btn-lg shadow-sm"
+                  onClick={resetProgress}
+                  style={{ 
+                    borderRadius: "12px",
+                    padding: "0.875rem 2rem",
+                    fontWeight: 600
+                  }}
                 >
-                    {loadingAssessment ? t("dementia.calculating", "Calculating...") : t("dementia.viewResults", "View Results")}
+                  🔄 {t("dementia.reset", "Reset")}
                 </button>
-              )}
-              {!canViewResults && results.length > 0 && (
-                  <span className="badge bg-info" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}>
-                    {t("dementia.gamesRemaining", { count: MIN_GAMES_FOR_ASSESSMENT - results.length })}{" "}
-                  {t("dementia.gamesRemainingText", "more games needed")}
-                </span>
-              )}
-              <button
-                type="button"
-                className="btn btn-outline-danger"
-                onClick={resetProgress}
-                style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
-              >
-                {t("dementia.reset", "Reset")}
-                    </button>
-                    </div>
-                  </div>
-                </div>
-              </header>
-
-              <div className="card mb-4 mt-4">
-            <div className="card-header bg-warning text-dark">
-              <h3 className="h5 mb-0">⚠️ {t("dementia.importantDisclaimer", "Important Disclaimer")}</h3>
+              </div>
             </div>
-            <div className="card-body">
-              <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                <strong>{t("dementia.disclaimerTitle", "Assessment Purpose")}:</strong> {t("dementia.disclaimerText1", "These cognitive assessments are designed for screening and self-assessment purposes only. They are based on validated neuropsychological testing paradigms but are NOT intended to replace professional medical evaluation, diagnosis, or treatment.")}
-              </p>
-              <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                <strong>{t("dementia.disclaimerTitle2", "Clinical Interpretation")}:</strong> {t("dementia.disclaimerText2", "Results should be interpreted by qualified healthcare professionals in conjunction with comprehensive clinical assessment, medical history, and appropriate diagnostic testing. Scores may be influenced by factors such as fatigue, stress, medication effects, or temporary health conditions.")}
-              </p>
-              <p className="mb-0" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                <strong>{t("dementia.disclaimerTitle3", "Not a Diagnosis")}:</strong> {t("dementia.disclaimerText3", "The platform does not provide medical diagnosis, treatment recommendations, or clinical decision-making support. Always consult licensed healthcare professionals for any medical concerns or before making health-related decisions.")}
-              </p>
-            </div>
-          </div>
 
-          
-          <div className="row g-4 mb-4" role="main">
-            {games.map((g) => (
-              <div key={g.key} className="col-12 col-md-6 col-lg-4">
-                  <div className="card h-100 shadow-sm border-0">
-                  <div className="card-body d-flex flex-column">
-                    <div className="d-flex align-items-center gap-3 mb-3">
-                      <div className="fs-1" aria-hidden="true" style={{lineHeight: 1}}>
-                        {getGameIcon(g)}
-                      </div>
-                      <div className="flex-grow-1">
-                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h4 className="h5 mb-0 fw-bold">{getGameTitle(g)}</h4>
-                          {completedKeys.includes(g.key) && (
-                              <span className="badge bg-success">
-                              {t("dementia.completed", "Completed")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-muted mb-3 flex-grow-1">
-                      {t(`dementia.games.descriptions.${g.i18nKey || g.key}`)}
+            {/* Disclaimer Card */}
+            <div className="card border-0 shadow-sm mb-5" style={{ 
+              background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+              borderRadius: "16px",
+              border: "2px solid #fbbf24"
+            }}>
+              <div className="card-body p-4">
+                <div className="d-flex align-items-start gap-3">
+                  <div className="fs-1">⚠️</div>
+                  <div className="flex-grow-1">
+                    <h5 className="fw-bold mb-3 text-dark">Important Disclaimer</h5>
+                    <p className="mb-2 small text-dark" style={{ lineHeight: 1.7 }}>
+                      <strong>Assessment Purpose:</strong> These cognitive assessments are designed for screening and self-assessment purposes only. They are based on validated neuropsychological testing paradigms but are NOT intended to replace professional medical evaluation, diagnosis, or treatment.
                     </p>
-                    <button
-                      type="button"
-                      className="btn btn-primary w-100 mt-auto"
-                      onClick={() => handleGameClick(g)}
-                    >
-                      {t("dementia.play", "Play")}
-                    </button>
+                    <p className="mb-2 small text-dark" style={{ lineHeight: 1.7 }}>
+                      <strong>Clinical Interpretation:</strong> Results should be interpreted by qualified healthcare professionals in conjunction with comprehensive clinical assessment, medical history, and appropriate diagnostic testing.
+                    </p>
+                    <p className="mb-0 small text-dark" style={{ lineHeight: 1.7 }}>
+                      <strong>Not a Diagnosis:</strong> The platform does not provide medical diagnosis, treatment recommendations, or clinical decision-making support. Always consult licensed healthcare professionals for any medical concerns.
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          
-          <div className="card mb-4 mt-4">
-            <div className="card-header bg-primary text-white">
-              <h3 className="h5 mb-0">📊 {t("dementia.howScoringWorks", "How Results Are Scored & Evaluated")}</h3>
             </div>
-            <div className="card-body">
-              <div className="mb-4">
-                <h5 className="mb-3">{t("dementia.gameBasedScoring", "Game-Based Assessment Scoring")}</h5>
-                <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                  {t("dementia.cognitiveScoringExplanation", "Cognitive metrics are calculated from your performance in various cognitive games. Each game is designed to assess specific cognitive domains based on validated neuropsychological testing paradigms. Your raw scores from each game are normalized by difficulty level (easy, moderate, hard) to ensure fair comparison. The formula used is: Normalized Score = (Raw Score / Maximum Possible Score for Difficulty) × 100. This normalization accounts for different difficulty multipliers (easy: 1.0x, moderate: 1.5x, hard: 2.0x) and ensures that scores are comparable across games and difficulty levels.")}
-                </p>
-                
-                <h5 className="mb-3 mt-4">{t("dementia.domainMapping", "Game-to-Domain Mapping")}</h5>
-                <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                  {t("dementia.domainMappingExplanation", "Each game maps to specific cognitive domains with clinical justification: Digit Span and N-Back primarily test Memory (working memory capacity). Pattern Recall and Memory Match assess Memory and Attention. Reaction Time measures Attention and Processing Speed. Stroop Test evaluates Executive Function (cognitive flexibility and inhibition). Clock Drawing tests Executive Function, Orientation, and Visuospatial abilities. Text Recall (Dementia Checker) assesses Memory and Language. Each game contributes to domain scores with weighted importance based on which cognitive function it primarily tests.")}
-                </p>
-                
-                <h5 className="mb-3 mt-4">{t("dementia.weightedRiskCalculation", "Weighted Risk Score Calculation")}</h5>
-                <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                  {t("dementia.weightedRiskExplanation", "The final cognitive risk score uses a weighted domain model based on clinical research: Memory (30% weight) - main early dementia marker, Language (20%) - word-finding issues appear early, Attention (20%) - executive decline affects attention, Orientation (15%) - moderate impact, Executive Function (15%) - important but typically late-stage. The formula calculates: Weighted Risk Score = Σ(Domain Risk × Domain Weight), where Domain Risk = 1 - (Domain Score / 10). Higher domain scores (0-10 scale) indicate better cognitive function, resulting in lower risk scores (0-1 scale). Risk levels are determined as: High (≥70%), Moderate (40-69%), Low (<40%).")}
-                </p>
+
+            {/* Games Grid */}
+            <div className="row g-4 mb-5">
+              {games.map((g) => (
+                <div key={g.key} className="col-12 col-md-6 col-lg-4 col-xl-3">
+                  <div 
+                    className="card h-100 border-0 shadow-sm"
+                    style={{
+                      borderRadius: "20px",
+                      transition: "all 0.3s ease",
+                      overflow: "hidden",
+                      background: completedKeys.includes(g.key) 
+                        ? "linear-gradient(135deg, #d1fae5, #a7f3d0)" 
+                        : "linear-gradient(135deg, #ffffff, #f8fafc)"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-8px)";
+                      e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                    }}
+                  >
+                    <div className="card-body d-flex flex-column p-4">
+                      <div className="d-flex align-items-start justify-content-between mb-3">
+                        <div className="fs-1" style={{ lineHeight: 1 }}>
+                          {getGameIcon(g)}
+                        </div>
+                        {completedKeys.includes(g.key) && (
+                          <span className="badge rounded-pill" style={{
+                            background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                            color: "white",
+                            padding: "0.5rem 1rem",
+                            fontSize: "0.75rem",
+                            fontWeight: 600
+                          }}>
+                            ✓ {t("dementia.completed", "Completed")}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h4 className="h5 mb-3 fw-bold" style={{ color: "#1e293b" }}>
+                        {getGameTitle(g)}
+                      </h4>
+                      
+                      <p className="text-muted mb-4 flex-grow-1 small" style={{ lineHeight: 1.6 }}>
+                        {t(`dementia.games.descriptions.${g.i18nKey || g.key}`, "Test your cognitive abilities with this engaging game.")}
+                      </p>
+                      
+                      <button
+                        type="button"
+                        className="btn w-100 mt-auto border-0"
+                        onClick={() => handleGameClick(g)}
+                        style={{
+                          background: completedKeys.includes(g.key)
+                            ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+                            : "linear-gradient(135deg, #667eea, #764ba2)",
+                          color: "white",
+                          borderRadius: "12px",
+                          padding: "0.875rem",
+                          fontWeight: 600,
+                          transition: "all 0.3s ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = "scale(1.02)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = "scale(1)";
+                        }}
+                      >
+                        {completedKeys.includes(g.key) ? "🔄 " : "▶️ "}
+                        {t("dementia.play", "Play")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Information Cards */}
+            <div className="row g-4 mb-5">
+              <div className="col-12 col-lg-6">
+                <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "20px" }}>
+                  <div className="card-header border-0 bg-primary text-white" style={{ 
+                    borderRadius: "20px 20px 0 0",
+                    padding: "1.5rem"
+                  }}>
+                    <h3 className="h5 mb-0 fw-bold">
+                      📊 {t("dementia.howScoringWorks", "How Results Are Scored & Evaluated")}
+                    </h3>
+                  </div>
+                  <div className="card-body p-4">
+                    <div className="mb-3">
+                      <h6 className="fw-bold mb-2">Game-Based Assessment Scoring</h6>
+                      <p className="small text-muted mb-3" style={{ lineHeight: 1.7 }}>
+                        Cognitive metrics are calculated from your performance in various cognitive games. Each game is designed to assess specific cognitive domains based on validated neuropsychological testing paradigms.
+                      </p>
+                    </div>
+                    <div className="mb-3">
+                      <h6 className="fw-bold mb-2">Weighted Risk Score Calculation</h6>
+                      <p className="small text-muted mb-0" style={{ lineHeight: 1.7 }}>
+                        The final cognitive risk score uses a weighted domain model: Memory (30%), Language (20%), Attention (20%), Orientation (15%), Executive Function (15%).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="col-12 col-lg-6">
+                <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "20px" }}>
+                  <div className="card-header border-0 bg-success text-white" style={{ 
+                    borderRadius: "20px 20px 0 0",
+                    padding: "1.5rem"
+                  }}>
+                    <h3 className="h5 mb-0 fw-bold">
+                      🎮 {t("dementia.whatEachGameTests", "What Each Game Tests")}
+                    </h3>
+                  </div>
+                  <div className="card-body p-4">
+                    <div className="small" style={{ maxHeight: "400px", overflowY: "auto" }}>
+                      <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🔢 Digit Span</h6>
+                        <p className="text-muted mb-1 small">Tests working memory capacity</p>
+                        <span className="badge bg-info text-dark me-1">Memory (80%)</span>
+                        <span className="badge bg-secondary">Attention (20%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🧩 Memory Match</h6>
+                        <p className="text-muted mb-1 small">Assesses associative memory</p>
+                        <span className="badge bg-info text-dark me-1">Memory (75%)</span>
+                        <span className="badge bg-secondary">Executive (25%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🎯 Stroop Test</h6>
+                        <p className="text-muted mb-1 small">Assesses cognitive flexibility</p>
+                        <span className="badge bg-info text-dark me-1">Executive (80%)</span>
+                        <span className="badge bg-secondary">Attention (20%)</span>
+                      </div>
+                      <div className="mb-0">
+                        <h6 className="fw-bold mb-1">🕐 Clock Drawing</h6>
+                        <p className="text-muted mb-1 small">Tests multiple cognitive domains</p>
+                        <span className="badge bg-info text-dark me-1">Executive (50%)</span>
+                        <span className="badge bg-secondary">Orientation (30%)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </>
+        )}
 
-          
-          <div className="card mb-4">
-            <div className="card-header bg-success text-white">
-              <h3 className="h5 mb-0">🎮 {t("dementia.whatEachGameTests", "What Each Game Tests")}</h3>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🔢 {t("dementia.digitSpanGame", "Digit Span")}</h6>
-                  <p className="small mb-2">{t("dementia.digitSpanGameDesc", "Tests working memory capacity by requiring you to remember and recall sequences of digits. Measures immediate memory span, which is a key indicator of cognitive health. Early Alzheimer's disease affects short-term recall, making this test sensitive to early cognitive decline.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (80%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Attention (20%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🔄 {t("dementia.nBackGame", "N-Back")}</h6>
-                  <p className="small mb-2">{t("dementia.nBackGameDesc", "Evaluates working memory and executive function by requiring you to identify items that appeared N steps back in a sequence. Tests your ability to maintain and update information in working memory, which is sensitive to Mild Cognitive Impairment (MCI) decline.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (60%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Executive (40%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🔁 {t("dementia.patternRecallGame", "Pattern Recall")}</h6>
-                  <p className="small mb-2">{t("dementia.patternRecallGameDesc", "Tests visual memory and sequential processing by requiring you to remember and reproduce visual patterns. Evaluates memory encoding and retrieval deficits, which are critical cognitive functions that decline in early-stage dementia.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (70%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Attention (30%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🧩 {t("dementia.memoryMatchGame", "Memory Match")}</h6>
-                  <p className="small mb-2">{t("dementia.memoryMatchGameDesc", "Assesses associative memory by requiring you to match pairs of cards by remembering their positions. Tests hippocampal-dependent memory systems, which are strongly affected in early Alzheimer's disease. Identifies visual memory deficits and spatial processing issues.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (75%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Executive (25%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">⚡ {t("dementia.reactionTimeGame", "Reaction Time")}</h6>
-                  <p className="small mb-2">{t("dementia.reactionTimeGameDesc", "Measures processing speed and attention by requiring quick responses to visual stimuli. Detects slowed cognitive processing, which is an early indicator of cognitive decline. Tracks average reaction time, variability, and slowest 10% responses.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Attention (70%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Executive (30%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🎨 {t("dementia.colorSequenceGame", "Color Sequence")}</h6>
-                  <p className="small mb-2">{t("dementia.colorSequenceGameDesc", "Tests sequential memory by requiring you to remember and repeat color sequences in order. Evaluates working memory and executive function components that are affected in early dementia. Measures ability to maintain sequences in memory.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (60%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Executive (40%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🎯 {t("dementia.stroopTestGame", "Stroop Test")}</h6>
-                  <p className="small mb-2">{t("dementia.stroopTestGameDesc", "Assesses cognitive flexibility and inhibition by requiring you to identify color names while ignoring conflicting text colors. Measures executive function and cognitive control, which are impaired in dementia patients. Tests ability to inhibit automatic responses.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Executive (80%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Attention (20%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">🕐 {t("dementia.clockDrawingGame", "Clock Drawing")}</h6>
-                  <p className="small mb-2">{t("dementia.clockDrawingGameDesc", "A widely used screening tool for dementia that assesses multiple cognitive domains including visuospatial skills, executive function, attention, and semantic memory. This is a clinically validated test (CDT) used in MMSE, MoCA, and other assessments. Impairments in clock drawing are strong indicators of cognitive decline.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Executive (50%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Orientation (30%) + Memory (20%)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-            </>
-          )}
+        {showInstructions && selectedGame && (
+          <GameInstructions
+            gameKey={selectedGame.i18nKey || selectedGame.key}
+            onClose={handleCloseInstructions}
+            onStart={handleStartGame}
+          />
+        )}
 
-          {showInstructions && selectedGame && (
-            <GameInstructions
-              gameKey={selectedGame.i18nKey || selectedGame.key}
-              onClose={handleCloseInstructions}
-              onStart={handleStartGame}
-            />
-          )}
-
-          {CurrentComp && current && (
-            <div className="game-container">
-              <GameKeyboardShortcuts show={true} />
-              <header 
-                className="game-header" 
-                style={{
-                  padding: "1rem 2rem",
-                  background: "var(--cloud-white-pure)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "1rem",
-                  marginBottom: "1rem",
-                }}
-              >
-                <h2 style={{ fontSize: "1.5rem", margin: 0 }}>
+        {CurrentComp && current && (
+          <div className="game-container">
+            <GameKeyboardShortcuts show={true} />
+            <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: "20px" }}>
+              <div className="card-header border-0 d-flex justify-content-between align-items-center flex-wrap gap-3" style={{
+                background: "linear-gradient(135deg, #667eea, #764ba2)",
+                color: "white",
+                borderRadius: "20px 20px 0 0",
+                padding: "1.5rem"
+              }}>
+                <h2 className="h4 mb-0 fw-bold">
                   {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
                 </h2>
                 <button
                   type="button"
-                  className="btn btn-outline-danger"
+                  className="btn btn-light btn-sm"
                   onClick={handleExit}
-                  style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
+                  style={{ borderRadius: "10px", fontWeight: 600 }}
                 >
-                  {t("dementia.backToGames", "Back to Games")} (ESC)
+                  ← {t("dementia.backToGames", "Back to Games")} (ESC)
                 </button>
-              </header>
-              
-              <ErrorBoundary
-                fallback={
-                  <div style={{ padding: "2rem", textAlign: "center", minHeight: "400px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <p>{t("dementia.gameError", "An error occurred while loading the game.")}</p>
+              </div>
+            </div>
+            
+            <ErrorBoundary
+              fallback={
+                <div className="card border-0 shadow-sm" style={{ borderRadius: "20px", padding: "3rem" }}>
+                  <div className="text-center">
+                    <p className="mb-4">{t("dementia.gameError", "An error occurred while loading the game.")}</p>
                     <button 
                       type="button"
                       className="btn btn-primary" 
@@ -702,24 +777,25 @@ export default function Game({ onDataUpdate }) {
                       {t("dementia.backToGames", "Back to Games")}
                     </button>
                   </div>
-                }
-              >
-                <div className="container-fluid py-4">
-                  <CurrentComp onFinish={handleFinish} onExit={handleExit} />
                 </div>
-              </ErrorBoundary>
-            </div>
-          )}
+              }
+            >
+              <div className="container-fluid py-4">
+                <CurrentComp onFinish={handleFinish} onExit={handleExit} />
+              </div>
+            </ErrorBoundary>
+          </div>
+        )}
 
-          <ViewResult
-            showModal={showResultsModal}
-            onClose={closeResultsModal}
-            loadingAssessment={loadingAssessment}
-            assessmentError={assessmentError}
-            riskAssessment={riskAssessment}
-            onRetry={handleViewResults}
-          />
-        </div>
-      </ErrorBoundary>
-    );
+        <ViewResult
+          showModal={showResultsModal}
+          onClose={closeResultsModal}
+          loadingAssessment={loadingAssessment}
+          assessmentError={assessmentError}
+          riskAssessment={riskAssessment}
+          onRetry={handleViewResults}
+        />
+      </div>
+    </ErrorBoundary>
+  );
 }

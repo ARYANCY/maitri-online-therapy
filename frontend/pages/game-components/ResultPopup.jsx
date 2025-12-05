@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-export default function ResultPopup({ score, time, onNext, detail = {} }) {
+export default function ResultPopup({ score, time, onNext, onRetry, detail = {} }) {
   const { t } = useTranslation();
   const [animatedScore, setAnimatedScore] = useState(0);
   const [animatedTime, setAnimatedTime] = useState(0);
@@ -13,6 +13,7 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
         level: "excellent",
         emoji: "🌟",
         color: "#22c55e",
+        bgGradient: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
         message: t("dementia.performance.excellent", "Excellent performance!"),
         description: t(
           "dementia.performanceDesc.excellent",
@@ -24,6 +25,7 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
         level: "good",
         emoji: "👍",
         color: "#3b82f6",
+        bgGradient: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
         message: t("dementia.performance.good", "Good performance!"),
         description: t(
           "dementia.performanceDesc.good",
@@ -35,6 +37,7 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
         level: "fair",
         emoji: "💪",
         color: "#f59e0b",
+        bgGradient: "linear-gradient(135deg, #fef3c7, #fde68a)",
         message: t("dementia.performance.fair", "Fair performance!"),
         description: t(
           "dementia.performanceDesc.fair",
@@ -45,6 +48,7 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
       level: "practice",
       emoji: "📚",
       color: "#ef4444",
+      bgGradient: "linear-gradient(135deg, #fee2e2, #fecaca)",
       message: t("dementia.performance.practice", "Keep practicing!"),
       description: t(
         "dementia.performanceDesc.practice",
@@ -55,7 +59,6 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
 
   const performance = getPerformanceLevel();
 
-  
   useEffect(() => {
     setAnimatedScore(0);
     setAnimatedTime(0);
@@ -114,121 +117,162 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
 
   const getAdditionalStats = () => {
     const stats = [];
-    if (detail.rounds) stats.push({ label: t("dementia.rounds", "Rounds"), value: detail.rounds });
+    if (detail.rounds) stats.push({ label: t("dementia.rounds", "Rounds"), value: detail.rounds, icon: "🔄" });
     if (detail.attempts !== undefined)
-      stats.push({ label: t("dementia.attempts", "Attempts"), value: detail.attempts });
+      stats.push({ label: t("dementia.attempts", "Attempts"), value: detail.attempts, icon: "🎯" });
     if (detail.correct !== undefined && detail.total !== undefined)
       stats.push({
         label: t("dementia.accuracy", "Accuracy"),
         value: `${Math.round((detail.correct / detail.total) * 100)}%`,
+        icon: "✅"
       });
-    if (detail.errors !== undefined) stats.push({ label: t("dementia.errors", "Errors"), value: detail.errors });
+    if (detail.errors !== undefined) stats.push({ label: t("dementia.errors", "Errors"), value: detail.errors, icon: "❌" });
     return stats;
   };
 
   const additionalStats = getAdditionalStats();
 
-  
   const handleClose = () => {
     setFadeOut(true);
-    setTimeout(() => onNext?.(), 300); 
+    setTimeout(() => {
+      if (typeof onNext === 'function') {
+        onNext();
+      }
+    }, 300); 
   };
 
   return (
     <div
-      className={`position-absolute top-0 start-0 w-100 d-flex align-items-center justify-content-center p-3 ${fadeOut ? "fade-out" : "fade-in"}`}
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         zIndex: 9999,
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        overscrollBehavior: 'none',
-        scrollBehavior: 'auto',
-        borderRadius: '8px',
-        minHeight: '100%',
-        padding: '2rem 1rem'
+        transition: 'opacity 0.3s ease',
+        opacity: fadeOut ? 0 : 1
       }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div className="card shadow-lg border-0 position-relative result-popup-card" style={{
-        maxWidth: '800px',
-        width: '90%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        display: 'flex', 
-        flexDirection: 'column', 
-        borderRadius: '12px'
-      }}>
+      <div 
+        className="card shadow-lg border-0 position-relative" 
+        style={{
+          maxWidth: '700px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          display: 'flex', 
+          flexDirection: 'column', 
+          borderRadius: '24px',
+          background: 'white'
+        }}
+      >
         <button 
           className="btn-close position-absolute top-0 end-0 m-3" 
           onClick={handleClose} 
           aria-label={t("dementia.close", "Close")}
-          style={{zIndex: 10}}
-        ></button>
-
-        <div
-          className="text-center p-4"
           style={{
-            background: `linear-gradient(135deg, ${performance.color}20, ${performance.color}10)`,
-            border: `3px solid ${performance.color}40`,
+            zIndex: 10,
+            background: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px"
+          }}
+        />
+
+        {/* Header with Performance Icon */}
+        <div
+          className="text-center p-5"
+          style={{
+            background: performance.bgGradient,
+            borderBottom: `4px solid ${performance.color}`,
+            borderRadius: "24px 24px 0 0"
           }}
         >
-          <div className="result-emoji" style={{ fontSize: "64px" }}>
-            {performance.emoji}
-          </div>
-        </div>
-
-        <div className="card-body text-center p-4" style={{flex: '1', display: 'flex', flexDirection: 'column', overflowY: 'auto', overscrollBehavior: 'none', scrollBehavior: 'auto'}}>
-          <h2 className="h4 mb-3 fw-bold" style={{ color: performance.color }}>
-            {t("dementia.testCompleted", "Test Completed!")}
-          </h2>
-
-          <div
-            className="alert mb-4"
+          <div 
+            className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
             style={{
-              background: `linear-gradient(135deg, ${performance.color}15, ${performance.color}08)`,
-              border: `1px solid ${performance.color}30`,
-              color: performance.color,
+              background: "rgba(255, 255, 255, 0.9)",
+              border: `4px solid ${performance.color}`,
+              width: "120px",
+              height: "120px",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.15)"
             }}
           >
-            <div className="fw-bold mb-2">{performance.message}</div>
-            <div className="small">{performance.description}</div>
+            <div style={{ fontSize: "72px" }}>
+              {performance.emoji}
+            </div>
+          </div>
+          <h2 className="h3 mb-2 fw-bold" style={{ color: performance.color }}>
+            {t("dementia.testCompleted", "Test Completed!")}
+          </h2>
+        </div>
+
+        {/* Body */}
+        <div 
+          className="card-body p-4" 
+          style={{
+            flex: '1', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            overflowY: 'auto',
+            background: "#f8fafc"
+          }}
+        >
+          {/* Performance Message */}
+          <div
+            className="alert border-0 mb-4"
+            style={{
+              background: performance.bgGradient,
+              border: `2px solid ${performance.color}40`,
+              borderRadius: "16px"
+            }}
+          >
+            <div className="fw-bold mb-2" style={{ color: performance.color, fontSize: "1.1rem" }}>
+              {performance.message}
+            </div>
+            <div className="small" style={{ color: performance.color, opacity: 0.9 }}>
+              {performance.description}
+            </div>
           </div>
 
+          {/* Main Stats */}
           <div className="row g-3 mb-4">
             <div className="col-6">
-              <div className="card border-0 bg-light">
-                <div className="card-body text-center">
-                  <div className="fs-3 mb-2">🎯</div>
-                  <div className="small text-muted mb-1">{t("dementia.score", "Score")}</div>
-                  <div className="h4 mb-0 fw-bold" style={{ color: performance.color }}>
+              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+                <div className="card-body text-center p-4">
+                  <div className="fs-1 mb-2">🎯</div>
+                  <div className="text-muted small mb-2">{t("dementia.score", "Score")}</div>
+                  <div className="h2 mb-0 fw-bold" style={{ color: performance.color }}>
                     {animatedScore}
                   </div>
-                  <div className="small text-muted">{t("dementia.points", "points")}</div>
+                  <div className="text-muted small">{t("dementia.points", "points")}</div>
                 </div>
               </div>
             </div>
 
             <div className="col-6">
-              <div className="card border-0 bg-light">
-                <div className="card-body text-center">
-                  <div className="fs-3 mb-2">⏱️</div>
-                  <div className="small text-muted mb-1">{t("dementia.time", "Time")}</div>
-                  <div className="h4 mb-0 fw-bold">{formatTime(animatedTime)}</div>
-                  <div className="small text-muted">{t("dementia.totalTime", "total time")}</div>
+              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+                <div className="card-body text-center p-4">
+                  <div className="fs-1 mb-2">⏱️</div>
+                  <div className="text-muted small mb-2">{t("dementia.time", "Time")}</div>
+                  <div className="h2 mb-0 fw-bold text-primary">{formatTime(animatedTime)}</div>
+                  <div className="text-muted small">{t("dementia.totalTime", "total time")}</div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Additional Stats */}
           {additionalStats.length > 0 && (
             <div className="row g-2 mb-4">
               {additionalStats.map((stat, idx) => (
                 <div key={idx} className="col-6">
-                  <div className="card border-0 bg-light">
-                    <div className="card-body text-center p-2">
-                      <div className="small text-muted mb-1">{stat.label}</div>
-                      <div className="h6 mb-0 fw-bold">{stat.value}</div>
+                  <div className="card border-0 shadow-sm" style={{ borderRadius: "16px", background: "white" }}>
+                    <div className="card-body text-center p-3">
+                      <div className="fs-4 mb-1">{stat.icon}</div>
+                      <div className="text-muted small mb-1">{stat.label}</div>
+                      <div className="h6 mb-0 fw-bold text-dark">{stat.value}</div>
                     </div>
                   </div>
                 </div>
@@ -236,13 +280,57 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
             </div>
           )}
 
-          <button
-            className="btn btn-primary w-100 btn-lg"
-            onClick={handleClose}
-            style={{ background: `linear-gradient(135deg, ${performance.color}, ${performance.color}dd)` }}
-          >
-            {t("dementia.saveContinue", "Save & Continue")} →
-          </button>
+          {/* Action Buttons */}
+          <div className="d-flex gap-3 mt-auto">
+            {onRetry && typeof onRetry === 'function' && (
+              <button
+                className="btn btn-outline-secondary btn-lg flex-fill border-0"
+                onClick={() => {
+                  setFadeOut(true);
+                  setTimeout(() => {
+                    try {
+                      onRetry();
+                    } catch (err) {
+                      console.error("[ResultPopup] Error in onRetry:", err);
+                    }
+                    setFadeOut(false);
+                  }, 300);
+                }}
+                style={{ 
+                  borderRadius: "16px",
+                  padding: "1rem",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  transition: "all 0.3s ease"
+                }}
+              >
+                🔄 {t("dementia.retry", "Retry")}
+              </button>
+            )}
+            <button
+              className="btn btn-lg border-0 flex-fill"
+              onClick={handleClose}
+              style={{ 
+                background: `linear-gradient(135deg, ${performance.color}, ${performance.color}dd)`,
+                color: "white",
+                borderRadius: "16px",
+                padding: "1rem",
+                fontWeight: 600,
+                fontSize: "1.1rem",
+                transition: "all 0.3s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = `0 8px 20px ${performance.color}40`;
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              {t("dementia.saveContinue", "Save & Continue")} →
+            </button>
+          </div>
         </div>
       </div>
     </div>
