@@ -54,14 +54,12 @@ export default function DOCHDashboard() {
   const [success, setSuccess] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
   
-  // Message modal state
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [selectedAction, setSelectedAction] = useState(null);
   const [actionMessage, setActionMessage] = useState("");
   const [selectedPresetMessage, setSelectedPresetMessage] = useState("");
 
-  // Pre-built messages
   const presetMessages = {
     accepted: [
       "Your appointment is confirmed. Please arrive 10 minutes early with any relevant medical records.",
@@ -139,7 +137,6 @@ export default function DOCHDashboard() {
     })();
   }, [fetchUser, fetchDOCHProfile, fetchAppointments]);
 
-  // Open modal to add message before action
   const openMessageModal = useCallback((appointment, action) => {
     setSelectedAppointment(appointment);
     setSelectedAction(action);
@@ -148,7 +145,6 @@ export default function DOCHDashboard() {
     setShowMessageModal(true);
   }, []);
 
-  // Handle the actual action with message
   const handleAppointmentAction = useCallback(async () => {
     if (!selectedAppointment || !selectedAction) return;
     
@@ -445,7 +441,6 @@ export default function DOCHDashboard() {
         </div>
       </div>
 
-      {/* Message Modal */}
       {showMessageModal && selectedAppointment && (
         <div 
           className="modal show d-block" 

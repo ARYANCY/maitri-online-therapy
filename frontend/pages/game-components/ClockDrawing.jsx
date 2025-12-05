@@ -32,39 +32,32 @@ export default function ClockDrawing({ onFinish, onExit }) {
   const containerRef = useRef(null);
 
   
-  // Track if component is mounted and ready status to prevent infinite loops
   const isReadyRef = useRef(false);
   const lastCanvasSizeRef = useRef(CANVAS_SIZE);
   
   useEffect(() => {
-    // Set random target time once on mount
     const randomTime = getRandomTargetTime();
     setTargetTime(randomTime);
 
-    // Update canvas size only if it actually changed
     const updateCanvasSize = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const newSize = Math.max(300, Math.min(500, containerWidth - 40));
         
-        // Only update state if size actually changed
         if (newSize !== lastCanvasSizeRef.current) {
           lastCanvasSizeRef.current = newSize;
           setCanvasSize(newSize);
         }
       }
       
-      // Only set ready once
       if (!isReadyRef.current) {
         isReadyRef.current = true;
         setIsReady(true);
       }
     };
 
-    // Initial setup with small delay
     const initTimer = setTimeout(updateCanvasSize, 50);
     
-    // Debounce resize events
     let resizeTimeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);

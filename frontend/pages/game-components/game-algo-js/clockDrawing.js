@@ -1,43 +1,21 @@
-/**
- * Clock Drawing Test Algorithm
- * Analyzes user's clock drawing for cognitive assessment
- */
-
 export const CANVAS_SIZE = 500;
 export const CLOCK_RADIUS = 200;
 export const CLOCK_CENTER = { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
 
-/**
- * Available target times for the clock drawing test
- */
 export const TARGET_TIMES = [
   { hour: 11, minute: 10 },
   { hour: 3, minute: 0 },
   { hour: 2, minute: 45 },
 ];
 
-/**
- * Get a random target time
- * @returns {Object} - Random target time {hour, minute}
- */
 export const getRandomTargetTime = () => {
   return TARGET_TIMES[Math.floor(Math.random() * TARGET_TIMES.length)];
 };
 
-/**
- * Format time for display
- * @param {Object} time - Time object {hour, minute}
- * @returns {string} - Formatted time string
- */
 export const formatTime = (time) => {
   return `${time.hour}:${time.minute.toString().padStart(2, "0")}`;
 };
 
-/**
- * Render lines to canvas and get image data
- * @param {Array} lines - Array of line objects
- * @returns {ImageData} - Canvas image data
- */
 export const renderLinesToCanvas = (lines) => {
   const canvas = document.createElement("canvas");
   canvas.width = CANVAS_SIZE;
@@ -70,13 +48,6 @@ export const renderLinesToCanvas = (lines) => {
   return ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 };
 
-/**
- * Check if there is content at given position
- * @param {Uint8ClampedArray} data - Image data array
- * @param {number} x - X coordinate
- * @param {number} y - Y coordinate
- * @returns {boolean} - True if there is content
- */
 const hasContentAt = (data, x, y) => {
   const idx = (Math.floor(y) * CANVAS_SIZE + Math.floor(x)) * 4;
   if (idx >= 0 && idx < data.length) {
@@ -85,15 +56,6 @@ const hasContentAt = (data, x, y) => {
   return false;
 };
 
-/**
- * Check if there is content in an area
- * @param {Uint8ClampedArray} data - Image data array
- * @param {number} centerX - Center X
- * @param {number} centerY - Center Y
- * @param {number} radius - Search radius
- * @param {number} threshold - Alpha threshold
- * @returns {boolean} - True if content found
- */
 const hasContentInArea = (data, centerX, centerY, radius, threshold = 50) => {
   for (let dx = -radius; dx <= radius; dx++) {
     for (let dy = -radius; dy <= radius; dy++) {
@@ -110,11 +72,6 @@ const hasContentInArea = (data, centerX, centerY, radius, threshold = 50) => {
   return false;
 };
 
-/**
- * Analyze circle quality
- * @param {Uint8ClampedArray} data - Image data array
- * @returns {Object} - Circle analysis results
- */
 const analyzeCircle = (data) => {
   const centerX = CLOCK_CENTER.x;
   const centerY = CLOCK_CENTER.y;
@@ -135,11 +92,6 @@ const analyzeCircle = (data) => {
   };
 };
 
-/**
- * Analyze number placement
- * @param {Uint8ClampedArray} data - Image data array
- * @returns {Object} - Number analysis results
- */
 const analyzeNumbers = (data) => {
   const centerX = CLOCK_CENTER.x;
   const centerY = CLOCK_CENTER.y;
@@ -163,12 +115,6 @@ const analyzeNumbers = (data) => {
   };
 };
 
-/**
- * Analyze clock hands
- * @param {Uint8ClampedArray} data - Image data array
- * @param {Object} targetTime - Target time {hour, minute}
- * @returns {Object} - Hand analysis results
- */
 const analyzeHands = (data, targetTime) => {
   const centerX = CLOCK_CENTER.x;
   const centerY = CLOCK_CENTER.y;
@@ -177,7 +123,6 @@ const analyzeHands = (data, targetTime) => {
   const hourAngle = ((targetTime.hour % 12) * 30 + targetTime.minute * 0.5 - 90) * (Math.PI / 180);
   const minuteAngle = (targetTime.minute * 6 - 90) * (Math.PI / 180);
   
-  // Check hour hand
   let hourHandPresent = false;
   for (let r = centerRadius; r < CLOCK_RADIUS * 0.6; r += 10) {
     const x = centerX + r * Math.cos(hourAngle);
@@ -189,7 +134,6 @@ const analyzeHands = (data, targetTime) => {
     }
   }
   
-  // Check minute hand
   let minuteHandPresent = false;
   for (let r = centerRadius; r < CLOCK_RADIUS * 0.8; r += 10) {
     const x = centerX + r * Math.cos(minuteAngle);
@@ -209,13 +153,6 @@ const analyzeHands = (data, targetTime) => {
   };
 };
 
-/**
- * Calculate final score based on analysis
- * @param {Object} circleAnalysis - Circle analysis results
- * @param {Object} numberAnalysis - Number analysis results
- * @param {Object} handAnalysis - Hand analysis results
- * @returns {number} - Final score (0-100)
- */
 const calculateScore = (circleAnalysis, numberAnalysis, handAnalysis) => {
   let score = 0;
   
@@ -224,19 +161,12 @@ const calculateScore = (circleAnalysis, numberAnalysis, handAnalysis) => {
   if (handAnalysis.hasHands) score += 25;
   if (handAnalysis.handPlacement) score += 20;
   
-  // Bonus for good number placement
   if (numberAnalysis.numberCount >= 12) score += 5;
   else if (numberAnalysis.numberCount >= 10) score += 3;
   
   return Math.min(100, score);
 };
 
-/**
- * Main analysis function for clock drawing
- * @param {Array} lines - Array of drawn lines
- * @param {Object} targetTime - Target time {hour, minute}
- * @returns {Object} - Analysis result with score and details
- */
 export const analyzeClockDrawing = (lines, targetTime) => {
   if (!lines || lines.length === 0) {
     return {
@@ -276,13 +206,6 @@ export const analyzeClockDrawing = (lines, targetTime) => {
   };
 };
 
-/**
- * Prepare result data for submission
- * @param {Object} analysisResult - Analysis result
- * @param {Object} targetTime - Target time
- * @param {number} totalTime - Total time spent
- * @returns {Object} - Formatted result for onFinish
- */
 export const prepareClockDrawingResult = (analysisResult, targetTime, totalTime) => {
   return {
     key: "clock_drawing",

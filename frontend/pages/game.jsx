@@ -190,11 +190,9 @@ export default function Game({ onDataUpdate }) {
       }
     } catch (err) {
       console.warn("[Game] Failed to save progress:", err);
-      // Handle quota exceeded error
       if (err.name === 'QuotaExceededError') {
         console.error("[Game] Storage quota exceeded. Clearing old data...");
         try {
-          // Keep only last 10 results
           const limitedResults = results.slice(-10);
           localStorage.setItem(
             LS_PROGRESS,
@@ -498,7 +496,6 @@ export default function Game({ onDataUpdate }) {
       <div className="container-fluid py-5" style={{ maxWidth: "1400px", margin: "0 auto" }}>
         {!current && (
           <>
-            {/* Hero Header Section */}
             <div className="text-center mb-5">
               <div className="mb-4">
                 <h1 className="display-4 fw-bold mb-3" style={{ 
@@ -514,7 +511,6 @@ export default function Game({ onDataUpdate }) {
                 </p>
               </div>
               
-              {/* Stats Bar */}
               <div className="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-4">
                 <div className="card border-0 shadow-sm" style={{ 
                   background: "linear-gradient(135deg, #667eea15, #764ba215)",
@@ -594,7 +590,6 @@ export default function Game({ onDataUpdate }) {
               </div>
             </div>
 
-            {/* Disclaimer Card */}
             <div className="card border-0 shadow-sm mb-5" style={{ 
               background: "linear-gradient(135deg, #fef3c7, #fde68a)",
               borderRadius: "16px",
@@ -619,7 +614,6 @@ export default function Game({ onDataUpdate }) {
               </div>
             </div>
 
-            {/* Games Grid */}
             <div className="row g-4 mb-5">
               {games.map((g) => (
                 <div key={g.key} className="col-12 col-md-6 col-lg-4 col-xl-3">
@@ -698,7 +692,6 @@ export default function Game({ onDataUpdate }) {
               ))}
             </div>
 
-            {/* Information Cards */}
             <div className="row g-4 mb-5">
               <div className="col-12 col-lg-6">
                 <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "20px" }}>

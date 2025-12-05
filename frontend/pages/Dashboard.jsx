@@ -200,7 +200,6 @@ export default function Dashboard() {
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
       const [notifRes, countRes] = await Promise.all([
@@ -266,7 +265,6 @@ export default function Dashboard() {
     return () => i18n.off("languageChanged", handler);
   }, [i18n, user]);
 
-  // Close notification dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
@@ -347,7 +345,6 @@ export default function Dashboard() {
               )}
             </button>
 
-            {/* Notification Bell */}
             <div className="position-relative" ref={notificationRef}>
               <button
                 className="btn btn-outline-primary d-flex align-items-center justify-content-center position-relative"
@@ -368,7 +365,6 @@ export default function Dashboard() {
                 )}
               </button>
 
-              {/* Notification Dropdown */}
               {showNotifications && (
                 <div 
                   className="position-absolute end-0 mt-2 card shadow-lg"

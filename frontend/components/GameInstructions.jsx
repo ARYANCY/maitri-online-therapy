@@ -68,7 +68,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div 
           className="card-header border-0 text-white position-relative"
           style={{
@@ -106,7 +105,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
           </div>
         </div>
         
-        {/* Scrollable Body */}
         <div 
           className="card-body p-4"
           style={{ 
@@ -115,7 +113,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
             background: "#f8fafc"
           }}
         >
-          {/* How to Play */}
           <div className="mb-4">
             <div className="d-flex align-items-center gap-2 mb-3">
               <div className="fs-3">📋</div>
@@ -136,7 +133,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
             </div>
           </div>
 
-          {/* Cognitive Benefits */}
           <div className="mb-4">
             <div className="d-flex align-items-center gap-2 mb-3">
               <div className="fs-3">🧠</div>
@@ -188,7 +184,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
             </div>
           </div>
 
-          {/* Keyboard Shortcuts */}
           <div className="mb-4">
             <div className="d-flex align-items-center gap-2 mb-3">
               <div className="fs-3">⌨️</div>
@@ -241,7 +236,6 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div 
           className="card-footer border-0 d-flex gap-3 justify-content-end p-4"
           style={{ background: "white", borderRadius: "0 0 24px 24px" }}

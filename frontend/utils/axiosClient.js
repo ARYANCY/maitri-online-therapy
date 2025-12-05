@@ -407,7 +407,6 @@ API.upload = {
   deleteFile: (publicId, resourceType = "image") => API.delete(`/api/upload/file/${publicId}?resourceType=${resourceType}`),
 };
 
-// Notifications API
 API.notifications = {
   getAll: () => API.get("/api/notifications"),
   getUnreadCount: () => API.get("/api/notifications/unread-count"),

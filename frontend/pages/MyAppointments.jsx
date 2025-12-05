@@ -167,7 +167,6 @@ export default function MyAppointments() {
               </div>
             )}
 
-            {/* Filter Tabs */}
             <div className="mb-4">
               <div className="btn-group flex-wrap" role="group">
                 <button 

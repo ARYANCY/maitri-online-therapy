@@ -445,7 +445,6 @@ export default function DOCTDashboard() {
         </div>
       </div>
 
-      {/* Message Modal */}
       {showMessageModal && selectedAppointment && (
         <div 
           className="modal show d-block" 

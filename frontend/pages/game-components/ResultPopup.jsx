@@ -180,7 +180,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
           }}
         />
 
-        {/* Header with Performance Icon */}
         <div
           className="text-center p-5"
           style={{
@@ -208,7 +207,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
           </h2>
         </div>
 
-        {/* Body */}
         <div 
           className="card-body p-4" 
           style={{
@@ -219,7 +217,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             background: "#f8fafc"
           }}
         >
-          {/* Performance Message */}
           <div
             className="alert border-0 mb-4"
             style={{
@@ -236,7 +233,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             </div>
           </div>
 
-          {/* Main Stats */}
           <div className="row g-3 mb-4">
             <div className="col-6">
               <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
@@ -263,7 +259,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             </div>
           </div>
 
-          {/* Additional Stats */}
           {additionalStats.length > 0 && (
             <div className="row g-2 mb-4">
               {additionalStats.map((stat, idx) => (
@@ -280,7 +275,6 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="d-flex gap-3 mt-auto">
             {onRetry && typeof onRetry === 'function' && (
               <button

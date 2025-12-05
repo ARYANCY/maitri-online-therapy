@@ -136,7 +136,6 @@ export default function ViewResult({
           background: "white"
         }}
       >
-        {/* Close Button */}
         <button
           type="button"
           className="btn-close position-absolute"
@@ -289,7 +288,6 @@ export default function ViewResult({
           </div>
         ) : riskAssessment && riskAssessment.success !== false && typeof riskAssessment.riskScore === 'number' ? (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-            {/* Header with Risk Level */}
             <div 
               className="text-center p-4"
               style={{
@@ -328,7 +326,6 @@ export default function ViewResult({
               </div>
             </div>
 
-            {/* Scrollable Content */}
             <div 
               style={{ 
                 flex: "1", 
@@ -339,7 +336,6 @@ export default function ViewResult({
                 background: "#f8fafc"
               }}
             >
-              {/* Risk Score Display */}
               <div className="row g-3 mb-4">
                 <div className="col-6">
                   <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
@@ -365,7 +361,6 @@ export default function ViewResult({
                 </div>
               </div>
 
-              {/* Explanation */}
               {riskAssessment.explanation && (
                 <div 
                   className="card border-0 shadow-sm mb-4"
@@ -384,7 +379,6 @@ export default function ViewResult({
                 </div>
               )}
 
-              {/* Cognitive Domains */}
               {riskAssessment.cognitiveMetrics?.cognitiveDomains && (
                 <div 
                   className="card border-0 shadow-sm mb-4"
@@ -458,7 +452,6 @@ export default function ViewResult({
                 </div>
               )}
 
-              {/* Additional Stats */}
               {(typeof riskAssessment.averageScore === 'number' || typeof riskAssessment.averageTime === 'number') && (
                 <div className="row g-3 mb-4">
                   {typeof riskAssessment.averageScore === 'number' && !isNaN(riskAssessment.averageScore) && (
@@ -484,7 +477,6 @@ export default function ViewResult({
                 </div>
               )}
 
-              {/* Recommendations */}
               {Array.isArray(riskAssessment.suggestions) && riskAssessment.suggestions.length > 0 && (
                 <div 
                   className="card border-0 shadow-sm mb-4"
@@ -505,7 +497,6 @@ export default function ViewResult({
                 </div>
               )}
 
-              {/* Disclaimer */}
               <div 
                 className="card border-0 mb-4"
                 style={{ 
@@ -526,7 +517,6 @@ export default function ViewResult({
               </div>
             </div>
 
-            {/* Footer Button */}
             <div className="p-4 border-top" style={{ background: "white" }}>
               <button
                 type="button"

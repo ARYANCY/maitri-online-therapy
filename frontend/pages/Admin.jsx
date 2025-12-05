@@ -53,7 +53,6 @@ export default function Admin() {
   const [availabilityDate, setAvailabilityDate] = useState("");
   const [availabilityTimeSlots, setAvailabilityTimeSlots] = useState([""]);
   
-  // Therapist availability editing state
   const [therapistAvailDate, setTherapistAvailDate] = useState("");
   const [therapistAvailSlots, setTherapistAvailSlots] = useState([""]);
   const [showTherapistAvailForm, setShowTherapistAvailForm] = useState(false);
@@ -500,7 +499,6 @@ export default function Admin() {
     setError("");
   };
 
-  // Add availability to therapist
   const handleAddTherapistAvailability = useCallback(async () => {
     if (!selectedTherapist) return;
     if (!therapistAvailDate) {
