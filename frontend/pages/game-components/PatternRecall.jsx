@@ -28,13 +28,16 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const [gameStartTime, setGameStartTime] = useState(0);
   const [accumulatedTime, setAccumulatedTime] = useState(0);
   const [timePausedAt, setTimePausedAt] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
 
   const intervalRef = useRef(null);
   const showTimeoutRef = useRef(null);
   const inputTimeoutRef = useRef(null);
+  const sequenceShowTimeoutRef = useRef(null);
   const gameStartRef = useRef(0);
   const sequenceRef = useRef([]);
   const isShowingSequenceRef = useRef(false);
+  const currentIndexRef = useRef(0);
 
   const generateNewSequence = useCallback(() => {
     if (!difficulty) return;
@@ -46,87 +49,20 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     setActiveIndex(-1);
     setError(false);
     isShowingSequenceRef.current = false;
+    currentIndexRef.current = 0;
     
     if (intervalRef.current) clearInterval(intervalRef.current);
     setTimePausedAt(Date.now());
   }, [difficulty]);
 
-  const startGame = (level) => {
-    setDifficulty(level);
-    setRound(1);
-    setMaxRounds(DIFFICULTY[level].rounds);
-    setTotalScore(0);
-    setTimer(0);
-    setShowResult(false);
-    setGameStartTime(Date.now());
-    setAccumulatedTime(0);
-    setTimePausedAt(Date.now());
-    gameStartRef.current = Date.now();
-    
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    
-    setTimeout(() => {
-      generateNewSequence();
-    }, 100);
-  };
-
-  
-  useEffect(() => {
-    if (phase === "show" && sequence.length > 0 && difficulty && !isShowingSequenceRef.current) {
-      isShowingSequenceRef.current = true;
-      let currentIndex = 0;
-      const showDuration = DIFFICULTY[difficulty].showDuration;
-      
-      const showSequence = () => {
-        if (currentIndex < sequence.length) {
-          setActiveIndex(currentIndex);
-          setTimeout(() => {
-            setActiveIndex(-1);
-            currentIndex++;
-            if (currentIndex < sequence.length) {
-              setTimeout(showSequence, showDuration / 2);
-            } else {
-              
-              setTimeout(() => {
-                setPhase("input");
-                setActiveIndex(-1);
-                isShowingSequenceRef.current = false;
-                
-                const resumeTime = Date.now();
-                const pausedDuration = resumeTime - timePausedAt;
-                setAccumulatedTime(prev => prev + pausedDuration);
-                
-                if (intervalRef.current) clearInterval(intervalRef.current);
-                intervalRef.current = setInterval(() => {
-                  setTimer((t) => t + 1);
-                }, 1000);
-                
-                if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-                inputTimeoutRef.current = setTimeout(() => {
-                  
-                  handleRoundComplete(false);
-                }, DIFFICULTY[difficulty].inputTimeout);
-              }, 500);
-            }
-          }, showDuration);
-        }
-      };
-      
-      showSequence();
-    }
-    
-    return () => {
-      if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
-      if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-    };
-  }, [phase, sequence.length, difficulty]);
-
   const handleRoundComplete = useCallback((isCorrect) => {
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
     if (intervalRef.current) clearInterval(intervalRef.current);
+    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     
     const currentTime = Date.now();
-    const activeTime = currentTime - (timePausedAt || gameStartTime);
+    const pausedTime = timePausedAt || gameStartTime;
+    const activeTime = currentTime - pausedTime;
     const finalAccumulated = accumulatedTime + activeTime;
     setAccumulatedTime(finalAccumulated);
     
@@ -147,9 +83,86 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
         setShowResult(true);
       }
     }, 1500);
-  }, [round, maxRounds, sequence.length, generateNewSequence, accumulatedTime, timePausedAt, gameStartTime]);
+  }, [round, maxRounds, sequence.length, accumulatedTime, timePausedAt, gameStartTime, generateNewSequence]);
 
-  
+  const startGame = (level) => {
+    setDifficulty(level);
+    setRound(1);
+    setMaxRounds(DIFFICULTY[level].rounds);
+    setTotalScore(0);
+    setTimer(0);
+    setShowResult(false);
+    setGameStartTime(Date.now());
+    setAccumulatedTime(0);
+    setTimePausedAt(Date.now());
+    setTotalTime(0);
+    gameStartRef.current = Date.now();
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+    if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
+    
+    setTimeout(() => {
+      generateNewSequence();
+    }, 100);
+  };
+
+  useEffect(() => {
+    if (phase === "show" && sequence.length > 0 && difficulty && !isShowingSequenceRef.current) {
+      isShowingSequenceRef.current = true;
+      currentIndexRef.current = 0;
+      const showDuration = DIFFICULTY[difficulty]?.showDuration || 800;
+      const pauseStartTime = Date.now();
+      
+      const showNextColor = () => {
+        if (currentIndexRef.current >= sequence.length) {
+          isShowingSequenceRef.current = false;
+          return;
+        }
+        
+        setActiveIndex(currentIndexRef.current);
+        
+        sequenceShowTimeoutRef.current = setTimeout(() => {
+          setActiveIndex(-1);
+          currentIndexRef.current++;
+          
+          if (currentIndexRef.current < sequence.length) {
+            setTimeout(showNextColor, showDuration / 2);
+          } else {
+            setTimeout(() => {
+              setPhase("input");
+              setActiveIndex(-1);
+              isShowingSequenceRef.current = false;
+              
+              const resumeTime = Date.now();
+              const pausedDuration = resumeTime - pauseStartTime;
+              setAccumulatedTime(prev => prev + pausedDuration);
+              setTimePausedAt(Date.now());
+              
+              if (intervalRef.current) clearInterval(intervalRef.current);
+              intervalRef.current = setInterval(() => {
+                setTimer((t) => t + 1);
+              }, 1000);
+              
+              if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+              const inputTimeout = DIFFICULTY[difficulty]?.inputTimeout || 15000;
+              inputTimeoutRef.current = setTimeout(() => {
+                handleRoundComplete(false);
+              }, inputTimeout);
+            }, 500);
+          }
+        }, showDuration);
+      };
+      
+      showNextColor();
+    }
+    
+    return () => {
+      if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
+    };
+  }, [phase, sequence, difficulty, handleRoundComplete]);
+
   useEffect(() => {
     if (phase === "input" && userSequence.length === sequence.length && sequence.length > 0) {
       const isCorrect = checkSequence(userSequence, sequence);
@@ -163,7 +176,6 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     
     const newSequence = [...userSequence, color];
     setUserSequence(newSequence);
-    
     
     if (newSequence.length <= sequence.length) {
       const isCorrect = isLatestInputCorrect(newSequence, sequence);
@@ -180,10 +192,10 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     onExit?.();
   }, [onExit]);
 
-  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -201,12 +213,14 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const handleNext = (retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     setShowResult(false);
     if (retry) {
       startGame(difficulty);
     } else {
       const currentTime = Date.now();
-      const activeTime = currentTime - (timePausedAt || gameStartTime);
+      const pausedTime = timePausedAt || gameStartTime;
+      const activeTime = currentTime - pausedTime;
       const finalAccumulated = accumulatedTime + activeTime;
       const totalTime = Math.floor(finalAccumulated / 1000);
       const result = preparePatternRecallResult(totalScore, totalTime, difficulty, maxRounds, round, sequence.length, ageGroup);
@@ -219,6 +233,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
       if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+      if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     };
   }, []);
 
@@ -330,7 +345,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
             </div>
 
               <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
-                {sequence.map((color, idx) => (
+                {sequence.length > 0 && sequence.map((color, idx) => (
                   <div
                     key={idx}
                     className={`rounded d-flex align-items-center justify-content-center fw-bold ${
@@ -384,7 +399,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
                   </div>
                   
                   <div className="d-flex justify-content-center gap-3 flex-wrap">
-                    {DIFFICULTY[difficulty].colors.map((color, idx) => (
+                    {DIFFICULTY[difficulty]?.colors?.map((color, idx) => (
                       <button
                         key={`${color}-${idx}`}
                         className="btn rounded"
@@ -414,7 +429,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
       {showResult && (
         <ResultPopup
           score={totalScore}
-          time={timer}
+          time={totalTime}
           detail={{
             rounds: maxRounds,
             difficulty,
