@@ -38,10 +38,15 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const sequenceRef = useRef([]);
   const isShowingSequenceRef = useRef(false);
   const currentIndexRef = useRef(0);
+  const handleRoundCompleteRef = useRef(null);
 
   const generateNewSequence = useCallback(() => {
     if (!difficulty) return;
     const seq = generateSequence(difficulty);
+    if (!seq || seq.length === 0) {
+      console.error("Failed to generate sequence");
+      return;
+    }
     setSequence(seq);
     sequenceRef.current = seq;
     setUserSequence([]);
@@ -84,6 +89,10 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
       }
     }, 1500);
   }, [round, maxRounds, sequence.length, accumulatedTime, timePausedAt, gameStartTime, generateNewSequence]);
+
+  useEffect(() => {
+    handleRoundCompleteRef.current = handleRoundComplete;
+  }, [handleRoundComplete]);
 
   const startGame = (level) => {
     setDifficulty(level);
@@ -148,20 +157,24 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
               if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
               const inputTimeout = DIFFICULTY[difficulty]?.inputTimeout || 15000;
               inputTimeoutRef.current = setTimeout(() => {
-                handleRoundComplete(false);
+                if (handleRoundCompleteRef.current) {
+                  handleRoundCompleteRef.current(false);
+                }
               }, inputTimeout);
             }, 500);
           }
         }, showDuration);
       };
       
-      showNextColor();
+      setTimeout(() => {
+        showNextColor();
+      }, 100);
     }
     
     return () => {
       if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     };
-  }, [phase, sequence, difficulty, handleRoundComplete]);
+  }, [phase, sequence.length, difficulty]);
 
   useEffect(() => {
     if (phase === "input" && userSequence.length === sequence.length && sequence.length > 0) {
@@ -344,29 +357,34 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
               )}
             </div>
 
-              <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
-                {sequence.length > 0 && sequence.map((color, idx) => (
-                  <div
-                    key={idx}
-                    className={`rounded d-flex align-items-center justify-content-center fw-bold ${
-                      phase === "show" && activeIndex === idx ? "" : phase === "show" ? "opacity-50" : "d-none"
-                    }`}
-                    style={{
-                      ...(phase === "show" ? getColorStyle(color) : {}),
-                      width: '100px',
-                      height: '100px',
-                      minWidth: '100px',
-                      color: 'white',
-                      fontSize: '1.2rem',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    {phase === "show" && activeIndex === idx && (
-                      <span className="text-white">{getColorName(color, t)}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {phase === "show" && sequence.length > 0 && (
+                <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
+                  {sequence.map((color, idx) => (
+                    <div
+                      key={idx}
+                      className={`rounded d-flex align-items-center justify-content-center fw-bold ${
+                        activeIndex === idx ? "" : "opacity-25"
+                      }`}
+                      style={{
+                        ...getColorStyle(color),
+                        width: '100px',
+                        height: '100px',
+                        minWidth: '100px',
+                        color: 'white',
+                        fontSize: '1.2rem',
+                        transition: 'all 0.3s ease',
+                        border: activeIndex === idx ? '3px solid white' : 'none',
+                        transform: activeIndex === idx ? 'scale(1.1)' : 'scale(1)',
+                        boxShadow: activeIndex === idx ? '0 4px 12px rgba(0,0,0,0.3)' : 'none'
+                      }}
+                    >
+                      {activeIndex === idx && (
+                        <span className="text-white fw-bold">{getColorName(color, t)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {phase === "input" && (
                 <div>
