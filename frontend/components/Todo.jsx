@@ -341,13 +341,16 @@ export default function Todo({
   
   
   return (
-    <div className="todo-container card animate-fade-in">
-      <div className="todo-header card-header d-flex justify-content-between align-items-start flex-wrap gap-3 pb-3 border-bottom">
+    <div className="todo-container card animate-fade-in border-0 shadow-lg" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+      <div className="todo-header card-header d-flex justify-content-between align-items-start flex-wrap gap-3 pb-3 border-bottom" style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+        borderRadius: '16px 16px 0 0'
+      }}>
         <div className="todo-header-main d-flex align-items-center gap-3 flex-grow-1">
-          <div className="todo-header-icon">✅</div>
+          <div className="todo-header-icon" style={{ fontSize: '2rem' }}>✅</div>
           <div>
-            <h2 className="h3 mb-1">{t("todo.title", "My Tasks")}</h2>
-            <p className="text-muted mb-0 small">{t("todo.subtitle", "Stay organized and productive")}</p>
+            <h2 className="h4 mb-1 fw-bold" style={{ color: '#1e293b' }}>{t("todo.title", "My Tasks")}</h2>
+            <p className="text-muted mb-0 small" style={{ fontSize: '0.875rem' }}>{t("todo.subtitle", "Stay organized and productive")}</p>
           </div>
         </div>
         <div className="todo-header-buttons d-flex gap-2 flex-wrap">
@@ -357,6 +360,21 @@ export default function Todo({
               disabled={loading} 
               className="btn btn-outline-secondary d-flex align-items-center gap-2"
               aria-label={t("todo.refresh", "Refresh")}
+              style={{
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -377,6 +395,23 @@ export default function Todo({
             disabled={loading || tasks.length === 0} 
             className="btn btn-outline-danger d-flex align-items-center gap-2"
             aria-label={t("todo.deleteAll", "Delete All")}
+            style={{
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!e.target.disabled) {
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.2)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -390,40 +425,56 @@ export default function Todo({
       <div className="card-body">
         
         {tasks.length > 0 && (
-          <div className="row g-3 mb-4">
+          <div className="row g-2 g-md-3 mb-3 mb-md-4">
             <div className="col-6 col-md-3">
-              <div className="card text-center todo-stat-card animate-scale-in" style={{animationDelay: '0.1s'}}>
-                <div className="card-body p-3">
-                  <div className="fs-3 mb-2">📊</div>
-                  <div className="h4 mb-0 fw-bold">{stats.total}</div>
-                  <div className="text-muted small">{t("todo.total", "Total")}</div>
+              <div className="card text-center todo-stat-card animate-scale-in border-0 shadow-sm" style={{
+                animationDelay: '0.1s',
+                background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                borderRadius: '12px'
+              }}>
+                <div className="card-body p-2 p-md-2">
+                  <div className="fs-5 mb-1">📊</div>
+                  <div className="h5 mb-0 fw-bold" style={{ fontSize: '1.25rem' }}>{stats.total}</div>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>{t("todo.total", "Total")}</div>
                 </div>
               </div>
             </div>
             <div className="col-6 col-md-3">
-              <div className="card text-center todo-stat-card border-success animate-scale-in" style={{animationDelay: '0.2s'}}>
-                <div className="card-body p-3">
-                  <div className="fs-3 mb-2">✅</div>
-                  <div className="h4 mb-0 text-success fw-bold">{stats.completed}</div>
-                  <div className="text-muted small">{t("todo.completed", "Completed")}</div>
+              <div className="card text-center todo-stat-card border-0 shadow-sm animate-scale-in" style={{
+                animationDelay: '0.2s',
+                background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                borderRadius: '12px'
+              }}>
+                <div className="card-body p-2 p-md-2">
+                  <div className="fs-5 mb-1">✅</div>
+                  <div className="h5 mb-0 text-success fw-bold" style={{ fontSize: '1.25rem' }}>{stats.completed}</div>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>{t("todo.completed", "Completed")}</div>
                 </div>
               </div>
             </div>
             <div className="col-6 col-md-3">
-              <div className="card text-center todo-stat-card border-warning animate-scale-in" style={{animationDelay: '0.3s'}}>
-                <div className="card-body p-3">
-                  <div className="fs-3 mb-2">⏳</div>
-                  <div className="h4 mb-0 text-warning fw-bold">{stats.pending}</div>
-                  <div className="text-muted small">{t("todo.pending", "Pending")}</div>
+              <div className="card text-center todo-stat-card border-0 shadow-sm animate-scale-in" style={{
+                animationDelay: '0.3s',
+                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                borderRadius: '12px'
+              }}>
+                <div className="card-body p-2 p-md-2">
+                  <div className="fs-5 mb-1">⏳</div>
+                  <div className="h5 mb-0 text-warning fw-bold" style={{ fontSize: '1.25rem' }}>{stats.pending}</div>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>{t("todo.pending", "Pending")}</div>
                 </div>
               </div>
             </div>
             <div className="col-6 col-md-3">
-              <div className="card text-center todo-stat-card border-info animate-scale-in" style={{animationDelay: '0.4s'}}>
-                <div className="card-body p-3">
-                  <div className="fs-3 mb-2">📈</div>
-                  <div className="h4 mb-0 text-info fw-bold">{stats.completionRate}%</div>
-                  <div className="text-muted small">{t("todo.completion", "Progress")}</div>
+              <div className="card text-center todo-stat-card border-0 shadow-sm animate-scale-in" style={{
+                animationDelay: '0.4s',
+                background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                borderRadius: '12px'
+              }}>
+                <div className="card-body p-2 p-md-2">
+                  <div className="fs-5 mb-1">📈</div>
+                  <div className="h5 mb-0 text-info fw-bold" style={{ fontSize: '1.25rem' }}>{stats.completionRate}%</div>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>{t("todo.completion", "Progress")}</div>
                 </div>
               </div>
             </div>
@@ -443,8 +494,49 @@ export default function Todo({
             placeholder={t("todo.placeholder", "Add a new task...")}
             maxLength={200}
             autoComplete="off"
+            style={{
+              borderRadius: '8px 0 0 8px',
+              border: '2px solid #e2e8f0',
+              padding: '0.75rem 1rem',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#667eea';
+              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e2e8f0';
+              e.target.style.boxShadow = 'none';
+            }}
           />
-          <button className="btn btn-primary d-flex align-items-center gap-2" onClick={handleAdd} disabled={!input.trim() || loading}>
+          <button 
+            className="btn btn-primary d-flex align-items-center gap-2" 
+            onClick={handleAdd} 
+            disabled={!input.trim() || loading}
+            style={{
+              borderRadius: '0 8px 8px 0',
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              background: !input.trim() || loading 
+                ? 'linear-gradient(135deg, #cbd5e1, #94a3b8)' 
+                : 'linear-gradient(135deg, #667eea, #764ba2)',
+              border: 'none',
+              transition: 'all 0.3s ease',
+              boxShadow: !input.trim() || loading ? 'none' : '0 2px 8px rgba(102, 126, 234, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              if (!e.target.disabled) {
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = !input.trim() || loading ? 'none' : '0 2px 8px rgba(102, 126, 234, 0.3)';
+            }}
+          >
             {loading ? (
               <>
                 <span className="spinner-border spinner-border-sm"></span>
