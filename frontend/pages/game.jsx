@@ -464,13 +464,15 @@ export default function Game({ onDataUpdate }) {
           </div>
         }
       >
-        <div className="game-wrapper">
+        <div className="container-fluid py-4">
         
         {!current && (
           <>
-          <header className="game-header" role="banner">
-            <h2>{t("dementia.title", "Cognitive Games")}</h2>
-              <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <header className="card shadow-sm border-0 mb-4" role="banner">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h2 className="h3 mb-0">{t("dementia.title", "Cognitive Games")}</h2>
+              <div className="d-flex gap-2 align-items-center flex-wrap">
                 <span className="badge bg-info" style={{ fontSize: "1rem", padding: "0.625rem 1.25rem" }}>
                 {t("dementia.completedCount", { count: results.length })}
               </span>
@@ -499,6 +501,7 @@ export default function Game({ onDataUpdate }) {
               >
                 {t("dementia.reset", "Reset")}
               </button>
+              </div>
             </div>
           </header>
 
@@ -704,9 +707,9 @@ export default function Game({ onDataUpdate }) {
                   </div>
                 }
               >
-              <div className="game-component-wrapper">
+              <div className="container-fluid py-4">
                 <CurrentComp onFinish={handleFinish} onExit={handleExit} />
-                </div>
+              </div>
               </ErrorBoundary>
           </div>
         )}

@@ -44,63 +44,72 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
   const cognitiveBenefits = t(`dementia.games.cognitiveBenefits.${gameKey}`, "");
 
   return (
-    <div className="game-instructions-overlay" ref={overlayRef} onClick={onClose}>
-      <div className="game-instructions-card" onClick={(e) => e.stopPropagation()}>
-        <button 
-          className="instructions-close-btn" 
-          onClick={onClose} 
-          aria-label="Close"
-          title="Close (ESC)"
-        >
-          ×
-        </button>
+    <div 
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+        zIndex: 9999,
+        padding: '1rem'
+      }}
+      ref={overlayRef} 
+      onClick={onClose}
+    >
+      <div 
+        className="card shadow-lg" 
+        style={{ maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center position-relative">
+          <h2 className="h4 mb-0">{gameTitle}</h2>
+          <button 
+            className="btn btn-sm btn-light" 
+            onClick={onClose} 
+            aria-label="Close"
+            title="Close (ESC)"
+            style={{ minWidth: '32px', height: '32px' }}
+          >
+            ×
+          </button>
         
-        <div className="instructions-header">
-          <div className="game-icon-large">
-            {t(`dementia.games.icons.${gameKey}`, "🎮")}
-          </div>
-          <h2 className="instructions-title">{gameTitle}</h2>
+        <div className="card-body">
           {gameDescription && (
-            <p className="instructions-description">{gameDescription}</p>
+            <p className="text-muted mb-4">{gameDescription}</p>
           )}
-        </div>
 
-        <div className="instructions-content">
-          <div className="instructions-section">
-            <h3 className="section-title">
-              <span className="section-icon">📋</span>
+          <div className="mb-4">
+            <h3 className="h5 mb-3">
+              <span className="me-2">📋</span>
               {t("dementia.howToPlay", "How to Play")}
             </h3>
-            <ul className="instructions-list">
+            <ol className="list-group list-group-numbered">
               {instructions.map((instruction, idx) => (
-                <li key={idx}>
-                  <span className="instruction-number">{idx + 1}</span>
-                  <span className="instruction-text">{instruction}</span>
+                <li key={idx} className="list-group-item">
+                  {instruction}
                 </li>
               ))}
-            </ul>
+            </ol>
           </div>
 
-          <div className="instructions-section">
-            <h3 className="section-title">
-              <span className="section-icon">🧠</span>
+          <div className="mb-4">
+            <h3 className="h5 mb-3">
+              <span className="me-2">🧠</span>
               {t("dementia.cognitiveBenefits", "Cognitive Benefits")}
             </h3>
-            <div className="benefits-content">
+            <div className="alert alert-info">
               {cognitiveBenefits ? (
-                <p className="benefits-text">{cognitiveBenefits}</p>
+                <p className="mb-0">{cognitiveBenefits}</p>
               ) : (
-                <p className="benefits-text">
+                <p className="mb-0">
                   {t(`dementia.games.benefits.${gameKey}`, "This assessment helps evaluate cognitive function and working memory.")}
                 </p>
               )}
             </div>
-            <div className="cognitive-domains">
+            <div className="d-flex flex-wrap gap-2 mt-2">
               {(() => {
                 const domains = t(`dementia.games.domains.${gameKey}`, [], { returnObjects: true });
                 if (Array.isArray(domains) && domains.length > 0) {
                   return domains.map((domain, idx) => (
-                    <span key={idx} className="domain-badge">{domain}</span>
+                    <span key={idx} className="badge bg-secondary">{domain}</span>
                   ));
                 }
                 return null;
@@ -108,30 +117,30 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
             </div>
           </div>
 
-          <div className="keyboard-shortcuts-info">
-            <h4 className="shortcuts-title">⌨️ Keyboard Shortcuts</h4>
-            <div className="shortcuts-list">
-              <div className="shortcut-item">
-                <kbd>Backspace</kbd>
-                <span>Undo last action</span>
+          <div className="mb-4">
+            <h4 className="h6 mb-3">⌨️ Keyboard Shortcuts</h4>
+            <div className="list-group">
+              <div className="list-group-item d-flex justify-content-between align-items-center">
+                <span><kbd>Backspace</kbd></span>
+                <small className="text-muted">Undo last action</small>
               </div>
-              <div className="shortcut-item">
-                <kbd>Enter</kbd>
-                <span>Submit answer</span>
+              <div className="list-group-item d-flex justify-content-between align-items-center">
+                <span><kbd>Enter</kbd></span>
+                <small className="text-muted">Submit answer</small>
               </div>
-              <div className="shortcut-item">
-                <kbd>ESC</kbd>
-                <span>Exit game</span>
+              <div className="list-group-item d-flex justify-content-between align-items-center">
+                <span><kbd>ESC</kbd></span>
+                <small className="text-muted">Exit game</small>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="instructions-footer">
-          <button className="btn-start-game" onClick={onStart}>
+        <div className="card-footer bg-light d-flex gap-2 justify-content-end">
+          <button className="btn btn-primary" onClick={onStart}>
             {t("dementia.startGame", "Start Game")} →
           </button>
-          <button className="btn-close-instructions" onClick={onClose}>
+          <button className="btn btn-outline-secondary" onClick={onClose}>
             {t("dementia.close", "Close")} (ESC)
           </button>
         </div>
