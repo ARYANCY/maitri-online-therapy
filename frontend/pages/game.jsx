@@ -465,14 +465,13 @@ export default function Game({ onDataUpdate }) {
         }
       >
         <div className="container-fluid py-4">
-        
-        {!current && (
-          <>
-          <header className="card shadow-sm border-0 mb-4" role="banner">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <h2 className="h3 mb-0">{t("dementia.title", "Cognitive Games")}</h2>
-              <div className="d-flex gap-2 align-items-center flex-wrap">
+          {!current && (
+            <>
+              <header className="card shadow-sm border-0 mb-4" role="banner">
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h2 className="h3 mb-0">{t("dementia.title", "Cognitive Games")}</h2>
+                    <div className="d-flex gap-2 align-items-center flex-wrap">
                 <span className="badge bg-info" style={{ fontSize: "1rem", padding: "0.625rem 1.25rem" }}>
                 {t("dementia.completedCount", { count: results.length })}
               </span>
@@ -500,13 +499,13 @@ export default function Game({ onDataUpdate }) {
                 style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
               >
                 {t("dementia.reset", "Reset")}
-              </button>
-              </div>
-            </div>
-          </header>
+                    </button>
+                    </div>
+                  </div>
+                </div>
+              </header>
 
-          
-          <div className="card mb-4 mt-4">
+              <div className="card mb-4 mt-4">
             <div className="card-header bg-warning text-dark">
               <h3 className="h5 mb-0">⚠️ {t("dementia.importantDisclaimer", "Important Disclaimer")}</h3>
             </div>
@@ -650,52 +649,50 @@ export default function Game({ onDataUpdate }) {
               </div>
             </div>
           </div>
-          </>
-        )}
+            </>
+          )}
 
-        
-        {showInstructions && selectedGame && (
-          <GameInstructions
-            gameKey={selectedGame.i18nKey || selectedGame.key}
-            onClose={handleCloseInstructions}
-            onStart={handleStartGame}
-          />
-        )}
+          {showInstructions && selectedGame && (
+            <GameInstructions
+              gameKey={selectedGame.i18nKey || selectedGame.key}
+              onClose={handleCloseInstructions}
+              onStart={handleStartGame}
+            />
+          )}
 
-        
-        {CurrentComp && current && (
-          <div className="game-container">
-            <GameKeyboardShortcuts show={true} />
-            <header 
-              className="game-header" 
-            style={{
-                padding: "1rem 2rem",
-              background: "var(--cloud-white-pure)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: "1rem",
-                marginBottom: "1rem",
-              }}
-            >
-              <h2 style={{ fontSize: "1.5rem", margin: 0 }}>
-                {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
-              </h2>
-              <button
-                type="button"
-                className="btn btn-outline-danger"
-                onClick={handleExit}
-                style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
+          {CurrentComp && current && (
+            <div className="game-container">
+              <GameKeyboardShortcuts show={true} />
+              <header 
+                className="game-header" 
+                style={{
+                  padding: "1rem 2rem",
+                  background: "var(--cloud-white-pure)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "1rem",
+                  marginBottom: "1rem",
+                }}
               >
-                {t("dementia.backToGames", "Back to Games")} (ESC)
-              </button>
-            </header>
-            
+                <h2 style={{ fontSize: "1.5rem", margin: 0 }}>
+                  {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
+                </h2>
+                <button
+                  type="button"
+                  className="btn btn-outline-danger"
+                  onClick={handleExit}
+                  style={{ fontSize: "1rem", padding: "0.875rem 1.5rem" }}
+                >
+                  {t("dementia.backToGames", "Back to Games")} (ESC)
+                </button>
+              </header>
+              
               <ErrorBoundary
                 fallback={
-                <div style={{ padding: "2rem", textAlign: "center", minHeight: "400px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <div style={{ padding: "2rem", textAlign: "center", minHeight: "400px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     <p>{t("dementia.gameError", "An error occurred while loading the game.")}</p>
                     <button 
                       type="button"
@@ -707,22 +704,21 @@ export default function Game({ onDataUpdate }) {
                   </div>
                 }
               >
-              <div className="container-fluid py-4">
-                <CurrentComp onFinish={handleFinish} onExit={handleExit} />
-              </div>
+                <div className="container-fluid py-4">
+                  <CurrentComp onFinish={handleFinish} onExit={handleExit} />
+                </div>
               </ErrorBoundary>
-          </div>
-        )}
+            </div>
+          )}
 
-        
-        <ViewResult
-          showModal={showResultsModal}
-          onClose={closeResultsModal}
-          loadingAssessment={loadingAssessment}
-          assessmentError={assessmentError}
-          riskAssessment={riskAssessment}
-          onRetry={handleViewResults}
-        />
+          <ViewResult
+            showModal={showResultsModal}
+            onClose={closeResultsModal}
+            loadingAssessment={loadingAssessment}
+            assessmentError={assessmentError}
+            riskAssessment={riskAssessment}
+            onRetry={handleViewResults}
+          />
         </div>
       </ErrorBoundary>
     );
