@@ -120,25 +120,36 @@ function calculateMaxPossibleScore(gameKey, difficulty, gameDetail) {
 }
 
 /**
- * Normalize game score based on difficulty
+ * Normalize game score based on difficulty and age group
  * @param {number} rawScore - Raw game score
  * @param {string} gameKey - Game identifier
  * @param {string} difficulty - Difficulty level
  * @param {Object} gameDetail - Game detail object
+ * @param {string} ageGroup - Age group (optional)
  * @returns {number} Normalized score (0-100)
  */
-function normalizeGameScore(rawScore, gameKey, difficulty, gameDetail) {
+function normalizeGameScore(rawScore, gameKey, difficulty, gameDetail, ageGroup = null) {
   const maxPossible = calculateMaxPossibleScore(gameKey, difficulty, gameDetail);
   if (maxPossible === 0) return 0;
-  return Math.min(100, Math.max(0, (rawScore / maxPossible) * 100));
+  
+  let normalizedScore = Math.min(100, Math.max(0, (rawScore / maxPossible) * 100));
+  
+  if (ageGroup && ageGroup !== "20-30") {
+    const { normalizeScoreByAge } = require("./ageNormalization");
+    const ageAdjustedScore = normalizeScoreByAge(normalizedScore, gameKey, ageGroup, difficulty);
+    normalizedScore = Math.min(100, Math.max(0, ageAdjustedScore));
+  }
+  
+  return normalizedScore;
 }
 
 /**
  * Map game results to cognitive domain scores
  * @param {Array} gameResults - Array of game result objects
+ * @param {string} ageGroup - Age group (optional)
  * @returns {Object} Cognitive domain scores (0-10 scale)
  */
-function mapGamesToDomains(gameResults) {
+function mapGamesToDomains(gameResults, ageGroup = null) {
   const domainScores = {
     memory: [],
     language: [],
@@ -151,12 +162,15 @@ function mapGamesToDomains(gameResults) {
     const mapping = GAME_DOMAIN_MAPPING[game.key];
     if (!mapping) return;
 
+    const gameAgeGroup = game.ageGroup || ageGroup;
+
     // Normalize score
     const normalizedScore = normalizeGameScore(
       game.score || 0,
       game.key,
       game.detail?.difficulty || 'easy',
-      game.detail || {}
+      game.detail || {},
+      gameAgeGroup
     );
 
     // Convert normalized score (0-100) to domain score (0-10)

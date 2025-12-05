@@ -533,6 +533,7 @@ export default {
     refreshPage: "Refresh Page",
     gamesCompleted: "Games Completed",
     game: "Game",
+    ageGroup: "Age Group",
     subtitle: "Engage with scientifically-designed cognitive assessments that evaluate key mental functions including memory, attention, language, and executive skills. Complete multiple games to receive a comprehensive AI-powered risk assessment and personalized insights into your cognitive health.",
     importantDisclaimer: "Important Disclaimer",
     assessmentPurpose: "Assessment Purpose",

@@ -12,9 +12,11 @@ import GameInstructions from "../components/GameInstructions";
 import ViewResult from "../components/ViewResult";
 import GameKeyboardShortcuts from "../components/GameKeyboardShortcuts";
 import API from "../utils/axiosClient";
+import { AGE_GROUPS, getAgeGroupLabel } from "./game-components/game-algo-js/ageNormalization";
 
 const LS_PROGRESS = "mini_game_progress";
 const LS_ASSESSMENT = "mini_game_assessment";
+const LS_AGE_GROUP = "mini_game_age_group";
 const MIN_GAMES_FOR_ASSESSMENT = 5;
 
 const generateResultsHash = (results) => {
@@ -94,6 +96,20 @@ export default function Game({ onDataUpdate }) {
   const [loadingAssessment, setLoadingAssessment] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [assessmentError, setAssessmentError] = useState(null);
+  const [ageGroup, setAgeGroup] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(LS_AGE_GROUP);
+        if (stored && AGE_GROUPS[stored]) {
+          return stored;
+        }
+      }
+      return "20-30";
+    } catch (err) {
+      console.warn("[Game] Failed to load age group:", err);
+      return "20-30";
+    }
+  });
 
   useEffect(() => {
     if (showInstructions) {
@@ -205,6 +221,16 @@ export default function Game({ onDataUpdate }) {
     }
   }, [results, completedKeys]);
 
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && ageGroup) {
+        localStorage.setItem(LS_AGE_GROUP, ageGroup);
+      }
+    } catch (err) {
+      console.warn("[Game] Failed to save age group:", err);
+    }
+  }, [ageGroup]);
+
   const handleExit = useCallback(() => {
     setCurrent(null);
     setSelectedGame(null);
@@ -250,7 +276,11 @@ export default function Game({ onDataUpdate }) {
           title,
           score,
           time,
-          detail,
+          detail: {
+            ...detail,
+            ageGroup: ageGroup
+          },
+          ageGroup: ageGroup,
           timestamp: Date.now(),
         };
 
@@ -271,7 +301,7 @@ export default function Game({ onDataUpdate }) {
         console.error("[Game] Error handling game finish:", err);
       }
     },
-    [current, games, getGameTitle]
+    [current, games, getGameTitle, ageGroup, t]
   );
 
   const resetProgress = useCallback(() => {
@@ -332,6 +362,7 @@ export default function Game({ onDataUpdate }) {
         score: r.score || 0,
         time: r.time || 0,
         detail: r.detail || {},
+        ageGroup: r.ageGroup || ageGroup,
       }));
 
       const resultsHash = generateResultsHash(results);
@@ -358,7 +389,10 @@ export default function Game({ onDataUpdate }) {
         return;
       }
 
-      const response = await API.dementia.submitGameResults({ gameResults });
+      const response = await API.dementia.submitGameResults({ 
+        gameResults,
+        ageGroup: ageGroup
+      });
       
       const responseData = response?.data || response;
       
@@ -524,6 +558,37 @@ export default function Game({ onDataUpdate }) {
                       <div className="text-muted small">{t("dementia.gamesCompleted", "Games Completed")}</div>
                       <div className="h4 mb-0 fw-bold text-primary">{results.length}</div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="card border-0 shadow-sm" style={{ 
+                  background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
+                  borderRadius: "16px",
+                  padding: "1rem 1.5rem",
+                  minWidth: "200px"
+                }}>
+                  <div className="d-flex flex-column gap-2">
+                    <label htmlFor="age-group-select" className="text-muted small fw-semibold mb-0">
+                      {t("dementia.ageGroup", "Age Group")}
+                    </label>
+                    <select
+                      id="age-group-select"
+                      className="form-select form-select-sm"
+                      value={ageGroup}
+                      onChange={(e) => setAgeGroup(e.target.value)}
+                      style={{
+                        borderRadius: "8px",
+                        border: "2px solid #3b82f6",
+                        fontWeight: 500,
+                        fontSize: "0.9rem"
+                      }}
+                    >
+                      {Object.entries(AGE_GROUPS).map(([key, value]) => (
+                        <option key={key} value={key}>
+                          {getAgeGroupLabel(key)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 
@@ -832,9 +897,14 @@ export default function Game({ onDataUpdate }) {
                 borderRadius: "20px 20px 0 0",
                 padding: "1.5rem"
               }}>
-                <h2 className="h4 mb-0 fw-bold">
-                  {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
-                </h2>
+                <div className="d-flex align-items-center gap-3">
+                  <h2 className="h4 mb-0 fw-bold">
+                    {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
+                  </h2>
+                  <span className="badge bg-light text-dark" style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}>
+                    {getAgeGroupLabel(ageGroup)}
+                  </span>
+                </div>
                 <button
                   type="button"
                   className="btn btn-light btn-sm"
@@ -863,7 +933,7 @@ export default function Game({ onDataUpdate }) {
               }
             >
               <div className="container-fluid py-4">
-                <CurrentComp onFinish={handleFinish} onExit={handleExit} />
+                <CurrentComp onFinish={handleFinish} onExit={handleExit} ageGroup={ageGroup} />
               </div>
             </ErrorBoundary>
           </div>

@@ -57,8 +57,10 @@ const gameResultsSchema = Joi.object({
     title: Joi.string().required(),
     score: Joi.number().min(0).required(),
     time: Joi.number().min(0).optional(),
-    detail: Joi.object().optional()
-  })).min(5).required()
+    detail: Joi.object().optional(),
+    ageGroup: Joi.string().optional()
+  })).min(5).required(),
+  ageGroup: Joi.string().optional()
 });
 
 exports.submitGameResults = asyncHandler(async (req, res) => {
@@ -74,7 +76,8 @@ exports.submitGameResults = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: req.t("dementia.invalidPayload", "Invalid payload"), details: error.details });
   }
 
-  const { gameResults } = value;
+  const { gameResults, ageGroup } = value;
+  const commonAgeGroup = ageGroup || gameResults[0]?.ageGroup || "20-30";
 
   try {
     const totalScore = gameResults.reduce((sum, r) => sum + (r.score || 0), 0);
@@ -290,7 +293,7 @@ Return a risk assessment based on these cognitive game results.`;
 
     const cognitiveMetrics = calculateCognitiveMetrics(gameResults);
     
-    const domainScores = mapGamesToDomains(gameResults);
+    const domainScores = mapGamesToDomains(gameResults, commonAgeGroup);
     const weightedRiskScore = calculateWeightedRiskScore(domainScores);
     
     cognitiveMetrics.cognitiveDomains = {
