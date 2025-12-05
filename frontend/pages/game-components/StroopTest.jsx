@@ -11,7 +11,7 @@ import {
   prepareStroopTestResult
 } from "./game-algo-js/stroopTest";
 
-export default function StroopTest({ onFinish, onExit }) {
+export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -107,7 +107,7 @@ export default function StroopTest({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareStroopTestResult(totalScore, totalTime, difficulty, maxRounds);
+      const result = prepareStroopTestResult(totalScore, totalTime, difficulty, maxRounds, ageGroup);
       onFinish?.(result);
     }
   };

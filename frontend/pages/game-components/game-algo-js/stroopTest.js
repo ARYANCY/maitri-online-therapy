@@ -1,6 +1,6 @@
 
-
 import { shuffleArray, getColorStyle, getTextColor } from './utils';
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { rounds: 5, colors: ["red", "green", "blue"] },
@@ -42,16 +42,21 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const prepareStroopTestResult = (totalScore, totalTime, difficulty, maxRounds) => {
+export const prepareStroopTestResult = (totalScore, totalTime, difficulty, maxRounds, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "stroop_test", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "stroop_test",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
+      ageGroup: ageGroup,
     },
   };
 };

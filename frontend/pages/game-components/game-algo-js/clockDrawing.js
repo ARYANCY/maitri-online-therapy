@@ -1,3 +1,5 @@
+import { normalizeScoreByAge } from './ageNormalization';
+
 export const CANVAS_SIZE = 500;
 export const CLOCK_RADIUS = 200;
 export const CLOCK_CENTER = { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
@@ -206,15 +208,20 @@ export const analyzeClockDrawing = (lines, targetTime) => {
   };
 };
 
-export const prepareClockDrawingResult = (analysisResult, targetTime, totalTime) => {
+export const prepareClockDrawingResult = (analysisResult, targetTime, totalTime, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(analysisResult.score, "clock_drawing", ageGroup, "easy")
+    : analysisResult.score;
+  
   return {
     key: "clock_drawing",
-    score: analysisResult.score,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       ...analysisResult.details,
       targetTime: formatTime(targetTime),
       totalTime,
+      ageGroup: ageGroup,
     },
   };
 };

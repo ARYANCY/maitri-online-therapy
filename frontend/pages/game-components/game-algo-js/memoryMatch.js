@@ -1,6 +1,6 @@
 
-
 import { shuffleArray } from './utils';
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { rounds: 5, pairs: 3 },
@@ -49,18 +49,23 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const prepareMemoryMatchResult = (totalScore, totalTime, difficulty, maxRounds, matchedCount, flippedCount) => {
+export const prepareMemoryMatchResult = (totalScore, totalTime, difficulty, maxRounds, matchedCount, flippedCount, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "memory", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "memory",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
       matches: Math.floor(matchedCount / 2),
-      attempts: Math.floor(matchedCount / 2) + Math.floor(flippedCount / 2)
+      attempts: Math.floor(matchedCount / 2) + Math.floor(flippedCount / 2),
+      ageGroup: ageGroup,
     },
   };
 };

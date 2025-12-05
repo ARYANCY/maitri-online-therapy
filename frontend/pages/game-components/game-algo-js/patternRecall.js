@@ -1,6 +1,6 @@
 
-
 import { shuffleArray, getColorStyle as baseColorStyle } from './utils';
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { 
@@ -87,17 +87,22 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const preparePatternRecallResult = (totalScore, totalTime, difficulty, maxRounds, completedRounds, sequenceLength) => {
+export const preparePatternRecallResult = (totalScore, totalTime, difficulty, maxRounds, completedRounds, sequenceLength, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "pattern_recall", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "pattern_recall",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       completedRounds,
-      averageScore: Math.round(totalScore / maxRounds),
-      accuracy: Math.round((totalScore / (maxRounds * sequenceLength * 10)) * 100)
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
+      accuracy: Math.round((ageAdjustedScore / (maxRounds * sequenceLength * 10)) * 100),
+      ageGroup: ageGroup,
     },
   };
 };

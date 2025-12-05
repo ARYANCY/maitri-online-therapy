@@ -10,7 +10,7 @@ import {
   prepareMemoryMatchResult
 } from "./game-algo-js/memoryMatch";
 
-export default function MemoryMatch({ onFinish, onExit }) {
+export default function MemoryMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -122,7 +122,7 @@ export default function MemoryMatch({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length);
+      const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length, ageGroup);
       onFinish?.(result);
     }
   };

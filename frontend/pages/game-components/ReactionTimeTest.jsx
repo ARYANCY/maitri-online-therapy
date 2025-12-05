@@ -9,7 +9,7 @@ import {
   prepareReactionTimeResult
 } from "./game-algo-js/reactionTime";
 
-export default function ReactionTimeTest({ onFinish, onExit }) {
+export default function ReactionTimeTest({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -168,7 +168,7 @@ export default function ReactionTimeTest({ onFinish, onExit }) {
       if (retry) {
         startGame(difficulty);
       } else {
-        const result = prepareReactionTimeResult(score, totalTime, difficulty, maxRounds, reactionTimes);
+        const result = prepareReactionTimeResult(score, totalTime, difficulty, maxRounds, reactionTimes, ageGroup);
         onFinish?.(result);
       }
     } catch (err) {

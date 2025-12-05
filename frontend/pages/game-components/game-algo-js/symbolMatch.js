@@ -1,6 +1,6 @@
 
-
 import { shuffleArray } from './utils';
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const SYMBOLS = {
   easy: ["★", "●", "▲", "■", "◆", "♥"],
@@ -43,22 +43,27 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const prepareSymbolMatchResult = (totalScore, totalTime, difficulty, maxRounds, matchedCount, attempts) => {
+export const prepareSymbolMatchResult = (totalScore, totalTime, difficulty, maxRounds, matchedCount, attempts, ageGroup = "20-30") => {
   const matches = Math.floor(matchedCount / 2);
   const accuracy = calculateAccuracy(matches, attempts);
   
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "symbol_match", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "symbol_match",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
       matches: matches,
       attempts: attempts,
-      accuracy: accuracy
+      accuracy: accuracy,
+      ageGroup: ageGroup,
     },
   };
 };

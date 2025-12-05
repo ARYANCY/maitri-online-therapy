@@ -1,4 +1,5 @@
 
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { length: 3, rounds: 5 },
@@ -51,19 +52,24 @@ export const isGameComplete = (currentRound, maxRounds) => {
   return currentRound >= maxRounds;
 };
 
-export const prepareDigitSpanResult = (totalScore, totalTime, difficulty, maxRounds) => {
+export const prepareDigitSpanResult = (totalScore, totalTime, difficulty, maxRounds, ageGroup = "20-30") => {
   const config = DIFFICULTY[difficulty];
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30" 
+    ? normalizeScoreByAge(totalScore, "digit_span", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "digit_span",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
-      correct: Math.round(totalScore / 10),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
+      correct: Math.round(ageAdjustedScore / 10),
       total: maxRounds * config.length,
+      ageGroup: ageGroup,
     },
   };
 };

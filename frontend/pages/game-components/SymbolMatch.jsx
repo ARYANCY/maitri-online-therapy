@@ -10,7 +10,7 @@ import {
   prepareSymbolMatchResult
 } from "./game-algo-js/symbolMatch";
 
-export default function SymbolMatch({ onFinish, onExit }) {
+export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -117,7 +117,7 @@ export default function SymbolMatch({ onFinish, onExit }) {
   const handleNext = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
-    const result = prepareSymbolMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, attempts);
+    const result = prepareSymbolMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, attempts, ageGroup);
     onFinish?.(result);
   };
 

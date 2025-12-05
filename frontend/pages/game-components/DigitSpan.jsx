@@ -9,7 +9,7 @@ import {
   prepareDigitSpanResult
 } from "./game-algo-js/digitSpan";
 
-export default function DigitSpan({ onFinish, onExit }) {
+export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [sequence, setSequence] = useState([]);
@@ -124,7 +124,7 @@ export default function DigitSpan({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareDigitSpanResult(totalScore, totalTime, difficulty, maxRounds);
+      const result = prepareDigitSpanResult(totalScore, totalTime, difficulty, maxRounds, ageGroup);
       onFinish?.(result);
     }
   };

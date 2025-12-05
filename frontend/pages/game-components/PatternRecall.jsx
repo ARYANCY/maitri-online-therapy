@@ -12,7 +12,7 @@ import {
   preparePatternRecallResult
 } from "./game-algo-js/patternRecall";
 
-export default function PatternRecall({ onFinish, onExit }) {
+export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -188,7 +188,7 @@ export default function PatternRecall({ onFinish, onExit }) {
       startGame(difficulty);
     } else {
       const totalTime = Math.floor((Date.now() - gameStartRef.current) / 1000);
-      const result = preparePatternRecallResult(totalScore, totalTime, difficulty, maxRounds, round, sequence.length);
+      const result = preparePatternRecallResult(totalScore, totalTime, difficulty, maxRounds, round, sequence.length, ageGroup);
       onFinish?.(result);
     }
   };

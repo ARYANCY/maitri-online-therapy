@@ -1,4 +1,5 @@
 
+import { normalizeScoreByAge, getExpectedReactionTime } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { rounds: 5, minDelay: 2000, maxDelay: 4000 },
@@ -36,22 +37,29 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const prepareReactionTimeResult = (totalScore, totalTime, difficulty, maxRounds, reactionTimes) => {
+export const prepareReactionTimeResult = (totalScore, totalTime, difficulty, maxRounds, reactionTimes, ageGroup = "20-30") => {
   const avgReactionTime = calculateAverageReactionTime(reactionTimes);
   const bestReactionTime = getBestReactionTime(reactionTimes);
+  const expectedReactionTime = getExpectedReactionTime(ageGroup);
+  
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "reaction_time", ageGroup, difficulty)
+    : totalScore;
   
   return {
     key: "reaction_time",
-    score: Math.round(totalScore),
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
       averageReactionTime: avgReactionTime,
       bestReactionTime: bestReactionTime,
+      expectedReactionTime: expectedReactionTime,
       reactionTimes: reactionTimes,
+      ageGroup: ageGroup,
     },
   };
 };

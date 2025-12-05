@@ -1,4 +1,5 @@
 
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { level: 1, rounds: 5 },
@@ -64,16 +65,21 @@ export const getGameConfig = (difficulty) => {
 
 export const getSequenceDisplayTime = () => 1500;
 
-export const prepareNBackResult = (totalScore, totalTime, difficulty, maxRounds, lastRoundScore = {}) => {
+export const prepareNBackResult = (totalScore, totalTime, difficulty, maxRounds, lastRoundScore = {}, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "n_back", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "n_back",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: totalTime,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: totalTime,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
+      ageGroup: ageGroup,
       ...lastRoundScore,
     },
   };

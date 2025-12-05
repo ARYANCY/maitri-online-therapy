@@ -12,7 +12,7 @@ import {
   prepareClockDrawingResult
 } from "./game-algo-js/clockDrawing";
 
-export default function ClockDrawing({ onFinish, onExit }) {
+export default function ClockDrawing({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [isDrawing, setIsDrawing] = useState(false);
   const [mode, setMode] = useState("draw"); 
@@ -193,7 +193,7 @@ export default function ClockDrawing({ onFinish, onExit }) {
       setTargetTime(randomTime);
     } else {
       const finalAnalysis = analysisResult || analyzeClockDrawing();
-      const result = prepareClockDrawingResult(finalAnalysis, targetTime, totalTime);
+      const result = prepareClockDrawingResult(finalAnalysis, targetTime, totalTime, ageGroup);
       onFinish?.(result);
     }
   };

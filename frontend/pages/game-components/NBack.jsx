@@ -9,7 +9,7 @@ import {
   prepareNBackResult
 } from "./game-algo-js/nBack";
 
-export default function NBack({ onFinish, onExit }) {
+export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [sequence, setSequence] = useState([]);
@@ -170,7 +170,7 @@ export default function NBack({ onFinish, onExit }) {
     } else {
       const level = DIFFICULTY[difficulty].level;
       const lastRoundScore = calculateScore(sequence, userInputs, level);
-      const result = prepareNBackResult(totalScore, totalTime, difficulty, maxRounds, lastRoundScore);
+      const result = prepareNBackResult(totalScore, totalTime, difficulty, maxRounds, lastRoundScore, ageGroup);
       onFinish?.(result);
     }
   };

@@ -1,6 +1,6 @@
 
-
 import { shuffleArray, getColorStyle as baseGetColorStyle } from './utils';
+import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
   easy: { rounds: 5, sequenceLength: 3, colors: ["red", "green", "blue"] },
@@ -54,16 +54,21 @@ export const getGameConfig = (difficulty) => {
   return { ...DIFFICULTY[difficulty] };
 };
 
-export const prepareColorSequenceResult = (totalScore, timer, difficulty, maxRounds) => {
+export const prepareColorSequenceResult = (totalScore, timer, difficulty, maxRounds, ageGroup = "20-30") => {
+  const ageAdjustedScore = ageGroup && ageGroup !== "20-30"
+    ? normalizeScoreByAge(totalScore, "color_sequence", ageGroup, difficulty)
+    : totalScore;
+  
   return {
     key: "color_sequence",
-    score: totalScore,
+    score: Math.round(ageAdjustedScore),
     time: timer,
     detail: {
       rounds: maxRounds,
       difficulty,
       time: timer,
-      averageScore: Math.round(totalScore / maxRounds),
+      averageScore: Math.round(ageAdjustedScore / maxRounds),
+      ageGroup: ageGroup,
     },
   };
 };

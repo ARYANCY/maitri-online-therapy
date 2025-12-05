@@ -10,7 +10,7 @@ import {
   prepareColorSequenceResult
 } from "./game-algo-js/colorSequence";
 
-export default function ColorSequence({ onFinish, onExit }) {
+export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
@@ -124,7 +124,7 @@ export default function ColorSequence({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareColorSequenceResult(totalScore, timer, difficulty, maxRounds);
+      const result = prepareColorSequenceResult(totalScore, timer, difficulty, maxRounds, ageGroup);
       onFinish?.(result);
     }
   };
