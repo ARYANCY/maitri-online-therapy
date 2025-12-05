@@ -243,7 +243,7 @@ export default function Game({ onDataUpdate }) {
           : (detail && typeof detail.time === 'number' ? Math.max(0, detail.time) : 0);
         
         const found = games.find((g) => g.key === key);
-        const title = found ? getGameTitle(found) : key || "Game";
+        const title = found ? getGameTitle(found) : key || t("dementia.game", "Game");
 
         const resultEntry = {
           key,
@@ -466,9 +466,9 @@ export default function Game({ onDataUpdate }) {
       <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh", padding: "3rem" }}>
         <div className="text-center">
           <div className="spinner-border text-primary mb-4" role="status" style={{ width: "3rem", height: "3rem" }}>
-            <span className="visually-hidden">Loading games...</span>
+            <span className="visually-hidden">{t("dementia.loadingGames", "Loading games...")}</span>
           </div>
-          <p className="text-muted fs-5 mt-3">Loading games...</p>
+          <p className="text-muted fs-5 mt-3">{t("dementia.loadingGames", "Loading games...")}</p>
         </div>
       </div>
     );
@@ -480,25 +480,25 @@ export default function Game({ onDataUpdate }) {
         <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh", padding: "3rem" }}>
           <div className="text-center">
             <div className="alert alert-danger shadow-sm" role="alert" style={{ maxWidth: "500px" }}>
-              <h4 className="alert-heading">⚠️ Error Loading Games</h4>
-              <p className="mb-3">Something went wrong. Please refresh the page.</p>
+              <h4 className="alert-heading">⚠️ {t("dementia.errorLoadingGames", "Error Loading Games")}</h4>
+              <p className="mb-3">{t("dementia.errorMessage", "Something went wrong. Please refresh the page.")}</p>
               <button 
                 className="btn btn-primary"
                 onClick={() => window.location.reload()}
               >
-                Refresh Page
+                {t("dementia.refreshPage", "Refresh Page")}
               </button>
             </div>
           </div>
         </div>
       }
     >
-      <div className="container-fluid py-5" style={{ maxWidth: "1400px", margin: "0 auto" }}>
+      <div className="container-fluid py-4 py-md-5 px-3 px-md-4" style={{ maxWidth: "1400px", margin: "0 auto" }}>
         {!current && (
           <>
-            <div className="text-center mb-5">
-              <div className="mb-4">
-                <h1 className="display-4 fw-bold mb-3" style={{ 
+            <div className="text-center mb-4 mb-md-5">
+              <div className="mb-3 mb-md-4">
+                <h1 className="display-5 display-md-4 fw-bold mb-3" style={{ 
                   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -506,22 +506,22 @@ export default function Game({ onDataUpdate }) {
                 }}>
                   {t("dementia.title", "Cognitive Games")}
                 </h1>
-                <p className="lead text-muted mb-4" style={{ maxWidth: "800px", margin: "0 auto", lineHeight: 1.8 }}>
+                <p className="lead text-muted mb-3 mb-md-4 px-2" style={{ maxWidth: "800px", margin: "0 auto", lineHeight: 1.8, fontSize: "1.1rem" }}>
                   {t("dementia.subtitle", "Engage with scientifically-designed cognitive assessments that evaluate key mental functions including memory, attention, language, and executive skills. Complete multiple games to receive a comprehensive AI-powered risk assessment and personalized insights into your cognitive health.")}
                 </p>
               </div>
               
-              <div className="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-4">
+              <div className="d-flex justify-content-center align-items-center gap-3 gap-md-4 flex-wrap mb-3 mb-md-4">
                 <div className="card border-0 shadow-sm" style={{ 
                   background: "linear-gradient(135deg, #667eea15, #764ba215)",
                   borderRadius: "16px",
-                  padding: "1rem 2rem",
-                  minWidth: "200px"
+                  padding: "1rem 1.5rem",
+                  minWidth: "180px"
                 }}>
                   <div className="d-flex align-items-center gap-3">
                     <div className="fs-1">📊</div>
                     <div className="text-start">
-                      <div className="text-muted small">Games Completed</div>
+                      <div className="text-muted small">{t("dementia.gamesCompleted", "Games Completed")}</div>
                       <div className="h4 mb-0 fw-bold text-primary">{results.length}</div>
                     </div>
                   </div>
@@ -590,33 +590,33 @@ export default function Game({ onDataUpdate }) {
               </div>
             </div>
 
-            <div className="card border-0 shadow-sm mb-5" style={{ 
+            <div className="card border-0 shadow-sm mb-4 mb-md-5" style={{ 
               background: "linear-gradient(135deg, #fef3c7, #fde68a)",
               borderRadius: "16px",
               border: "2px solid #fbbf24"
             }}>
-              <div className="card-body p-4">
+              <div className="card-body p-3 p-md-4">
                 <div className="d-flex align-items-start gap-3">
                   <div className="fs-1">⚠️</div>
                   <div className="flex-grow-1">
-                    <h5 className="fw-bold mb-3 text-dark">Important Disclaimer</h5>
+                    <h5 className="fw-bold mb-3 text-dark">{t("dementia.importantDisclaimer", "Important Disclaimer")}</h5>
                     <p className="mb-2 small text-dark" style={{ lineHeight: 1.7 }}>
-                      <strong>Assessment Purpose:</strong> These cognitive assessments are designed for screening and self-assessment purposes only. They are based on validated neuropsychological testing paradigms but are NOT intended to replace professional medical evaluation, diagnosis, or treatment.
+                      <strong>{t("dementia.assessmentPurpose", "Assessment Purpose")}:</strong> {t("dementia.assessmentPurposeText", "These cognitive assessments are designed for screening and self-assessment purposes only. They are based on validated neuropsychological testing paradigms but are NOT intended to replace professional medical evaluation, diagnosis, or treatment.")}
                     </p>
                     <p className="mb-2 small text-dark" style={{ lineHeight: 1.7 }}>
-                      <strong>Clinical Interpretation:</strong> Results should be interpreted by qualified healthcare professionals in conjunction with comprehensive clinical assessment, medical history, and appropriate diagnostic testing.
+                      <strong>{t("dementia.clinicalInterpretation", "Clinical Interpretation")}:</strong> {t("dementia.clinicalInterpretationText", "Results should be interpreted by qualified healthcare professionals in conjunction with comprehensive clinical assessment, medical history, and appropriate diagnostic testing.")}
                     </p>
                     <p className="mb-0 small text-dark" style={{ lineHeight: 1.7 }}>
-                      <strong>Not a Diagnosis:</strong> The platform does not provide medical diagnosis, treatment recommendations, or clinical decision-making support. Always consult licensed healthcare professionals for any medical concerns.
+                      <strong>{t("dementia.notADiagnosis", "Not a Diagnosis")}:</strong> {t("dementia.notADiagnosisText", "The platform does not provide medical diagnosis, treatment recommendations, or clinical decision-making support. Always consult licensed healthcare professionals for any medical concerns.")}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="row g-4 mb-5">
+            <div className="row g-3 g-md-4 mb-4 mb-md-5">
               {games.map((g) => (
-                <div key={g.key} className="col-12 col-md-6 col-lg-4 col-xl-3">
+                <div key={g.key} className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3">
                   <div 
                     className="card h-100 border-0 shadow-sm"
                     style={{
@@ -692,12 +692,12 @@ export default function Game({ onDataUpdate }) {
               ))}
             </div>
 
-            <div className="row g-4 mb-5">
+            <div className="row g-3 g-md-4 mb-4 mb-md-5">
               <div className="col-12 col-lg-6">
                 <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "20px" }}>
                   <div className="card-header border-0 bg-primary text-white" style={{ 
                     borderRadius: "20px 20px 0 0",
-                    padding: "1.5rem"
+                    padding: "1.25rem 1.5rem"
                   }}>
                     <h3 className="h5 mb-0 fw-bold">
                       📊 {t("dementia.howScoringWorks", "How Results Are Scored & Evaluated")}
@@ -705,15 +705,15 @@ export default function Game({ onDataUpdate }) {
                   </div>
                   <div className="card-body p-4">
                     <div className="mb-3">
-                      <h6 className="fw-bold mb-2">Game-Based Assessment Scoring</h6>
+                      <h6 className="fw-bold mb-2">{t("dementia.gameBasedScoring", "Game-Based Assessment Scoring")}</h6>
                       <p className="small text-muted mb-3" style={{ lineHeight: 1.7 }}>
-                        Cognitive metrics are calculated from your performance in various cognitive games. Each game is designed to assess specific cognitive domains based on validated neuropsychological testing paradigms.
+                        {t("dementia.gameBasedScoringText", "Cognitive metrics are calculated from your performance in various cognitive games. Each game is designed to assess specific cognitive domains based on validated neuropsychological testing paradigms.")}
                       </p>
                     </div>
                     <div className="mb-3">
-                      <h6 className="fw-bold mb-2">Weighted Risk Score Calculation</h6>
+                      <h6 className="fw-bold mb-2">{t("dementia.weightedRiskScore", "Weighted Risk Score Calculation")}</h6>
                       <p className="small text-muted mb-0" style={{ lineHeight: 1.7 }}>
-                        The final cognitive risk score uses a weighted domain model: Memory (30%), Language (20%), Attention (20%), Orientation (15%), Executive Function (15%).
+                        {t("dementia.weightedRiskScoreText", "The final cognitive risk score uses a weighted domain model: Memory (30%), Language (20%), Attention (20%), Orientation (15%), Executive Function (15%).")}
                       </p>
                     </div>
                   </div>
@@ -724,7 +724,7 @@ export default function Game({ onDataUpdate }) {
                 <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "20px" }}>
                   <div className="card-header border-0 bg-success text-white" style={{ 
                     borderRadius: "20px 20px 0 0",
-                    padding: "1.5rem"
+                    padding: "1.25rem 1.5rem"
                   }}>
                     <h3 className="h5 mb-0 fw-bold">
                       🎮 {t("dementia.whatEachGameTests", "What Each Game Tests")}
@@ -733,53 +733,53 @@ export default function Game({ onDataUpdate }) {
                   <div className="card-body p-4">
                     <div className="small" style={{ maxHeight: "400px", overflowY: "auto" }}>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🎨 Color Sequence</h6>
-                        <p className="text-muted mb-1 small">Tests visual working memory and pattern recognition</p>
-                        <span className="badge bg-info text-dark me-1">Memory (70%)</span>
-                        <span className="badge bg-secondary">Attention (30%)</span>
+                        <h6 className="fw-bold mb-1">🎨 {t("dementia.games.colorSequence", "Color Sequence")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.colorSequence", "Tests visual working memory and pattern recognition")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainMemory", "Memory")} (70%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainAttention", "Attention")} (30%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🔢 Digit Span</h6>
-                        <p className="text-muted mb-1 small">Tests working memory capacity</p>
-                        <span className="badge bg-info text-dark me-1">Memory (80%)</span>
-                        <span className="badge bg-secondary">Attention (20%)</span>
+                        <h6 className="fw-bold mb-1">🔢 {t("dementia.games.digitSpan", "Digit Span")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.digitSpan", "Tests working memory capacity")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainMemory", "Memory")} (80%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainAttention", "Attention")} (20%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🧩 Memory Match</h6>
-                        <p className="text-muted mb-1 small">Assesses associative memory</p>
-                        <span className="badge bg-info text-dark me-1">Memory (75%)</span>
-                        <span className="badge bg-secondary">Executive (25%)</span>
+                        <h6 className="fw-bold mb-1">🧩 {t("dementia.games.memory", "Memory Match")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.memory", "Assesses associative memory")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainMemory", "Memory")} (75%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainExecutive", "Executive")} (25%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🔄 N-Back</h6>
-                        <p className="text-muted mb-1 small">Evaluates working memory and attention</p>
-                        <span className="badge bg-info text-dark me-1">Memory (60%)</span>
-                        <span className="badge bg-secondary">Attention (40%)</span>
+                        <h6 className="fw-bold mb-1">🔄 {t("dementia.games.nBack", "N-Back")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.nBack", "Evaluates working memory and attention")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainMemory", "Memory")} (60%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainAttention", "Attention")} (40%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">⚡ Reaction Time</h6>
-                        <p className="text-muted mb-1 small">Measures processing speed and attention</p>
-                        <span className="badge bg-info text-dark me-1">Attention (85%)</span>
-                        <span className="badge bg-secondary">Executive (15%)</span>
+                        <h6 className="fw-bold mb-1">⚡ {t("dementia.games.reactionTime", "Reaction Time")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.reactionTime", "Measures processing speed and attention")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainAttention", "Attention")} (85%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainExecutive", "Executive")} (15%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🎯 Stroop Test</h6>
-                        <p className="text-muted mb-1 small">Assesses cognitive flexibility</p>
-                        <span className="badge bg-info text-dark me-1">Executive (80%)</span>
-                        <span className="badge bg-secondary">Attention (20%)</span>
+                        <h6 className="fw-bold mb-1">🎯 {t("dementia.games.stroopTest", "Stroop Test")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.stroopTest", "Assesses cognitive flexibility")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainExecutive", "Executive")} (80%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainAttention", "Attention")} (20%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
-                        <h6 className="fw-bold mb-1">🔁 Pattern Recall</h6>
-                        <p className="text-muted mb-1 small">Tests visual memory and pattern recognition</p>
-                        <span className="badge bg-info text-dark me-1">Memory (70%)</span>
-                        <span className="badge bg-secondary">Attention (30%)</span>
+                        <h6 className="fw-bold mb-1">🔁 {t("dementia.games.patternRecall", "Pattern Recall")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.patternRecall", "Tests visual memory and pattern recognition")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainMemory", "Memory")} (70%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainAttention", "Attention")} (30%)</span>
                       </div>
                       <div className="mb-0">
-                        <h6 className="fw-bold mb-1">🕐 Clock Drawing</h6>
-                        <p className="text-muted mb-1 small">Tests multiple cognitive domains</p>
-                        <span className="badge bg-info text-dark me-1">Executive (50%)</span>
-                        <span className="badge bg-secondary">Orientation (30%)</span>
-                        <span className="badge bg-secondary">Memory (20%)</span>
+                        <h6 className="fw-bold mb-1">🕐 {t("dementia.games.clockDrawing", "Clock Drawing")}</h6>
+                        <p className="text-muted mb-1 small">{t("dementia.gameInfo.clockDrawing", "Tests multiple cognitive domains")}</p>
+                        <span className="badge bg-info text-dark me-1">{t("dementia.domainExecutive", "Executive")} (50%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainOrientation", "Orientation")} (30%)</span>
+                        <span className="badge bg-secondary">{t("dementia.domainMemory", "Memory")} (20%)</span>
                       </div>
                     </div>
                   </div>
