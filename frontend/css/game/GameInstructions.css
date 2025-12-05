@@ -1,0 +1,392 @@
+
+
+.game-instructions-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: auto;
+}
+
+.game-instructions-card {
+  background: #ffffff;
+  width: 90%;
+  max-width: 800px;
+  max-height: 166vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: auto;
+  margin-top: 2rem;
+}
+
+.instructions-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  line-height: 1;
+  z-index: 10;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.instructions-close-btn:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.instructions-header {
+  padding: 2.5rem 2rem 2rem;
+  background: linear-gradient(135deg, #667eea15, #667eea08);
+  border-bottom: 2px solid #e0e0e0;
+  text-align: center;
+  position: relative;
+}
+
+.game-icon-large {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: block;
+  line-height: 1;
+}
+
+.instructions-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.instructions-description {
+  font-size: 1.0625rem;
+  color: #666;
+  line-height: 1.7;
+  margin: 1rem 0 0 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.instructions-content {
+  padding: 2rem;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  scroll-behavior: auto;
+}
+
+.instructions-section {
+  margin-bottom: 2rem;
+}
+
+.instructions-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+  display: inline-block;
+}
+
+.instructions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.instructions-list li {
+  padding: 1.125rem 1.25rem;
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #1a1a1a;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.instructions-list li:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.instruction-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #667eea;
+  color: #ffffff;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.instruction-text {
+  flex: 1;
+  line-height: 1.7;
+}
+
+.benefits-content {
+  margin-bottom: 1.25rem;
+}
+
+.benefits-text {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.7;
+  margin: 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #22c55e;
+}
+
+.cognitive-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.domain-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea, #667eeadd);
+  color: #ffffff;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.keyboard-shortcuts-info {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px solid #667eea;
+  border-radius: 8px;
+}
+
+.shortcuts-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #667eea;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.shortcut-item:last-child {
+  border-bottom: none;
+}
+
+.shortcut-item kbd {
+  background: #ffffff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #667eea;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 90px;
+  text-align: center;
+}
+
+.shortcut-item span {
+  color: #666;
+  font-size: 0.9375rem;
+  flex: 1;
+  text-align: right;
+  margin-left: 1rem;
+}
+
+.instructions-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #e0e0e0;
+  background: #f8f9fa;
+  flex-wrap: wrap;
+}
+
+.btn-start-game,
+.btn-close-instructions {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  min-width: 160px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-start-game {
+  background: linear-gradient(135deg, #667eea, #667eeadd);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-start-game:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-start-game:active {
+  transform: translateY(0);
+}
+
+.btn-close-instructions {
+  background: #ffffff;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.btn-close-instructions:hover {
+  background: #667eea;
+  color: #ffffff;
+}
+
+
+@media (max-width: 768px) {
+  .game-instructions-overlay {
+    padding: 1rem 0.5rem;
+  }
+  
+  .game-instructions-card {
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+  
+  .instructions-header {
+    padding: 2rem 1.5rem 1.5rem;
+  }
+  
+  .game-icon-large {
+    font-size: 3rem;
+  }
+  
+  .instructions-title {
+    font-size: 1.625rem;
+  }
+  
+  .instructions-description {
+    font-size: 1rem;
+  }
+  
+  .instructions-content {
+    padding: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+  }
+  
+  .instructions-list li {
+    padding: 1rem;
+    font-size: 0.9375rem;
+  }
+  
+  .instructions-footer {
+    padding: 1.25rem 1.5rem;
+    flex-direction: column;
+  }
+  
+  .btn-start-game,
+  .btn-close-instructions {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .shortcut-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .shortcut-item span {
+    text-align: left;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-instructions-overlay {
+    padding: 0.5rem;
+  }
+  
+  .instructions-header {
+    padding: 1.5rem 1rem 1.25rem;
+  }
+  
+  .instructions-content {
+    padding: 1.25rem 1rem;
+  }
+  
+  .instructions-footer {
+    padding: 1rem;
+  }
+}

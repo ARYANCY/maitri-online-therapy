@@ -1,0 +1,459 @@
+
+@import '../unified-design-system.css';
+
+.about-maitri-page {
+  background: var(--cloud-white);
+  color: var(--text-dark);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.navbar-spacer {
+  height: 120px;
+}
+
+@media (max-width: 992px) {
+  .navbar-spacer {
+    height: 140px;
+  }
+}
+
+.about-maitri-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .about-maitri-container {
+    padding: 2rem 1rem;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-maitri-container {
+    padding: 1.5rem 0.75rem;
+    gap: 2rem;
+  }
+}
+
+
+.maitri-hero {
+  background: linear-gradient(135deg, var(--cloud-white-pure) 0%, rgba(171, 209, 198, 0.05) 100%);
+  border: 1px solid var(--soft-jade-light);
+}
+
+
+.card {
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover) !important;
+}
+
+.type-card:hover,
+.domain-card:hover,
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--soft-jade) !important;
+}
+
+
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+
+.tab-navigation-wrapper {
+  position: sticky;
+  top: 120px;
+  z-index: 10;
+  background: var(--cloud-white);
+  padding-top: 1rem;
+}
+
+@media (max-width: 992px) {
+  .tab-navigation-wrapper {
+    top: 140px;
+  }
+}
+
+.nav-tabs-custom {
+  border-bottom: 2px solid var(--soft-jade-light);
+  display: flex;
+  gap: 0;
+}
+
+.nav-tabs-custom .nav-item {
+  flex: 1;
+}
+
+.nav-tabs-custom .nav-link {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-dark);
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.nav-tabs-custom .nav-link:hover {
+  background: rgba(111, 174, 154, 0.05);
+  color: var(--soft-jade);
+  border-bottom-color: rgba(111, 174, 154, 0.3);
+}
+
+.nav-tabs-custom .nav-link.active {
+  background: rgba(111, 174, 154, 0.1);
+  color: var(--soft-jade);
+  border-bottom-color: var(--soft-jade);
+  font-weight: 600;
+}
+
+.nav-tabs-custom .nav-link .tab-icon {
+  font-size: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.nav-tabs-custom .nav-link:hover .tab-icon,
+.nav-tabs-custom .nav-link.active .tab-icon {
+  transform: scale(1.15);
+}
+
+.nav-tabs-custom .nav-link .tab-text {
+  font-size: 1rem;
+}
+
+.tab-content-wrapper {
+  min-height: 400px;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.show.active {
+  display: block;
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-tabs-custom .nav-link {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .nav-tabs-custom .nav-link .tab-icon {
+    font-size: 1.1rem;
+  }
+  
+  .nav-tabs-custom .nav-link .tab-text {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .tab-navigation-wrapper {
+    padding-top: 0.5rem;
+  }
+  
+  .nav-tabs-custom .nav-link {
+    padding: 0.75rem 0.75rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .nav-tabs-custom .nav-link .tab-icon {
+    font-size: 1.25rem;
+  }
+  
+  .nav-tabs-custom .nav-link .tab-text {
+    font-size: 0.85rem;
+    text-align: center;
+  }
+}
+
+
+.domain-card,
+.feature-card,
+.type-card {
+  height: 100%;
+}
+
+.domain-icon,
+.feature-icon {
+  transition: transform var(--transition-base);
+}
+
+.domain-card:hover .domain-icon,
+.feature-card:hover .feature-icon {
+  transform: scale(1.1);
+}
+
+
+@media (max-width: 992px) {
+  .about-maitri-container {
+    padding: var(--space-6) var(--space-4);
+  }
+  
+  .display-4 {
+    font-size: 2rem !important;
+  }
+  
+  .display-5 {
+    font-size: 1.75rem !important;
+  }
+  
+  .maitri-hero .card-body,
+  .dementia-overview .card-body,
+  .cognitive-assessment .card-body,
+  .maitri-features .card-body,
+  .maitri-mission .card-body {
+    padding: var(--space-5) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-maitri-container {
+    padding: var(--space-4) var(--space-3);
+  }
+  
+  .maitri-hero .card-body,
+  .dementia-overview .card-body,
+  .cognitive-assessment .card-body,
+  .maitri-features .card-body,
+  .maitri-mission .card-body {
+    padding: var(--space-4) !important;
+  }
+  
+  .display-4 {
+    font-size: 1.75rem !important;
+  }
+  
+  .display-5 {
+    font-size: 1.5rem !important;
+  }
+  
+  .lead {
+    font-size: 1rem !important;
+  }
+  
+  .h3 {
+    font-size: 1.25rem !important;
+  }
+  
+  .h4 {
+    font-size: 1.1rem !important;
+  }
+  
+  .h5 {
+    font-size: 1rem !important;
+  }
+  
+  .chart-container {
+    height: 280px !important;
+  }
+  
+  .row.g-4 {
+    --bs-gutter-y: 1rem;
+    --bs-gutter-x: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .about-maitri-container {
+    padding: var(--space-3) var(--space-2);
+  }
+  
+  .maitri-hero .card-body,
+  .dementia-overview .card-body,
+  .cognitive-assessment .card-body,
+  .maitri-features .card-body,
+  .maitri-mission .card-body {
+    padding: var(--space-3) !important;
+  }
+  
+  .display-4 {
+    font-size: 1.5rem !important;
+  }
+  
+  .display-5 {
+    font-size: 1.25rem !important;
+  }
+  
+  .lead {
+    font-size: 0.95rem !important;
+  }
+  
+  .h3 {
+    font-size: 1.1rem !important;
+  }
+  
+  .h4 {
+    font-size: 1rem !important;
+  }
+  
+  .h5 {
+    font-size: 0.95rem !important;
+  }
+  
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  .row.g-4 {
+    --bs-gutter-y: 0.75rem;
+    --bs-gutter-x: 0.75rem;
+  }
+  
+  .domain-icon,
+  .feature-icon {
+    font-size: 2rem !important;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .about-maitri-container {
+    padding: var(--space-2) var(--space-1);
+  }
+  
+  .maitri-hero .card-body,
+  .dementia-overview .card-body,
+  .cognitive-assessment .card-body,
+  .maitri-features .card-body,
+  .maitri-mission .card-body {
+    padding: var(--space-2) !important;
+  }
+  
+  .display-4 {
+    font-size: 1.25rem !important;
+  }
+  
+  .display-5 {
+    font-size: 1.1rem !important;
+  }
+  
+  .lead {
+    font-size: 0.875rem !important;
+  }
+  
+  .chart-container {
+    height: 200px !important;
+  }
+  
+  .domain-icon,
+  .feature-icon {
+    font-size: 1.75rem !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .scientific-evidence .card-body,
+  .mental-health-integration .card-body,
+  .clinical-considerations .card-body,
+  .maitri-faqs .card-body,
+  .maitri-survey .card-body {
+    padding: var(--space-3) !important;
+  }
+  
+  .survey-iframe {
+    height: 600px !important;
+    min-height: 500px !important;
+  }
+  
+  .accordion-button {
+    font-size: 0.9rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .accordion-body {
+    font-size: 0.875rem !important;
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .scientific-evidence .card-body,
+  .mental-health-integration .card-body,
+  .clinical-considerations .card-body,
+  .maitri-faqs .card-body,
+  .maitri-survey .card-body {
+    padding: var(--space-2) !important;
+  }
+  
+  .survey-iframe {
+    height: 500px !important;
+    min-height: 400px !important;
+  }
+  
+  .research-references ul {
+    padding-left: 1rem !important;
+  }
+  
+  .research-references li {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .clinical-warning {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .warning-icon {
+    font-size: 2rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .survey-iframe {
+    height: 400px !important;
+    min-height: 350px !important;
+  }
+  
+  .maitri-medico .card-body {
+    padding: var(--space-3) !important;
+  }
+  
+  .maitri-medico .display-5 {
+    font-size: 1.5rem !important;
+  }
+  
+  .maitri-medico .lead {
+    font-size: 0.9rem !important;
+  }
+  
+  .maitri-medico .btn {
+    font-size: 0.875rem !important;
+    padding: 0.625rem 1.5rem !important;
+  }
+}

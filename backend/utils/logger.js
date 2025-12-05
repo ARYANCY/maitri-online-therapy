@@ -1,6 +1,4 @@
 const winston = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
-const path = require('path');
 
 // Define log levels
 const levels = {
@@ -23,9 +21,9 @@ const colors = {
 // Tell winston that you want to link the colors
 winston.addColors(colors);
 
-// Define which transports the logger must use
+// Define which transports the logger must use (console only, no file logging)
 const transports = [
-  // Console transport
+  // Console transport only
   new winston.transports.Console({
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
@@ -34,29 +32,6 @@ const transports = [
         (info) => `${info.timestamp} ${info.level}: ${info.message}`
       )
     ),
-  }),
-  // File transport for errors
-  new DailyRotateFile({
-    filename: path.join('logs', 'error-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    level: 'error',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
-    ),
-    maxSize: '20m',
-    maxFiles: '14d',
-  }),
-  // File transport for all logs
-  new DailyRotateFile({
-    filename: path.join('logs', 'combined-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
-    ),
-    maxSize: '20m',
-    maxFiles: '14d',
   }),
 ];
 

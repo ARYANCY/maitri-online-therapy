@@ -56,12 +56,15 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
 
   const performance = getPerformanceLevel();
 
-  // Animate score and time
+  
   useEffect(() => {
+    setAnimatedScore(0);
+    setAnimatedTime(0);
+    
     const scoreSteps = 60;
     const timeSteps = 40;
-    const scoreStep = score / scoreSteps;
-    const timeStep = time / timeSteps;
+    const scoreStep = score > 0 ? score / scoreSteps : 0;
+    const timeStep = time > 0 ? time / timeSteps : 0;
 
     let scoreCurrent = 0,
       timeCurrent = 0,
@@ -69,25 +72,38 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
       timeFrame = 0;
 
     const animateScore = () => {
-      if (scoreFrame < scoreSteps) {
+      if (scoreFrame < scoreSteps && score > 0) {
         scoreCurrent = Math.min(score, scoreCurrent + scoreStep);
         setAnimatedScore(Math.round(scoreCurrent));
         scoreFrame++;
         requestAnimationFrame(animateScore);
-      } else setAnimatedScore(score);
+      } else {
+        setAnimatedScore(score);
+      }
     };
 
     const animateTime = () => {
-      if (timeFrame < timeSteps) {
+      if (timeFrame < timeSteps && time > 0) {
         timeCurrent = Math.min(time, timeCurrent + timeStep);
         setAnimatedTime(Math.round(timeCurrent));
         timeFrame++;
         requestAnimationFrame(animateTime);
-      } else setAnimatedTime(time);
+      } else {
+        setAnimatedTime(time);
+      }
     };
 
-    animateScore();
-    setTimeout(() => animateTime(), 200);
+    if (score > 0) {
+      animateScore();
+    } else {
+      setAnimatedScore(0);
+    }
+    
+    if (time > 0) {
+      setTimeout(() => animateTime(), 200);
+    } else {
+      setAnimatedTime(0);
+    }
   }, [score, time]);
 
   const formatTime = (seconds) => {
@@ -113,24 +129,46 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
 
   const additionalStats = getAdditionalStats();
 
-  // Close with fade-out
+  
   const handleClose = () => {
     setFadeOut(true);
-    setTimeout(() => onNext?.(), 300); // match CSS fade duration
+    setTimeout(() => onNext?.(), 300); 
   };
 
   return (
     <div
-      className={`result-overlay ${fadeOut ? "fade-out" : "fade-in"}`}
+      className={`position-absolute top-0 start-0 w-100 d-flex align-items-center justify-content-center p-3 ${fadeOut ? "fade-out" : "fade-in"}`}
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 9999,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        overscrollBehavior: 'none',
+        scrollBehavior: 'auto',
+        borderRadius: '8px',
+        minHeight: '100%',
+        padding: '2rem 1rem'
+      }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div className="result-card">
-        <button className="result-close-btn" onClick={handleClose} aria-label={t("dementia.close", "Close")}>
-          ×
-        </button>
+      <div className="card shadow-lg border-0 position-relative result-popup-card" style={{
+        maxWidth: '800px',
+        width: '90%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        display: 'flex', 
+        flexDirection: 'column', 
+        borderRadius: '12px'
+      }}>
+        <button 
+          className="btn-close position-absolute top-0 end-0 m-3" 
+          onClick={handleClose} 
+          aria-label={t("dementia.close", "Close")}
+          style={{zIndex: 10}}
+        ></button>
 
         <div
-          className="result-icon"
+          className="text-center p-4"
           style={{
             background: `linear-gradient(135deg, ${performance.color}20, ${performance.color}10)`,
             border: `3px solid ${performance.color}40`,
@@ -141,59 +179,72 @@ export default function ResultPopup({ score, time, onNext, detail = {} }) {
           </div>
         </div>
 
-        <h2 className="result-title" style={{ color: performance.color }}>
-          {t("dementia.testCompleted", "Test Completed!")}
-        </h2>
+        <div className="card-body text-center p-4" style={{flex: '1', display: 'flex', flexDirection: 'column', overflowY: 'auto', overscrollBehavior: 'none', scrollBehavior: 'auto'}}>
+          <h2 className="h4 mb-3 fw-bold" style={{ color: performance.color }}>
+            {t("dementia.testCompleted", "Test Completed!")}
+          </h2>
 
-        <div
-          className="result-message"
-          style={{
-            background: `linear-gradient(135deg, ${performance.color}15, ${performance.color}08)`,
-            border: `1px solid ${performance.color}30`,
-            color: performance.color,
-          }}
-        >
-          <div className="result-message-text">{performance.message}</div>
-          <div className="result-message-desc">{performance.description}</div>
-        </div>
-
-        <div className="result-stats">
-          <div className="stat-box">
-            <div className="stat-icon">🎯</div>
-            <div className="stat-label">{t("dementia.score", "Score")}</div>
-            <div className="stat-value" style={{ color: performance.color }}>
-              {animatedScore}
-            </div>
-            <div className="stat-sublabel">{t("dementia.points", "points")}</div>
+          <div
+            className="alert mb-4"
+            style={{
+              background: `linear-gradient(135deg, ${performance.color}15, ${performance.color}08)`,
+              border: `1px solid ${performance.color}30`,
+              color: performance.color,
+            }}
+          >
+            <div className="fw-bold mb-2">{performance.message}</div>
+            <div className="small">{performance.description}</div>
           </div>
 
-          <div className="stat-box">
-            <div className="stat-icon">⏱️</div>
-            <div className="stat-label">{t("dementia.time", "Time")}</div>
-            <div className="stat-value">{formatTime(animatedTime)}</div>
-            <div className="stat-sublabel">{t("dementia.totalTime", "total time")}</div>
-          </div>
-        </div>
-
-        {additionalStats.length > 0 && (
-          <div className="result-additional-stats">
-            {additionalStats.map((stat, idx) => (
-              <div key={idx} className="additional-stat-item">
-                <div className="additional-stat-label">{stat.label}</div>
-                <div className="additional-stat-value">{stat.value}</div>
+          <div className="row g-3 mb-4">
+            <div className="col-6">
+              <div className="card border-0 bg-light">
+                <div className="card-body text-center">
+                  <div className="fs-3 mb-2">🎯</div>
+                  <div className="small text-muted mb-1">{t("dementia.score", "Score")}</div>
+                  <div className="h4 mb-0 fw-bold" style={{ color: performance.color }}>
+                    {animatedScore}
+                  </div>
+                  <div className="small text-muted">{t("dementia.points", "points")}</div>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
-        <button
-          className="result-btn"
-          onClick={handleClose}
-          style={{ background: `linear-gradient(135deg, ${performance.color}, ${performance.color}dd)` }}
-        >
-          <span>{t("dementia.saveContinue", "Save & Continue")}</span>
-          <span className="result-btn-arrow">→</span>
-        </button>
+            <div className="col-6">
+              <div className="card border-0 bg-light">
+                <div className="card-body text-center">
+                  <div className="fs-3 mb-2">⏱️</div>
+                  <div className="small text-muted mb-1">{t("dementia.time", "Time")}</div>
+                  <div className="h4 mb-0 fw-bold">{formatTime(animatedTime)}</div>
+                  <div className="small text-muted">{t("dementia.totalTime", "total time")}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {additionalStats.length > 0 && (
+            <div className="row g-2 mb-4">
+              {additionalStats.map((stat, idx) => (
+                <div key={idx} className="col-6">
+                  <div className="card border-0 bg-light">
+                    <div className="card-body text-center p-2">
+                      <div className="small text-muted mb-1">{stat.label}</div>
+                      <div className="h6 mb-0 fw-bold">{stat.value}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            className="btn btn-primary w-100 btn-lg"
+            onClick={handleClose}
+            style={{ background: `linear-gradient(135deg, ${performance.color}, ${performance.color}dd)` }}
+          >
+            {t("dementia.saveContinue", "Save & Continue")} →
+          </button>
+        </div>
       </div>
     </div>
   );

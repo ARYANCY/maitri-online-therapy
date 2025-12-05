@@ -24,8 +24,8 @@ function getNextGenAI() {
 
 async function safeGenerate(prompt) {
   let lastError;
-  // Increase timeout for API requests
-  const timeout = 120000; // 2 minutes timeout
+ 
+  const timeout = 120000;
   
   for (let i = 0; i < apiKeys.length; i++) {
     const client = getNextGenAI();
@@ -65,6 +65,10 @@ async function safeGenerate(prompt) {
 }
 
 let userSessions = {};
+
+// Message batch settings for chart data calculation
+const MIN_MESSAGES_FOR_CALCULATION = 5;
+const MAX_MESSAGES_FOR_CALCULATION = 10;
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; 
 let cleanupInitialized = false;
@@ -138,21 +142,32 @@ exports.getChatbot = asyncHandler((req, res) => {
     userSessions[userId] = {
       messages: [],
       language: userLanguage,
-      createdAt: new Date()
+      createdAt: new Date(),
+      messageCount: 0,
+      pendingMessages: [],
     };
   }
 
   const session = userSessions[userId];
+  
+  // Ensure all properties exist for backward compatibility
+  if (!session.messages) session.messages = [];
+  if (typeof session.messageCount !== 'number') {
+    session.messageCount = session.messages.filter(m => m.sender === "user").length;
+  }
+  if (!Array.isArray(session.pendingMessages)) {
+    session.pendingMessages = [];
+  }
 
   if (session.language !== userLanguage) {
     const oldLanguage = session.language;
     session.language = userLanguage;
 
     session.messages = session.messages.map((msg) => {
-      if (msg.sender === "bot" && msg.text === req.t("chatbot.welcome", { lng: oldLanguage })) {
+      if (msg.sender === "bot" && msg.type === "greeting") {
         return {
           ...msg,
-          text: req.t("chatbot.welcome", { lng: userLanguage }),
+          text: req.t("chatbot.welcomeAI", "Hello! I'm Vaidhya, your AI healthcare assistant. I'm here to help assess your mental health metrics, screening scores, and cognitive function. I'll ask you some questions to better understand your health. How are you feeling today?", { lng: userLanguage }),
           language: userLanguage,
         };
       }
@@ -163,10 +178,11 @@ exports.getChatbot = asyncHandler((req, res) => {
   }
 
   if (!session.messages.length) {
+  const welcomeText = req.t("chatbot.welcomeAI", "Hello! I'm your AI DOC (AI Doctor). I'm here to help assess your mental health metrics, screening scores, and cognitive function. I'll ask you some questions to better understand your health. How are you feeling today?");
   session.messages.push({
     sender: "bot",
     type: "greeting",
-    text: req.t("chatbot.welcome"),
+    text: welcomeText,
     timestamp: new Date().toISOString(),
     language: userLanguage
   });
@@ -174,9 +190,10 @@ exports.getChatbot = asyncHandler((req, res) => {
 
 session.messages = session.messages.map(msg => {
   if (msg.sender === "bot" && msg.type === "greeting") {
+    const welcomeText = req.t("chatbot.welcomeAI", "Hello! I'm Vaidhya, your AI healthcare assistant. I'm here to help assess your mental health metrics, screening scores, and cognitive function. I'll ask you some questions to better understand your health. How are you feeling today?");
     return {
       ...msg,
-      text: req.t("chatbot.welcome"),
+      text: welcomeText,
       language: userLanguage
     };
   }
@@ -223,11 +240,24 @@ exports.postChatbot = asyncHandler(async (req, res) => {
     userSessions[userId] = { 
       messages: [],
       language: userLanguage,
-      createdAt: new Date()
+      createdAt: new Date(),
+      messageCount: 0,
+      pendingMessages: [] // Store messages waiting for batch calculation
     };
   }
   
   const session = userSessions[userId];
+  
+  // Ensure backward compatibility: initialize new properties if they don't exist
+  if (!session.messageCount) {
+    session.messageCount = session.messages ? session.messages.filter(m => m.sender === "user").length : 0;
+  }
+  if (!session.pendingMessages) {
+    session.pendingMessages = [];
+  }
+  if (!session.messages) {
+    session.messages = [];
+  }
   
   if (session.language !== userLanguage) {
     logger.info('User language changed during chat', {
@@ -256,14 +286,39 @@ exports.postChatbot = asyncHandler(async (req, res) => {
   if (safeMessage.length > MAX_INPUT_LEN) {
     safeMessage = safeMessage.slice(0, MAX_INPUT_LEN);
   }
-  session.messages.push({ 
-    sender: "user", 
-    text: safeMessage, 
-    timestamp: new Date().toISOString(),
-    language: userLanguage
-  });
+  // Check if this exact message was already added (prevent duplicates from retries)
+  const lastMessage = session.messages[session.messages.length - 1];
+  const isDuplicate = lastMessage && 
+                      lastMessage.sender === "user" && 
+                      lastMessage.text === safeMessage &&
+                      new Date().getTime() - new Date(lastMessage.timestamp).getTime() < 5000; // Within 5 seconds
+  
+  if (!isDuplicate) {
+    session.messages.push({ 
+      sender: "user", 
+      text: safeMessage, 
+      timestamp: new Date().toISOString(),
+      language: userLanguage
+    });
+
+    // Track message count and add to pending batch
+    session.messageCount += 1;
+    session.pendingMessages.push({
+      sender: "user",
+      text: safeMessage,
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    logger.info('Duplicate message detected and skipped', { userId, message: safeMessage, requestId: req.id });
+  }
 
   const history = session.messages.map(m => `${m.sender}: ${m.text}`).join("\n");
+  
+  // Determine if we should calculate chart data (every 5-10 messages)
+  // Calculate when: message count is >= 5 AND (it's a multiple of 5 OR pending messages >= 10)
+  const shouldCalculateMetrics = session.messageCount >= MIN_MESSAGES_FOR_CALCULATION && 
+                                  (session.messageCount % MIN_MESSAGES_FOR_CALCULATION === 0 || 
+                                   session.pendingMessages.length >= MAX_MESSAGES_FOR_CALCULATION);
   
   logger.info('Chatbot message received', {
     userId,
@@ -276,6 +331,7 @@ exports.postChatbot = asyncHandler(async (req, res) => {
   let botResponse = "";
   let metricsData = {};
   let screeningData = {};
+  let cognitiveData = {}; // Initialize cognitiveData to prevent undefined errors
   let todosData = [];
 
   try {
@@ -283,9 +339,13 @@ exports.postChatbot = asyncHandler(async (req, res) => {
     const normalizedLang = (session.language || 'en').toLowerCase().trim();
     const languageName = LANGUAGE_MAP[normalizedLang] || 'English';
 
-    const chatbotPrompt = `You are a friendly, empathetic therapist chatbot. Respond in ${languageName}.
+    const chatbotPrompt = `You are Vaidhya - a professional, empathetic, and knowledgeable AI healthcare assistant. Respond in ${languageName}.
     
-Context: You are helping with mental health support and emotional well-being.
+Your Role: You are Vaidhya who provides comprehensive health assessments including:
+1. Mental Health Metrics (stress, happiness, anxiety, overall mood)
+2. Mental Health Screening (PHQ-9, GAD-7, GHQ scores and risk levels)
+3. Cognitive Impairment Assessment (based on MMSE, MoCA, ACE-III, Mini-Cog, SLUMS, RUDAS protocols)
+
 User's language preference: ${languageName}
 
 Conversation so far:
@@ -293,15 +353,54 @@ ${history}
 
 User just said: "${safeMessage}"
 
-Guidelines:
-- Be empathetic, supportive, and non-judgmental
-- Use appropriate therapeutic language
-- Keep responses concise but meaningful
-- Ask follow-up questions when appropriate
-- Provide practical suggestions when helpful
-- Always maintain a professional yet warm tone
+Assessment Protocol - You should INTERACTIVELY ASK QUESTIONS to gather data:
 
-Respond naturally and therapeutically in ${languageName}:`;
+MENTAL HEALTH METRICS - Ask about:
+- Stress levels and stress triggers
+- Happiness and life satisfaction
+- Anxiety symptoms and frequency
+- Overall mood and emotional state
+
+MENTAL HEALTH SCREENING - Ask PHQ-9, GAD-7, GHQ questions:
+- Depression symptoms (PHQ-9): interest, mood, sleep, energy, appetite, concentration, self-worth, movement, suicidal thoughts
+- Anxiety symptoms (GAD-7): worry, restlessness, fatigue, concentration, irritability, muscle tension, sleep
+- General health (GHQ): psychological distress, social functioning, physical symptoms
+
+COGNITIVE IMPAIRMENT ASSESSMENT - Ask questions based on validated tools:
+- Orientation: "What day is it today?", "What month/year?", "Where are you?"
+- Memory: "Repeat these words: apple, table, blue", "Recall the words I mentioned earlier"
+- Attention: "Count backwards from 20", "Repeat: 3, 7, 2"
+- Language: "Name 5 animals", "What is this object?" (if describing)
+- Executive Function: "If you have Rs. 50 and buy items for Rs. 12 and Rs. 9, how much is left?"
+- Visuospatial: "Draw a clock showing 3 o'clock"
+
+Knowledge Base - Cognitive Impairment Assessment Tools:
+1. MMSE (Mini-Mental State Examination) - 30-point questionnaire assessing orientation, memory, attention, calculation, language, visual-spatial skills
+2. MoCA (Montreal Cognitive Assessment) - Detects mild cognitive impairment, evaluating attention, concentration, executive functions, memory, language, visuoconstructional skills
+3. ACE-III (Addenbrooke's Cognitive Examination-III) - Comprehensive assessment evaluating attention, memory, fluency, language, visuospatial abilities
+4. Mini-Cog - Brief screening combining three-item recall with clock drawing test
+5. SLUMS (Saint Louis University Mental Status Examination) - Screening for mild cognitive impairment and dementia
+6. RUDAS (Rowland Universal Dementia Assessment Scale) - Culturally fair cognitive screening
+
+IMPORTANT GUIDELINES:
+- Be proactive: Ask 1-2 relevant assessment questions per response to gather comprehensive data
+- Be conversational: Don't make it feel like a formal test - weave questions naturally into conversation
+- Be empathetic: Show understanding and support while asking questions
+- Track progress: Remember what you've asked and what the user has answered
+- Be thorough: Cover all assessment areas (metrics, screening, cognitive) over the conversation
+- Never diagnose: Always emphasize these are screening tools and professional consultation is important
+- Be professional yet warm: Maintain a doctor-like but friendly demeanor
+- Use appropriate medical terminology but explain when needed
+- Ask follow-up questions based on user responses
+- Provide reassurance and guidance when appropriate
+
+Your Response Strategy:
+1. Acknowledge the user's message empathetically
+2. Ask 1-2 relevant assessment questions (mix of metrics, screening, or cognitive)
+3. Provide helpful information or suggestions
+4. Continue the conversation naturally
+
+Respond as Vaidhya in ${languageName}, asking assessment questions naturally:`;
 
     logger.info('Generating chatbot response', { userId, language: userLanguage, requestId: req.id });
     
@@ -319,9 +418,79 @@ Respond naturally and therapeutically in ${languageName}:`;
     session.messages.push({ sender: "bot", text: botResponse, timestamp: new Date().toISOString(), language: userLanguage });
     logger.error('Chatbot response generation failed', { userId, error: err.message, language: userLanguage, ip: req.ip, requestId: req.id });
   }
+  // Only calculate metrics if we've reached the batch threshold
+  if (shouldCalculateMetrics) {
+    // Get all messages from the current batch for analysis
+    const batchHistory = session.pendingMessages.map(m => `${m.sender}: ${m.text}`).join("\n");
+    const batchMessageCount = session.pendingMessages.length;
+    
+    logger.info('Calculating metrics for message batch', { 
+      userId, 
+      messageCount: session.messageCount,
+      batchSize: batchMessageCount,
+      requestId: req.id 
+    });
+
   try {
-    const metricsPrompt = `Analyze the user's emotional state and mental health indicators from their message.
-User message: "${safeMessage}"
+    const metricsPrompt = `You are Vaidhya analyzing user responses for comprehensive health assessment using feature-based NLP analysis.
+
+IMPORTANT CLINICAL DISCLAIMERS:
+- Emotional metrics (stress, anxiety, happiness) are AI-estimated using psycholinguistic markers, NOT clinically validated diagnostic tools.
+- PHQ-9, GAD-7, and GHQ scores are AI-ESTIMATED PROXY INDICATORS based on conversation patterns, NOT actual questionnaire responses.
+- For verified PHQ-9/GAD-7/GHQ results, users must complete the standardized questionnaires.
+- Cognitive scores are estimated from conversation linguistic features, not formal neuropsychological testing.
+
+ANALYSIS METHODOLOGY:
+You are using feature-based NLP analysis including:
+1. Psycholinguistic markers (LIWC features):
+   - First-person usage frequency
+   - Negative emotion word density
+   - Cognitive processing word frequency
+   - Disfluency markers ("um", "uh", "I don't know")
+   - Repetition patterns
+   - Hesitation indicators
+
+2. Transformer-based embeddings:
+   - Sentence-BERT / DistilBERT finetuned on mental-health datasets
+   - Semantic similarity to clinical symptom descriptions
+
+3. Cognitive assessment linguistic features:
+   - Memory markers: Repetition of earlier points, forgetting discussed details
+   - Orientation markers: Confusion about events/time/day, difficulty with factual questions
+   - Attention markers: Off-topic responses, delayed/incomplete answers
+   - Language markers: Word-finding difficulty, reduced vocabulary richness
+   - Executive function markers: Trouble following multi-step instructions, logical inconsistency
+
+You are analyzing a BATCH of ${batchMessageCount} recent messages from the conversation. Consider ALL messages in this batch together to provide a comprehensive assessment.
+
+Batch of messages to analyze:
+${batchHistory}
+
+Full conversation context (for reference):
+${history}
+
+Extract and analyze data for THREE assessment types:
+
+1. MENTAL HEALTH METRICS - Emotional state indicators:
+   - stress_level: 0-50 (based on stress mentions, triggers, physical symptoms)
+   - happiness_level: 0-50 (based on positive emotions, satisfaction, joy)
+   - anxiety_level: 0-50 (based on worry, nervousness, panic, restlessness)
+   - overall_mood_level: 0-50 (general emotional state, can be average of above or independent)
+
+2. MENTAL HEALTH SCREENING - Standardized screening scores:
+   - phq9_score: 0-27 (depression screening - look for: interest loss, mood, sleep, energy, appetite, concentration, self-worth, movement, suicidal thoughts)
+   - gad7_score: 0-21 (anxiety screening - look for: excessive worry, restlessness, fatigue, concentration issues, irritability, muscle tension, sleep problems)
+   - ghq_score: 0-36 (general health questionnaire - psychological distress, social functioning, physical symptoms)
+   - risk_level: "low", "moderate", or "high" (based on combined screening scores)
+
+3. COGNITIVE IMPAIRMENT ASSESSMENT - Cognitive function indicators:
+   - orientation_score: 0-10 (temporal/spatial orientation - date, time, location questions)
+   - memory_score: 0-10 (immediate and delayed recall - word lists, story recall)
+   - attention_score: 0-10 (attention span, concentration - digit span, counting)
+   - language_score: 0-10 (language abilities - naming, fluency, comprehension)
+   - executive_score: 0-10 (executive function - problem solving, calculations, planning)
+   - cognitive_risk_level: "low", "moderate", or "high" (based on cognitive scores)
+
 Respond ONLY in strict JSON format with exact keys:
 {
   "metrics": {
@@ -335,8 +504,18 @@ Respond ONLY in strict JSON format with exact keys:
     "gad7_score": number (0-21),
     "ghq_score": number (0-36),
     "risk_level": string ("low", "moderate", "high")
+  },
+  "cognitive": {
+    "orientation_score": number (0-10),
+    "memory_score": number (0-10),
+    "attention_score": number (0-10),
+    "language_score": number (0-10),
+    "executive_score": number (0-10),
+    "cognitive_risk_level": string ("low", "moderate", "high")
   }
-}`;
+}
+
+Analyze the ENTIRE conversation history, not just the latest message. Look for patterns, repeated mentions, and cumulative information.`;
 
     logger.info('Generating metrics and screening data', { userId, language: userLanguage, requestId: req.id });
     
@@ -350,10 +529,13 @@ Respond ONLY in strict JSON format with exact keys:
     }
     metricsData = parsed.metrics || {};
     screeningData = parsed.screening || {};
+    cognitiveData = parsed.cognitive || {}; // Update outer scope variable
 
+    // Save Metrics - use batch summary message
+    const batchSummary = `Batch of ${batchMessageCount} messages analyzed together`;
     await Metrics.create({
       userId: user._id,
-      message: safeMessage,
+      message: batchSummary,
       stress_level: Math.max(0, Math.min(50, Number(metricsData.stress_level) || 0)),
       happiness_level: Math.max(0, Math.min(50, Number(metricsData.happiness_level) || 0)),
       anxiety_level: Math.max(0, Math.min(50, Number(metricsData.anxiety_level) || 0)),
@@ -361,9 +543,10 @@ Respond ONLY in strict JSON format with exact keys:
       createdAt: new Date(),
     });
 
+    // Save Screening - use batch summary message
     await Screening.create({
       userId: user._id,
-      message: safeMessage,
+      message: batchSummary,
       phq9_score: Math.max(0, Math.min(27, Number(screeningData.phq9_score) || 0)),
       gad7_score: Math.max(0, Math.min(21, Number(screeningData.gad7_score) || 0)),
       ghq_score: Math.max(0, Math.min(36, Number(screeningData.ghq_score) || 0)),
@@ -371,11 +554,26 @@ Respond ONLY in strict JSON format with exact keys:
       createdAt: new Date(),
     });
 
-    logger.info('Metrics and screening data saved successfully', { userId, metrics: metricsData, screening: screeningData, requestId: req.id });
+    logger.info('Metrics, screening, and cognitive data saved successfully', { userId, metrics: metricsData, screening: screeningData, cognitive: cognitiveData, requestId: req.id });
+    
+    // Clear pending messages after successful calculation
+    session.pendingMessages = [];
   } catch (err) {
     metricsData = { stress_level: 0, happiness_level: 0, anxiety_level: 0, overall_mood_level: 0 };
     screeningData = { phq9_score: 0, gad7_score: 0, ghq_score: 0, risk_level: "low" };
-    logger.error('Metrics/Screening generation failed', { userId, error: err.message, language: userLanguage, ip: req.ip, requestId: req.id });
+    logger.error('Metrics/Screening/Cognitive generation failed', { userId, error: err.message, language: userLanguage, ip: req.ip, requestId: req.id });
+  }
+  } else {
+    // Skip metrics calculation - not enough messages yet
+    metricsData = {};
+    screeningData = {};
+    cognitiveData = {};
+    logger.info('Skipping metrics calculation - waiting for more messages', { 
+      userId, 
+      messageCount: session.messageCount,
+      pendingMessages: session.pendingMessages.length,
+      requestId: req.id 
+    });
   }
 
   try {
@@ -424,26 +622,51 @@ Guidelines:
     }
 
     try {
+      // Clean and validate tasks data to match schema
+      const cleanedTasks = todosData.map(task => {
+        const cleaned = {
+          title: String(task.title || ''),
+          completed: Boolean(task.completed || false),
+          priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
+          category: ['self-care', 'mindfulness', 'social', 'physical', 'professional'].includes(task.category)
+            ? task.category
+            : 'self-care',
+        };
+        
+        // Add optional fields if they exist and are valid
+        if (task._id) cleaned._id = String(task._id);
+        if (task.dueDate) cleaned.dueDate = new Date(task.dueDate);
+        if (task.createdAt) cleaned.createdAt = new Date(task.createdAt);
+        if (task.updatedAt) cleaned.updatedAt = new Date(task.updatedAt);
+        if (task.chatMessage) cleaned.chatMessage = String(task.chatMessage);
+        if (task.chatTimestamp) cleaned.chatTimestamp = new Date(task.chatTimestamp);
+        
+        return cleaned;
+      });
+
       await Todo.findOneAndUpdate(
         { userId: user._id },
-        { tasks: todosData, updatedAt: new Date(), language: userLanguage },
+        { tasks: cleanedTasks, updatedAt: new Date(), language: userLanguage },
         { upsert: true, new: true }
       );
-      logger.info('Todos saved successfully', { userId, todoCount: todosData.length, requestId: req.id });
+      logger.info('Todos saved successfully', { userId, todoCount: cleanedTasks.length, requestId: req.id });
     } catch (dbErr) {
-      logger.error('Saving todos to DB failed', { userId, error: dbErr.message, requestId: req.id });
+      logger.error('Saving todos to DB failed', { userId, error: dbErr.message, stack: dbErr.stack, requestId: req.id });
     }
 
   } catch (err) {
     todosData = [];
     logger.error('Todo generation failed', { userId, error: err.message, requestId: req.id });
   }
+
   const response = {
     success: true,
     messages: session.messages,
     botResponse,
     metrics: {
       ...metricsData,
+      disclaimer: "Emotional metrics are AI-estimated using psycholinguistic markers (LIWC features, transformer embeddings) and are NOT clinically validated diagnostic tools.",
+      analysisMethod: "Feature-based NLP analysis using Sentence-BERT/DistilBERT embeddings and psycholinguistic markers",
       labels: {
         stressLevel: req.t("chatbot.metrics.stressLevel"),
         happinessLevel: req.t("chatbot.metrics.happinessLevel"),
@@ -458,7 +681,33 @@ Guidelines:
         high: req.t("chatbot.metrics.high")
       }
     },
-    screening: screeningData,
+    screening: {
+      ...screeningData,
+      disclaimer: "PHQ-9, GAD-7, and GHQ scores are AI-ESTIMATED PROXY INDICATORS based on conversation patterns, NOT actual questionnaire responses. For verified results, users must complete the standardized questionnaires.",
+      isProxy: true,
+      clinicalNote: "These scores predict likelihood using conversation patterns. For clinical diagnosis, complete the official PHQ-9/GAD-7/GHQ questionnaires."
+    },
+    cognitive: cognitiveData ? {
+      ...cognitiveData,
+      disclaimer: "Cognitive scores are estimated from conversation linguistic features (memory markers, orientation markers, attention markers, language markers, executive function markers), not formal neuropsychological testing.",
+      analysisMethod: "Linguistic feature analysis: Memory (repetition, forgetting), Orientation (confusion about time/events), Attention (off-topic, delayed responses), Language (word-finding difficulty), Executive (multi-step instructions, logical consistency)",
+      linguisticFeatures: {
+        memoryMarkers: "Repetition of earlier points, forgetting previously discussed details",
+        orientationMarkers: "Confusion about events/time/day, difficulty answering direct factual questions",
+        attentionMarkers: "Off-topic responses, delayed or incomplete answers",
+        languageMarkers: "Word-finding difficulty, reduced vocabulary richness",
+        executiveMarkers: "Trouble following multi-step instructions, logical inconsistency in conversation"
+      },
+      labels: {
+        orientationScore: req.t("chatbot.cognitive.orientationScore"),
+        memoryScore: req.t("chatbot.cognitive.memoryScore"),
+        attentionScore: req.t("chatbot.cognitive.attentionScore"),
+        languageScore: req.t("chatbot.cognitive.languageScore"),
+        executiveScore: req.t("chatbot.cognitive.executiveScore"),
+        cognitiveRiskLevel: req.t("chatbot.cognitive.cognitiveRiskLevel"),
+        viewInChart: req.t("chatbot.cognitive.viewInChart")
+      }
+    } : null,
     todos: {
       data: todosData,
       message: todosData.length > 0 ? req.t("chatbot.todos.generated") : req.t("chatbot.todos.noTasks"),

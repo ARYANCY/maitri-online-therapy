@@ -88,6 +88,38 @@ exports.getDashboard = asyncHandler(async (req, res) => {
       screeningRecords = (await Screening.find({ userId }).sort({ createdAt: -1 }).limit(7).lean()).reverse();
       dementiaRecords = (await DementiaAssessment.find({ userId, status: "completed" }).sort({ createdAt: -1 }).limit(7).lean()).reverse();
     }
+    
+    // Extract cognitive metrics from dementia records
+    const extractCognitiveMetrics = (records) => {
+      const metrics = {
+        reactionTimeAverage: [],
+        accuracyPercentage: [],
+        workingMemorySpan: [],
+        executiveFunction: [],
+        visuospatialAccuracy: [],
+        attentionConsistency: [],
+        processingSpeed: [],
+        learningCurve: [],
+        errorRate: []
+      };
+      
+      records.forEach(d => {
+        const cm = d?.cognitiveMetrics || {};
+        metrics.reactionTimeAverage.push(cm?.reactionTime?.average ?? null);
+        metrics.accuracyPercentage.push(cm?.accuracy?.percentage ?? null);
+        metrics.workingMemorySpan.push(cm?.workingMemorySpan?.averageMemoryScore ?? null);
+        metrics.executiveFunction.push(cm?.executiveFunction?.stroopScore ?? null);
+        metrics.visuospatialAccuracy.push(cm?.visuospatialAbility?.clockScore ?? null);
+        metrics.attentionConsistency.push(cm?.attentionFocus?.consistencyScore ?? null);
+        metrics.processingSpeed.push(cm?.processingSpeed?.averageGameTime ?? null);
+        metrics.learningCurve.push(cm?.learningCurve?.improvementFromFirst ?? null);
+        metrics.errorRate.push(cm?.errorAnalytics?.averageErrorRate ?? null);
+      });
+      
+      return metrics;
+    };
+    
+    const cognitiveMetricsData = extractCognitiveMetrics(dementiaRecords);
     const getScreeningValue = (s, field) => s.screening?.[field] ?? s[field] ?? 0;
     const length = Math.max(metricsRecords.length, screeningRecords.length, dementiaRecords.length);
 
@@ -109,7 +141,17 @@ exports.getDashboard = asyncHandler(async (req, res) => {
       phq9_score: screeningRecords.map(s => getScreeningValue(s, "phq9_score")).slice(0, length),
       gad7_score: screeningRecords.map(s => getScreeningValue(s, "gad7_score")).slice(0, length),
       ghq_score: screeningRecords.map(s => getScreeningValue(s, "ghq_score")).slice(0, length),
-      dementia_risk_score: dementiaRecords.map(d => d?.riskScore ?? 0).slice(0, length)
+      dementia_risk_score: dementiaRecords.map(d => d?.riskScore ?? 0).slice(0, length),
+      // Cognitive metrics (9 metrics based on actual game data)
+      reactionTimeAverage: cognitiveMetricsData.reactionTimeAverage.slice(0, length),
+      accuracyPercentage: cognitiveMetricsData.accuracyPercentage.slice(0, length),
+      workingMemorySpan: cognitiveMetricsData.workingMemorySpan.slice(0, length),
+      executiveFunction: cognitiveMetricsData.executiveFunction.slice(0, length),
+      visuospatialAccuracy: cognitiveMetricsData.visuospatialAccuracy.slice(0, length),
+      attentionConsistency: cognitiveMetricsData.attentionConsistency.slice(0, length),
+      processingSpeed: cognitiveMetricsData.processingSpeed.slice(0, length),
+      learningCurve: cognitiveMetricsData.learningCurve.slice(0, length),
+      errorRate: cognitiveMetricsData.errorRate.slice(0, length)
     };
     const todosRecord = await Todo.findOne({ userId }).lean();
     const todos = (todosRecord?.tasks || []).map(task => {
@@ -132,25 +174,29 @@ exports.getDashboard = asyncHandler(async (req, res) => {
     };
     res.set('Content-Language', userLanguage);
 
+    // Standardized response format
     res.json({
       success: true,
-      chartLabels,
-      chartData,
-      todos,
-      summary,
-      mode: type,
-      language: userLanguage,
-      labels: {
-        stressLevel: req.t("chatbot.metrics.stressLevel"),
-        happinessLevel: req.t("chatbot.metrics.happinessLevel"),
-        anxietyLevel: req.t("chatbot.metrics.anxietyLevel"),
-        overallMood: req.t("chatbot.metrics.overallMood"),
-        phq9Score: req.t("chatbot.metrics.phq9Score"),
-        gad7Score: req.t("chatbot.metrics.gad7Score"),
-        ghqScore: req.t("chatbot.metrics.ghqScore"),
-        dementiaRisk: req.t("chart.dementiaRisk"),
-        noData: req.t("dashboard.noData", "No Data")
-      }
+      data: {
+        chartLabels,
+        chartData,
+        todos,
+        summary,
+        mode: type,
+        language: userLanguage,
+        labels: {
+          stressLevel: req.t("chatbot.metrics.stressLevel"),
+          happinessLevel: req.t("chatbot.metrics.happinessLevel"),
+          anxietyLevel: req.t("chatbot.metrics.anxietyLevel"),
+          overallMood: req.t("chatbot.metrics.overallMood"),
+          phq9Score: req.t("chatbot.metrics.phq9Score"),
+          gad7Score: req.t("chatbot.metrics.gad7Score"),
+          ghqScore: req.t("chatbot.metrics.ghqScore"),
+          dementiaRisk: req.t("chart.dementiaRisk"),
+          noData: req.t("dashboard.noData", "No Data")
+        }
+      },
+      timestamp: new Date().toISOString()
     });
   } catch (err) {
     res.status(500).json({ success: false, error: req.t("dashboard.dataError") });
@@ -187,17 +233,22 @@ exports.getTasks = asyncHandler(async (req, res) => {
     return taskObj;
   });
 
+  // Standardized response format
+  // Standardized response format
   res.json({ 
     success: true,
-    tasks,
-    language: userLanguage,
-    labels: {
-      taskTitle: req.t("chatbot.todos.taskTitle"),
-      completed: req.t("chatbot.todos.completed"),
-      pending: req.t("chatbot.todos.pending"),
-      noTasks: req.t("dashboard.noTasks"),
-      chatContext: req.t("dashboard.chatContext", "Chat Context")
-    }
+    data: {
+      tasks,
+      language: userLanguage,
+      labels: {
+        taskTitle: req.t("chatbot.todos.taskTitle"),
+        completed: req.t("chatbot.todos.completed"),
+        pending: req.t("chatbot.todos.pending"),
+        noTasks: req.t("dashboard.noTasks"),
+        chatContext: req.t("dashboard.chatContext", "Chat Context")
+      }
+    },
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -210,17 +261,29 @@ exports.updateTasks = asyncHandler(async (req, res) => {
 
   if (!Array.isArray(tasks)) return res.status(400).json({ success: false, error: req.t("dashboard.tasksRequired") });
 
-  const validatedTasks = tasks.map(task => ({
-    _id: task._id || uuidv4(),
-    title: task.title || '',
-    completed: Boolean(task.completed),
-    priority: task.priority || 'medium',
-    category: ['self-care','mindfulness','social','physical','professional'].includes(task.category)
-      ? task.category
-      : 'self-care',
-    createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
-    updatedAt: new Date()
-  }));
+  // Clean and validate tasks to match schema exactly
+  const validatedTasks = tasks.map(task => {
+    const validated = {
+      title: String(task.title || ''),
+      completed: Boolean(task.completed || false),
+      priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
+      category: ['self-care','mindfulness','social','physical','professional'].includes(task.category)
+        ? task.category
+        : 'self-care',
+    };
+    
+    // Add _id if provided, otherwise let schema generate it
+    if (task._id) validated._id = String(task._id);
+    
+    // Add optional fields if they exist
+    if (task.dueDate) validated.dueDate = new Date(task.dueDate);
+    if (task.createdAt) validated.createdAt = new Date(task.createdAt);
+    validated.updatedAt = new Date();
+    if (task.chatMessage) validated.chatMessage = String(task.chatMessage);
+    if (task.chatTimestamp) validated.chatTimestamp = new Date(task.chatTimestamp);
+    
+    return validated;
+  });
 
   const todo = await Todo.findOneAndUpdate(
     { userId },
@@ -228,10 +291,14 @@ exports.updateTasks = asyncHandler(async (req, res) => {
     { new: true, upsert: true }
   );
 
+  // Standardized response format
   res.json({ 
     success: true, 
-    tasks: todo.tasks,
-    language: userLanguage,
-    message: req.t("dashboard.tasksUpdated")
+    data: {
+      tasks: todo.tasks,
+      language: userLanguage,
+      message: req.t("dashboard.tasksUpdated")
+    },
+    timestamp: new Date().toISOString()
   });
 });

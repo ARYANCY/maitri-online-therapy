@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import ResultPopup from "./ResultPopup";
+import ResultPopup from "./ResultPopup"; 
 import "../../css/game/ColorSequence.css";
 
 const DIFFICULTY = {
@@ -9,7 +9,6 @@ const DIFFICULTY = {
   hard: { rounds: 10, sequenceLength: 5, colors: ["red", "green", "blue", "yellow", "purple"] },
 };
 
-// Shuffle helper
 const shuffleArray = (arr) => arr.sort(() => Math.random() - 0.5);
 
 export default function ColorSequence({ onFinish, onExit }) {
@@ -21,19 +20,34 @@ export default function ColorSequence({ onFinish, onExit }) {
   const [userSequence, setUserSequence] = useState([]);
   const [timer, setTimer] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  const [phase, setPhase] = useState("show"); // show sequence / user input
+  const [phase, setPhase] = useState("show");
   const [showResult, setShowResult] = useState(false);
+  const [shuffledColors, setShuffledColors] = useState([]);
 
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
 
+  const getColorStyle = (color) => {
+    const colorMap = {
+      red: "#dc2626",
+      green: "#16a34a",
+      blue: "#2563eb",
+      yellow: "#eab308",
+      purple: "#9333ea"
+    };
+    return { backgroundColor: colorMap[color] || color };
+  };
+
   const generateSequence = useCallback(() => {
+    if (!difficulty) return;
     const colors = DIFFICULTY[difficulty].colors;
     const length = DIFFICULTY[difficulty].sequenceLength;
     const seq = Array.from({ length }, () => colors[Math.floor(Math.random() * colors.length)]);
     setSequence(seq);
     setUserSequence([]);
     setPhase("show");
+    const shuffled = shuffleArray([...colors]);
+    setShuffledColors(shuffled);
   }, [difficulty]);
 
   const startGame = (level) => {
@@ -44,20 +58,44 @@ export default function ColorSequence({ onFinish, onExit }) {
     setTimer(0);
     setShowResult(false);
     gameStartRef.current = Date.now();
-    generateSequence();
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setTimer((t) => t + 1);
+    }, 1000);
+    
+    setTimeout(() => {
+      const colors = DIFFICULTY[level].colors;
+      const length = DIFFICULTY[level].sequenceLength;
+      const seq = Array.from({ length }, () => colors[Math.floor(Math.random() * colors.length)]);
+      setSequence(seq);
+      setUserSequence([]);
+      setPhase("show");
+      setShuffledColors(shuffleArray([...colors]));
+    }, 100);
   };
 
-  // Show sequence briefly, then allow user input
   useEffect(() => {
-    if (phase === "show") {
-      const timeout = setTimeout(() => setPhase("input"), 1000 * sequence.length);
-      return () => clearTimeout(timeout);
-    }
-  }, [phase, sequence]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
-    if (phase === "input" && userSequence.length === sequence.length) {
-      // Check score
+    if (phase === "show" && sequence.length > 0) {
+      const timeout = setTimeout(() => {
+        setPhase("input");
+        if (difficulty && shuffledColors.length === 0) {
+          const colors = DIFFICULTY[difficulty].colors;
+          setShuffledColors(shuffleArray([...colors]));
+        }
+      }, 1000 * sequence.length);
+      return () => clearTimeout(timeout);
+    }
+  }, [phase, sequence.length, difficulty, shuffledColors.length]);
+
+  useEffect(() => {
+    if (phase === "input" && userSequence.length === sequence.length && sequence.length > 0) {
       let score = 0;
       userSequence.forEach((color, idx) => {
         if (color === sequence[idx]) score += 10;
@@ -65,102 +103,227 @@ export default function ColorSequence({ onFinish, onExit }) {
       setTotalScore((prev) => prev + score);
 
       if (round < maxRounds) {
-        setRound((prev) => prev + 1);
-        generateSequence();
+        setTimeout(() => {
+          setRound((prev) => prev + 1);
+          generateSequence();
+        }, 500);
       } else {
+        if (intervalRef.current) clearInterval(intervalRef.current);
         setShowResult(true);
       }
     }
-  }, [userSequence, sequence, round, maxRounds, generateSequence]);
+  }, [userSequence, sequence, round, maxRounds, generateSequence, phase]);
 
   const handleUserClick = (color) => {
-    if (phase !== "input") return;
+    if (phase !== "input" || userSequence.length >= sequence.length) return;
     setUserSequence((prev) => [...prev, color]);
   };
 
+  const handleExit = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    onExit?.();
+  }, [onExit]);
+
+  
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleExit();
+      } else if (e.key === "Backspace" && phase === "input" && userSequence.length > 0 && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        setUserSequence(prev => prev.slice(0, -1));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, userSequence.length, handleExit]);
+
   const handleNext = (retry = false) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
-    if (retry) startGame(difficulty);
-    else
+    if (retry) {
+      startGame(difficulty);
+    } else {
       onFinish?.({
         key: "color_sequence",
         score: totalScore,
         time: timer,
         detail: { rounds: maxRounds, difficulty, time: timer },
       });
+    }
   };
 
   if (!difficulty) {
     return (
-      <div className="colorseq-menu">
-        <h2>{t("dementia.games.colorSequence")}</h2>
-        <p>{t("dementia.selectDifficulty")}</p>
-        <div className="colorseq-difficulty">
-          <button onClick={() => startGame("easy")}>{t("dementia.easy")}</button>
-          <button onClick={() => startGame("medium")}>{t("dementia.medium")}</button>
-          <button onClick={() => startGame("hard")}>{t("dementia.hard")}</button>
+      <div className="container py-4">
+        <div className="row justify-content-center">
+          <div className="col-12 col-md-8 col-lg-6">
+            <div className="card shadow-sm border-0">
+              <div className="card-body text-center p-4">
+                <h2 className="h3 mb-3 fw-bold">{t("dementia.games.colorSequence")}</h2>
+                <p className="text-muted mb-4">{t("dementia.selectDifficulty")}</p>
+                <div className="d-flex flex-column gap-3 mb-4">
+                  <button 
+                    className="btn btn-outline-primary btn-lg"
+                    onClick={() => startGame("easy")}
+                  >
+                    {t("dementia.easy")}
+                  </button>
+                  <button 
+                    className="btn btn-outline-primary btn-lg"
+                    onClick={() => startGame("medium")}
+                  >
+                    {t("dementia.medium")}
+                  </button>
+                  <button 
+                    className="btn btn-outline-primary btn-lg"
+                    onClick={() => startGame("hard")}
+                  >
+                    {t("dementia.hard")}
+                  </button>
         </div>
-        <button className="btn btn-outline-secondary" onClick={onExit}>
+                <button className="btn btn-outline-secondary w-100" onClick={handleExit}>
           {t("dementia.exit")}
         </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="colorseq-wrapper">
-      {/* Game Name Headline */}
-      <h2 style={{ textAlign: "center", marginBottom: "16px", fontSize: "1.5rem", fontWeight: "bold", color: "#333" }}>
+    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-primary text-white">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h2 className="h4 mb-0 fw-bold">
         {t("dementia.games.colorSequence")}
       </h2>
-      
-      {/* Header */}
-      <div className="colorseq-header">
-        <div>
-          <div>
-            {t("dementia.round")} {round} / {maxRounds}
-          </div>
-          <div>{t("dementia.score")}: {totalScore}</div>
-          <div>{t("dementia.timer")}: {timer}s</div>
-        </div>
-        <button className="btn-exit" onClick={onExit}>
+                <button className="btn btn-light btn-sm" onClick={handleExit}>
           {t("dementia.exit")}
         </button>
       </div>
+            </div>
+            <div className="card-body">
+              <div className="row g-3 mb-4">
+                <div className="col-4 col-md-4">
+                  <div className="text-center p-3 bg-light rounded">
+                    <div className="small text-muted mb-1">{t("dementia.round")}</div>
+                    <div className="h5 mb-0 fw-bold">{round} / {maxRounds}</div>
+                  </div>
+                </div>
+                <div className="col-4 col-md-4">
+                  <div className="text-center p-3 bg-light rounded">
+                    <div className="small text-muted mb-1">{t("dementia.score")}</div>
+                    <div className="h5 mb-0 fw-bold text-success">{totalScore}</div>
+                  </div>
+                </div>
+                <div className="col-4 col-md-4">
+                  <div className="text-center p-3 bg-light rounded">
+                    <div className="small text-muted mb-1">{t("dementia.timer")}</div>
+                    <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                  </div>
+                </div>
+              </div>
 
-      {/* Instructions */}
-      <div className="colorseq-instructions">
+              <div className="alert alert-info text-center mb-4">
         {phase === "show" ? (
-          <p>Memorize this sequence:</p>
+                  <p className="mb-0 fw-bold">
+            {t("dementia.colorSequence.memorizeSequence", "Memorize this sequence:")}
+          </p>
         ) : (
-          <p>Click the colors in the same order!</p>
+                  <p className="mb-0 fw-bold">
+            {t("dementia.colorSequence.clickColorsOrder", "Click the colors in the same order!")}
+          </p>
         )}
-        <div className="colorseq-display">
+              </div>
+
+              {phase === "show" && (
+                <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
           {sequence.map((color, idx) => (
             <div
               key={idx}
-              className={`colorseq-block ${phase === "show" ? color : "hidden"}`}
+                      className="rounded"
+                      style={{
+                        ...getColorStyle(color),
+                        width: '80px',
+                        height: '80px',
+                        minWidth: '80px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                      }}
             ></div>
           ))}
         </div>
+              )}
+
+              {phase === "input" && shuffledColors.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-center fw-bold mb-3">{t("dementia.colorSequence.yourSequence", "Your sequence:")}</p>
+                  <div className="d-flex justify-content-center gap-2 flex-wrap mb-4">
+                    {Array.from({ length: sequence.length }).map((_, idx) => {
+                      const color = userSequence[idx];
+                      return (
+                        <div
+                          key={idx}
+                          className="rounded d-flex align-items-center justify-content-center"
+                          style={{
+                            ...(color ? getColorStyle(color) : { backgroundColor: '#e9ecef', border: '2px dashed #adb5bd' }),
+                            width: '80px',
+                            height: '80px',
+                            minWidth: '80px',
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            color: color ? 'white' : '#6c757d',
+                            textShadow: color ? '0 2px 4px rgba(0,0,0,0.3)' : 'none'
+                          }}
+                        >
+                          {!color && "?"}
+                        </div>
+                      );
+                    })}
       </div>
 
-      {/* User input buttons */}
-      {phase === "input" && (
-        <div className="colorseq-grid">
-          {shuffleArray(DIFFICULTY[difficulty].colors).map((color) => (
+                  <div className="d-flex justify-content-center gap-3 flex-wrap">
+          {shuffledColors.map((color, idx) => (
             <button
-              key={color}
-              style={{ backgroundColor: color, color: "#fff" }}
+              key={`${color}-${idx}`}
+                        className="btn rounded"
+                        style={{
+                          ...getColorStyle(color),
+                          width: '100px',
+                          height: '100px',
+                          minWidth: '100px',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          fontSize: '1.1rem',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                          border: 'none',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                        }}
               onClick={() => handleUserClick(color)}
+              disabled={userSequence.length >= sequence.length}
             >
               {color.toUpperCase()}
             </button>
           ))}
         </div>
-      )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Result */}
       {showResult && (
         <ResultPopup
           score={totalScore}

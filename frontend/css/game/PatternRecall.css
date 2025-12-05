@@ -1,0 +1,120 @@
+
+
+.patternrecall-display {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.patternrecall-block {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #ffffff;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.patternrecall-block.hidden {
+  opacity: 0.3;
+}
+
+.patternrecall-block.active {
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px #667eea;
+}
+
+.patternrecall-input-section {
+  margin: 1.5rem 0;
+}
+
+.patternrecall-user-sequence-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.patternrecall-user-sequence {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.patternrecall-user-block {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #ffffff;
+  border: 2px dashed #ccc;
+}
+
+.patternrecall-user-block.filled {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.patternrecall-user-block.error {
+  border-color: #ef4444;
+  animation: shake 0.3s;
+}
+
+.patternrecall-grid {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.patternrecall-color-btn {
+  width: 100px;
+  height: 100px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #ffffff;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.patternrecall-color-btn:disabled {
+  opacity: 0.5;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+
+@media (max-width: 768px) {
+  .patternrecall-block,
+  .patternrecall-user-block {
+    width: 60px;
+    height: 60px;
+    font-size: 0.75rem;
+  }
+  
+  .patternrecall-color-btn {
+    width: 80px;
+    height: 80px;
+    font-size: 0.75rem;
+  }
+}

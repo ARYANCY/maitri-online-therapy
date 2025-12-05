@@ -1,0 +1,168 @@
+
+
+:root {
+  
+  --bs-primary: #ABD1C6; 
+  --bs-primary-rgb: 171, 209, 198;
+  --bs-secondary: #5A6B66; 
+  --bs-secondary-rgb: 90, 107, 102;
+  --bs-success: #6bbf8f;
+  --bs-success-rgb: 107, 191, 143;
+  --bs-danger: #e88a8a;
+  --bs-danger-rgb: 232, 138, 138;
+  --bs-warning: #E8B88B; 
+  --bs-warning-rgb: 232, 184, 139;
+  --bs-info: #8BB5A8; 
+  --bs-info-rgb: 139, 181, 168;
+  --bs-light: #FAFAFA; 
+  --bs-light-rgb: 250, 250, 250;
+  --bs-dark: #23323A; 
+  --bs-dark-rgb: 35, 50, 58;
+  
+  
+  --bs-body-bg: #FAFAFA;
+  --bs-body-color: #23323A;
+  --bs-body-font-family: "Inter", system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --bs-body-font-size: 16px;
+  --bs-body-font-weight: 400;
+  --bs-body-line-height: 1.6;
+  
+  
+  --bs-border-width: 2px;
+  --bs-border-radius: 12px;
+  --bs-border-radius-sm: 8px;
+  --bs-border-radius-lg: 14px;
+  --bs-border-color: rgba(0, 0, 0, 0.06);
+  
+  
+  --bs-spacer: 1rem; 
+  
+  
+  --bs-box-shadow: 0 8px 20px rgba(36, 60, 50, 0.06);
+  --bs-box-shadow-sm: 0 2px 8px rgba(36, 60, 50, 0.04);
+  --bs-box-shadow-lg: 0 12px 28px rgba(36, 60, 50, 0.1);
+  
+  
+  --bs-transition-base: 0.3s ease;
+  --bs-transition-fast: 0.2s ease;
+  --bs-transition-slow: 0.4s ease;
+  
+  
+  --bs-primary: var(--soft-jade);
+  --bs-primary-rgb: 171, 209, 198;
+  --bs-secondary: var(--text-secondary);
+  --bs-secondary-rgb: 90, 107, 102;
+  --bs-success: #6bbf8f;
+  --bs-success-rgb: 107, 191, 143;
+  --bs-danger: #e88a8a;
+  --bs-danger-rgb: 232, 138, 138;
+  --bs-warning: var(--accent-orange);
+  --bs-warning-rgb: 232, 184, 139;
+  --bs-info: var(--soft-jade-dark);
+  --bs-info-rgb: 139, 181, 168;
+  --bs-light: var(--cloud-white);
+  --bs-light-rgb: 250, 250, 250;
+  --bs-dark: var(--text-dark);
+  --bs-dark-rgb: 35, 50, 58;
+}
+
+
+.btn-primary {
+  --bs-btn-bg: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-color: var(--bs-dark);
+  --bs-btn-hover-bg: #9BC5B8;
+  --bs-btn-hover-border-color: #9BC5B8;
+  --bs-btn-hover-color: var(--bs-dark);
+  --bs-btn-active-bg: #8BB5A8;
+  --bs-btn-active-border-color: #8BB5A8;
+  --bs-btn-active-color: var(--bs-dark);
+  --bs-btn-border-radius: var(--bs-border-radius);
+  --bs-btn-font-weight: 600;
+  --bs-btn-padding-x: 1.25rem;
+  --bs-btn-padding-y: 0.875rem;
+  border-width: 2px;
+  box-shadow: var(--bs-box-shadow-sm);
+  transition: all var(--bs-transition-base);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bs-box-shadow);
+}
+
+.btn-secondary {
+  --bs-btn-bg: #FFFFFF;
+  --bs-btn-border-color: var(--bs-border-color);
+  --bs-btn-color: var(--bs-dark);
+  --bs-btn-hover-bg: var(--bs-light);
+  --bs-btn-hover-border-color: var(--bs-primary);
+  --bs-btn-hover-color: var(--bs-dark);
+  --bs-btn-border-radius: var(--bs-border-radius);
+  --bs-btn-font-weight: 600;
+  border-width: 2px;
+}
+
+
+.card {
+  --bs-card-border-radius: var(--bs-border-radius-lg);
+  --bs-card-border-width: 1px;
+  --bs-card-border-color: var(--bs-border-color);
+  --bs-card-box-shadow: var(--bs-box-shadow);
+  --bs-card-spacer-y: 1.25rem;
+  --bs-card-spacer-x: 1.25rem;
+  transition: all var(--bs-transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--bs-box-shadow-lg);
+  transform: translateY(-2px);
+}
+
+
+.form-control,
+.form-select {
+  --bs-border-radius: var(--bs-border-radius);
+  --bs-border-width: 2px;
+  --bs-border-color: var(--bs-border-color);
+  --bs-body-bg: #FFFFFF;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  transition: all var(--bs-transition-base);
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.form-control:focus,
+.form-select:focus {
+  --bs-border-color: var(--bs-primary);
+  --bs-box-shadow: 0 0 0 3px rgba(171, 209, 198, 0.1);
+  border-color: var(--bs-primary);
+}
+
+.form-select {
+  min-width: 200px;
+  width: auto;
+}
+
+.form-select option {
+  white-space: normal;
+  padding: 0.5rem;
+}
+
+
+.navbar {
+  --bs-navbar-padding-y: 0;
+  --bs-navbar-brand-font-size: 2.25rem;
+  --bs-navbar-brand-font-weight: 900;
+}
+
+
+.bg-soft-jade { background-color: var(--bs-primary) !important; }
+.bg-cloud-white { background-color: var(--bs-light) !important; }
+.text-soft-jade { color: var(--bs-primary) !important; }
+.border-soft-jade { border-color: var(--bs-primary) !important; }
+.shadow-card { box-shadow: var(--bs-box-shadow) !important; }
+.shadow-card-hover { box-shadow: var(--bs-box-shadow-lg) !important; }
+

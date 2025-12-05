@@ -4,21 +4,36 @@ import Chatbot from "../components/Chatbot";
 import Chart from "../components/Chart";
 import Todo from "../components/Todo";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import API from "../utils/axiosClient";
-import Reminder from "../components/reminder";
 import Game from "./game";
-import "../css/Dashboard.css";
+import "../css/pages/Dashboard.css";
 import { useTranslation } from "react-i18next";
-import jsPDF from "jspdf";
-import GuLogo from "@/images/logo.png";
-import autoTable from "jspdf-autotable";
+import { downloadReport } from "../utils/downloadReport";
+import bgImage from "@/images/bg.jpg";
+import { storeUserSession, clearUserSession, storePreferredLang, getPreferredLang } from "../utils/session";
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const reportRef = useRef();
 
-  const [activeTab, setActiveTab] = useState("chatbot");
+  
+  const validTabs = ["chatbot", "chart", "todo", "dementia"];
+  
+  
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const savedTab = localStorage.getItem("dashboardActiveTab");
+      
+      if (savedTab && validTabs.includes(savedTab)) {
+        return savedTab;
+      }
+    } catch (err) {
+      console.warn("Failed to load saved tab:", err);
+    }
+    return "chatbot";
+  });
   const [user, setUser] = useState(null);
   const [chartData, setChartData] = useState({});
   const [chartLabels, setChartLabels] = useState([]);
@@ -27,50 +42,81 @@ export default function Dashboard() {
   const [error, setError] = useState({ user: null, dashboard: null, todos: null });
   const [downloading, setDownloading] = useState(false);
   const [showFormatPopup, setShowFormatPopup] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const isFetchingRef = useRef(false);
+  const notificationRef = useRef(null);
   const lastFetchAtRef = useRef(0);
+  const fetchDashboardDataRef = useRef(null);
 
-  // --- Fetch user and set language ---
   const fetchUser = useCallback(async () => {
     try {
+      console.log("[SESSION DEBUG] Starting session verification (Dashboard.jsx)...");
       const data = await API.auth.checkSession();
-      if (!data?.user) {
-        // Clear session storage
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("isAdmin");
-        localStorage.removeItem("sessionTime");
+      console.log("[SESSION DEBUG] Session check completed (Dashboard.jsx):", {
+        success: data?.success,
+        hasUser: !!data?.user,
+        userId: data?.user?._id,
+        message: data?.message
+      });
+      
+      
+      if (!data?.success || !data?.user) {
+        
+        
+        if (data?.success === false) {
+          
+          if (import.meta.env.DEV) {
+            console.log(`[SESSION] No active session (Dashboard.jsx) - expected when not logged in:`, {
+              success: data?.success,
+              message: data?.message
+            });
+          }
+        } else {
+          
+          console.error(`[SESSION ERROR] Unexpected session state (Dashboard.jsx):`, {
+            success: data?.success,
+            hasUser: !!data?.user,
+            message: data?.message,
+            debug: data?.debug,
+            fullResponse: data
+          });
+        }
+        clearUserSession();
         navigate("/");
         return;
       }
 
       setUser(data.user);
 
-      // Store session info properly
-      if (data.user) {
-        localStorage.setItem("userId", data.user._id || "");
-        localStorage.setItem("userEmail", data.user.email || "");
-        localStorage.setItem("userName", data.user.name || "");
-        localStorage.setItem("isAdmin", data.user.isAdmin ? "true" : "false");
-        localStorage.setItem("sessionTime", Date.now().toString());
-      }
+      
+      storeUserSession(data.user, data.sessionInfo);
 
-      // Only change language if needed
-      const prefLang = data.user.preferredLang || localStorage.getItem("preferredLang") || "en";
-      if (i18n.language !== prefLang) i18n.changeLanguage(prefLang);
-      localStorage.setItem("preferredLang", prefLang);
+      const prefLang = data.user.preferredLang || getPreferredLang() || "en";
+      if (i18n.language !== prefLang) {
+        i18n.changeLanguage(prefLang);
+      }
+      storePreferredLang(prefLang);
 
       setError(prev => ({ ...prev, user: null }));
     } catch (err) {
-      console.error("Session check failed:", err);
+      console.error(`[SESSION ERROR] Session check failed (Dashboard.jsx):`, {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+        code: err.code,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       setError(prev => ({ ...prev, user: err.message }));
+      
+      clearUserSession(true);
     } finally {
       setLoading(prev => ({ ...prev, user: false }));
     }
   }, [navigate, i18n]);
 
-  // --- Fetch dashboard data ---
   const fetchDashboardData = useCallback(async () => {
     if (!user || isFetchingRef.current) return;
 
@@ -82,7 +128,8 @@ export default function Dashboard() {
     setLoading(prev => ({ ...prev, dashboard: true, todos: true }));
 
     try {
-      const data = await API.dashboard.get({ includeChat: true });
+      const response = await API.dashboard.get({ includeChat: true });
+      const data = response?.data || response; 
 
       const normalizedChartData = {};
       Object.entries(data.chartData || {}).forEach(([key, val]) => {
@@ -96,15 +143,18 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Dashboard fetch failed:", err);
       if (err.message.includes("401")) navigate("/");
-      else setError(prev => ({ ...prev, dashboard: err.message || t("dashboard.error.fetchFailed", "Failed to fetch dashboard") }));
+      else setError(prev => ({ ...prev, dashboard: err.message || "Failed to fetch dashboard" }));
     } finally {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
       isFetchingRef.current = false;
     }
-  }, [navigate, user]);
+  }, [navigate, user]); // Removed 't' to prevent infinite re-renders
 
+  
+  useEffect(() => {
+    fetchDashboardDataRef.current = fetchDashboardData;
+  }, [fetchDashboardData]);
 
-  // --- Handle todos update ---
   const handleTodosUpdate = useCallback(async (updatedTodos) => {
     setLoading(prev => ({ ...prev, todos: true }));
 
@@ -114,389 +164,359 @@ export default function Dashboard() {
       setError(prev => ({ ...prev, todos: null }));
     } catch (err) {
       console.error("Failed to update tasks:", err);
-      setError(prev => ({ ...prev, todos: err.message || t("dashboard.error.updateTodosFailed", "Todo update failed") }));
+      setError(prev => ({ ...prev, todos: err.message || "Todo update failed" }));
     } finally {
       setLoading(prev => ({ ...prev, todos: false }));
     }
-  }, []);
+  }, []); // Stable callback - no dependencies needed
 
-  // --- Download report (PDF/CSV/JSON) ---
   const handleDownloadReport = useCallback(async (format = "pdf") => {
     if (!user) return;
     setDownloading(true);
 
     try {
-      const data = await API.dashboard.get();
-
-      // Normalize chart data
-      const normalizedChartData = {};
-      Object.keys(data.chartData || {}).forEach(key => {
-        normalizedChartData[key] = Array.isArray(data.chartData[key])
-          ? data.chartData[key]
-          : [data.chartData[key]];
-      });
-
-      // For PDF, always use English translations
-      const tPdf = format === "pdf" ? i18n.getFixedT("en") : t;
-
-      const interpretValue = (val) => {
-        const v = parseFloat(val);
-        if (isNaN(v)) return tPdf("interpretation.unavailable");
-        if (v <= 5) return tPdf("interpretation.healthy");
-        if (v <= 10) return tPdf("interpretation.moderate");
-        return tPdf("interpretation.severe");
-      };
-
-      const metricKeys = Object.keys(normalizedChartData);
-
-      // --- PDF Export ---
-      if (format === "pdf") {
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const marginX = 18;
-        let y = 18;
-
-        // ========== PAGE 1: EXISTING REPORT ==========
-        pdf.addImage(GuLogo, "PNG", marginX, y, 24, 24);
-        pdf.setFont("helvetica", "bold").setFontSize(18);
-        pdf.text(tPdf("university.name"), pageWidth / 2, y + 11, { align: "center" });
-        pdf.setFont("helvetica", "normal").setFontSize(12);
-        pdf.text(tPdf("university.location"), pageWidth / 2, y + 19, { align: "center" });
-        y += 34;
-
-        pdf.setFont("helvetica", "bold").setFontSize(15);
-        pdf.text(tPdf("report.title"), pageWidth / 2, y, { align: "center" });
-        y += 12;
-
-        pdf.setFont("times", "italic").setFontSize(10);
-        pdf.setTextColor(100);
-        pdf.text(tPdf("report.disclaimer.1"), marginX, y, { maxWidth: pageWidth - 2*marginX });
-        y += 5;
-        pdf.text(tPdf("report.disclaimer.2"), marginX, y, { maxWidth: pageWidth - 2*marginX });
-        pdf.setTextColor(0,0,0);
-        y += 10;
-
-        pdf.setFont("helvetica", "bold").setFontSize(13);
-        pdf.text(tPdf("section.userProfile"), marginX, y);
-        y += 8;
-        pdf.setFont("helvetica", "normal").setFontSize(11);
-        pdf.text(`${tPdf("user.name")}: ${user?.name || tPdf("user.guest")}`, marginX, y); y+=6;
-        pdf.text(`${tPdf("user.email")}: ${user?.email || "N/A"}`, marginX, y); y+=6;
-        pdf.text(`${tPdf("user.language")}: ${localStorage.getItem("preferredLang") || "en"}`, marginX, y); y+=12;
-
-        const tableRows = metricKeys.map(key => {
-          const vals = normalizedChartData[key];
-          return [
-            tPdf(`metrics.${key}.label`),
-            vals.join(", "),
-            interpretValue(vals[0]),
-            tPdf(`metrics.${key}.description`),
-            tPdf(`metrics.${key}.ideal`)
-          ];
-        });
-
-        autoTable(pdf, {
-          startY: y,
-          head: [[tPdf("table.metric"), tPdf("table.value"), tPdf("table.interpretation"), tPdf("table.description"), tPdf("table.ideal")]],
-          body: tableRows,
-          theme: "grid",
-          headStyles: { fillColor:[44,62,80], textColor:255, halign:"center", valign:"middle" },
-          styles: { fontSize:10, cellPadding:3, overflow:"linebreak" },
-          alternateRowStyles: { fillColor:[250,250,250] },
-          columnStyles: { 0:{cellWidth:40}, 1:{cellWidth:25}, 2:{cellWidth:35}, 3:{cellWidth:55}, 4:{cellWidth:35} },
-          margin: { left: marginX, right: marginX }
-        });
-
-        y = pdf.lastAutoTable.finalY + 20;
-        pdf.setFont("times", "italic").setFontSize(10);
-        pdf.setTextColor(120);
-        pdf.text(`${tPdf("footer.text")} ${new Date().getFullYear()}`, pageWidth/2, pageHeight - 10, { align: "center" });
-
-        // ========== PAGE 2: DEMENTIA ASSESSMENT ==========
-        try {
-          const reportData = await API.report.fetch();
-          if (reportData && reportData.dementiaSummary && reportData.dementiaSummary.latestRiskScore !== undefined) {
-            pdf.addPage();
-            y = 18;
-
-            // Header
-            pdf.addImage(GuLogo, "PNG", marginX, y, 24, 24);
-            pdf.setFont("helvetica", "bold").setFontSize(18);
-            pdf.text(tPdf("university.name"), pageWidth / 2, y + 11, { align: "center" });
-            pdf.setFont("helvetica", "normal").setFontSize(12);
-            pdf.text(tPdf("university.location"), pageWidth / 2, y + 19, { align: "center" });
-            y += 34;
-
-            pdf.setFont("helvetica", "bold").setFontSize(15);
-            pdf.text(tPdf("chart.dementiaMetrics", "Dementia Assessment Report"), pageWidth / 2, y, { align: "center" });
-            y += 12;
-
-            // AI WARNING BOX
-            pdf.setFillColor(255, 193, 7); // Yellow background
-            pdf.roundedRect(marginX, y, pageWidth - 2*marginX, 20, 3, 3, "FD");
-            pdf.setFont("helvetica", "bold").setFontSize(11);
-            pdf.setTextColor(139, 69, 19); // Dark brown text
-            pdf.text("⚠️ " + tPdf("report.dementiaWarning", "AI-Generated Assessment Warning"), marginX + 5, y + 8);
-            pdf.setFont("helvetica", "normal").setFontSize(9);
-            pdf.text(tPdf("report.dementiaWarningText", "The dementia risk assessment results below are calculated using AI technology. These results are for informational and self-assessment purposes only and should not be considered a clinical diagnosis. Please consult a licensed healthcare professional for any medical evaluation or concerns."), marginX + 5, y + 14, { maxWidth: pageWidth - 2*marginX - 10 });
-            pdf.setTextColor(0, 0, 0);
-            y += 25;
-
-            const dSum = reportData.dementiaSummary;
-            
-            // Risk Score Section
-            pdf.setFont("helvetica", "bold").setFontSize(13);
-            pdf.text(tPdf("chart.dementiaRisk", "Dementia Risk Score"), marginX, y);
-            y += 8;
-            pdf.setFont("helvetica", "normal").setFontSize(11);
-            
-            const riskScorePercent = Math.round((dSum.latestRiskScore || 0) * 100);
-            const riskLevel = dSum.latestRiskLevel || "low";
-            
-            // Color code based on risk level
-            if (riskLevel === "high") pdf.setTextColor(220, 53, 69); // Red
-            else if (riskLevel === "moderate") pdf.setTextColor(255, 193, 7); // Yellow
-            else pdf.setTextColor(40, 167, 69); // Green
-            
-            pdf.setFont("helvetica", "bold").setFontSize(14);
-            pdf.text(`${riskScorePercent}%`, marginX, y);
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFont("helvetica", "normal").setFontSize(11);
-            pdf.text(`(${tPdf(`report.riskLevel.${riskLevel}`, riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1))} ${tPdf("report.risk", "Risk")})`, marginX + 25, y);
-            y += 8;
-
-            if (dSum.latestDate) {
-              pdf.text(`${tPdf("report.assessmentDate", "Assessment Date")}: ${new Date(dSum.latestDate).toLocaleDateString()}`, marginX, y);
-              y += 6;
-            }
-            if (dSum.latestDifficulty) {
-              pdf.text(`${tPdf("report.difficulty", "Difficulty Level")}: ${dSum.latestDifficulty.charAt(0).toUpperCase() + dSum.latestDifficulty.slice(1)}`, marginX, y);
-              y += 8;
-            }
-
-            // Explanation Section
-            if (dSum.explanation) {
-              pdf.setFont("helvetica", "bold").setFontSize(13);
-              pdf.text(tPdf("report.explanation", "Risk Explanation"), marginX, y);
-              y += 8;
-              pdf.setFont("helvetica", "normal").setFontSize(10);
-              const explanationLines = pdf.splitTextToSize(dSum.explanation, pageWidth - 2*marginX);
-              pdf.text(explanationLines, marginX, y);
-              y += explanationLines.length * 5 + 8;
-            }
-
-            // Suggestions Section
-            if (Array.isArray(dSum.suggestions) && dSum.suggestions.length > 0) {
-              pdf.setFont("helvetica", "bold").setFontSize(13);
-              pdf.text(tPdf("report.suggestions", "Recommendations & Suggestions"), marginX, y);
-              y += 8;
-              pdf.setFont("helvetica", "normal").setFontSize(10);
-              dSum.suggestions.forEach((suggestion, idx) => {
-                if (y > pageHeight - 30) {
-                  pdf.addPage();
-                  y = 18;
-                }
-                const suggestionLines = pdf.splitTextToSize(`${idx + 1}. ${suggestion}`, pageWidth - 2*marginX - 10);
-                pdf.text(suggestionLines, marginX + 5, y);
-                y += suggestionLines.length * 5 + 4;
-              });
-              y += 5;
-            }
-
-            // Footer
-            pdf.setFont("times", "italic").setFontSize(10);
-            pdf.setTextColor(120);
-            pdf.text(`${tPdf("footer.text")} ${new Date().getFullYear()}`, pageWidth/2, pageHeight - 10, { align: "center" });
-          }
-        } catch (err) {
-          console.error("Failed to fetch dementia data for report:", err);
-          // Continue without page 2 if dementia data fetch fails
-        }
-
-        pdf.save("maitri-mental-health-report.pdf");
-      }
-
-      // --- CSV Export ---
-      else if (format === "csv") {
-        const now = new Date();
-        const timestamp = now.toISOString().replace(/[:.]/g,"-");
-        const filename = `maitri-mental-health-report-${timestamp}.csv`;
-
-        const headers = [t("table.metric"), t("table.value"), t("table.interpretation"), t("table.description"), t("table.ideal")];
-
-        const metaLines = [
-          `# ${t("report.title")}`,
-          `# ${t("report.generatedAt")}: ${now.toLocaleString()}`,
-          `# ${t("report.institution")}: ${t("university.name")}`,
-          `# ${t("report.disclaimerShort")}`,
-          "#",
-          headers.join(",")
-        ];
-
-        const escapeCSV = text => `"${String(text ?? "").trim().replace(/\r?\n|\r/g," ").replace(/"/g,'""')}"`;
-
-        const rows = metricKeys.map(key => {
-          const vals = normalizedChartData[key];
-          return [
-            t(`metrics.${key}.label`),
-            vals.join(", "),
-            interpretValue(vals[0]),
-            t(`metrics.${key}.description`),
-            t(`metrics.${key}.ideal`)
-          ].map(escapeCSV).join(",");
-        });
-
-        const csvContent = "\uFEFF" + metaLines.join("\n") + "\n" + rows.join("\n");
-
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-
-      // --- JSON Export ---
-      else if (format === "json") {
-        const report = {
-          metadata: {
-            title: t("report.title"),
-            generated_at: new Date().toISOString(),
-            institution: t("university.name"),
-            disclaimer: t("report.disclaimerShort")
-          },
-          user: {
-            name: user?.name || t("user.guest"),
-            email: user?.email || "N/A",
-            language: localStorage.getItem("preferredLang") || "en"
-          },
-          metrics: metricKeys.map(key => {
-            const vals = normalizedChartData[key];
-            return {
-              metric: t(`metrics.${key}.label`),
-              value: vals[0] || 0,
-              interpretation: interpretValue(vals[0]),
-              description: t(`metrics.${key}.description`),
-              ideal_range: t(`metrics.${key}.ideal`)
-            };
-          })
-        };
-
-        const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "maitri-mental-health-report.json";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-
-    } catch(e) {
-      console.error("Report generation failed:", e);
+      await downloadReport(format, user, API);
+    } catch (error) {
+      console.error("Report generation failed:", error);
     } finally {
       setDownloading(false);
     }
-  }, [user, t, i18n]);
+  }, [user]);
 
-  // --- Fetch user only once on mount ---
+  
+  const handleTabChange = useCallback((tab) => {
+    
+    if (validTabs.includes(tab)) {
+      setActiveTab(tab);
+      try {
+        localStorage.setItem("dashboardActiveTab", tab);
+      } catch (err) {
+        console.warn("Failed to save active tab:", err);
+      }
+    } else {
+      console.warn("Invalid tab:", tab);
+    }
+  }, [validTabs]);
+
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  // --- Fetch dashboard data only when user exists and not already fetching ---
-  useEffect(() => { 
-    if (user && !isFetchingRef.current) fetchDashboardData(); 
-  }, [user, fetchDashboardData]);
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const [notifRes, countRes] = await Promise.all([
+        API.notifications.getAll(),
+        API.notifications.getUnreadCount()
+      ]);
+      if (notifRes?.success) {
+        setNotifications(notifRes.notifications || []);
+      }
+      if (countRes?.success) {
+        setUnreadCount(countRes.count || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  }, []);
 
-  // --- Update dashboard on language change ---
+  const handleMarkAsRead = useCallback(async (notificationId) => {
+    try {
+      await API.notifications.markAsRead(notificationId);
+      setNotifications(prev => prev.map(n => 
+        n._id === notificationId ? { ...n, isRead: true } : n
+      ));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
+  }, []);
+
+  const handleMarkAllAsRead = useCallback(async () => {
+    try {
+      await API.notifications.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
+  }, []);
+
+  const handleDeleteNotification = useCallback(async (notificationId) => {
+    try {
+      await API.notifications.delete(notificationId);
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
+  }, []);
+
+  useEffect(() => { 
+    if (user && !isFetchingRef.current && fetchDashboardDataRef.current) {
+      fetchDashboardDataRef.current();
+      fetchNotifications();
+    }
+  }, [user, fetchNotifications]); 
+
   useEffect(() => {
-    const handler = () => { if (user && !isFetchingRef.current) fetchDashboardData(); };
+    const handler = () => { 
+      if (user && !isFetchingRef.current && fetchDashboardDataRef.current) {
+        fetchDashboardDataRef.current(); 
+      }
+    };
     i18n.on("languageChanged", handler);
     return () => i18n.off("languageChanged", handler);
-  }, [i18n, user, fetchDashboardData]);
+  }, [i18n, user]);
+
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications]); 
 
   const renderContent = () => {
     if (loading.user || loading.dashboard)
-      return <p className="dashboard-loading">{t("dashboard.loading","Loading...")}</p>;
+      return <p className="text-center py-5">{t("dashboard.loading","Loading...")}</p>;
     if (error.dashboard)
-      return <p className="dashboard-error">{t("dashboard.error","An error occurred")}: {error.dashboard}</p>;
+      return <div className="alert alert-danger">{t("dashboard.error","An error occurred")}: {error.dashboard}</div>;
 
     switch (activeTab) {
       case "chatbot":
-        return <div className="dashboard-tab-content"><Chatbot onTodosUpdate={handleTodosUpdate} /></div>;
+        return <Chatbot onTodosUpdate={handleTodosUpdate} onDataUpdate={fetchDashboardData} />;
       case "chart":
-        return <div className="dashboard-tab-content"><Chart 
+        return <Chart 
             chartData={chartData} 
             chartLabels={chartLabels} 
             onRefresh={fetchDashboardData} 
-          />
-          </div>;
+          />;
       case "todo":
-        return <div className="dashboard-tab-content"><Todo
+        return <Todo
               tasks={todos}
               onUpdate={handleTodosUpdate}
               onFetch={fetchDashboardData}
               loading={loading.todos}
               showChatContext={true}
-            /></div>;
-      case "reminder":
-        return <div className="dashboard-tab-content"><Reminder /></div>;
+            />;
       case "dementia":
-        return <div className="dashboard-tab-content"><Game /></div>;
+        return <Game onDataUpdate={fetchDashboardData} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="dashboard-page">
+    <div 
+      className="dashboard-page d-flex flex-column min-vh-100"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       <Navbar user={user} downloadReport={handleDownloadReport} />
+      <div className="navbar-spacer" style={{height: '160px'}}></div>
       <div className="dashboard-container" ref={reportRef}>
         <div className="dashboard-header">
-          <div className="d-flex gap-2">
-            <button className="dashboard-download-btn download-btn" onClick={()=>setShowFormatPopup(true)} disabled={downloading}>
-              {downloading ? t("dashboard.downloading","Generating Report...") : t("dashboard.downloadReport","Download Report")}
+          <div className="d-flex gap-3 align-items-center justify-content-center flex-wrap w-100">
+            <button 
+              className="btn btn-primary d-flex align-items-center justify-content-center gap-2" 
+              onClick={()=>setShowFormatPopup(true)} 
+              disabled={downloading}
+              aria-label={t("dashboard.downloadReport","Download Report")}
+            >
+              {downloading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                  <span>{t("dashboard.downloading","Generating Report...")}</span>
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                  </svg>
+                  <span>{t("dashboard.downloadReport","Download Report")}</span>
+                </>
+              )}
             </button>
 
+            {/* Notification Bell */}
+            <div className="position-relative" ref={notificationRef}>
+              <button
+                className="btn btn-outline-primary d-flex align-items-center justify-content-center position-relative"
+                onClick={() => setShowNotifications(!showNotifications)}
+                aria-label="Notifications"
+                style={{ width: '44px', height: '44px', borderRadius: '50%' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <span 
+                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                    style={{ fontSize: '0.65rem' }}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div 
+                  className="position-absolute end-0 mt-2 card shadow-lg"
+                  style={{ 
+                    width: '350px', 
+                    maxHeight: '400px', 
+                    overflowY: 'auto',
+                    zIndex: 1050,
+                    borderRadius: '12px'
+                  }}
+                >
+                  <div className="card-header d-flex justify-content-between align-items-center" style={{ background: 'linear-gradient(135deg, #c0d7d6 0%, rgb(5, 82, 47) 100%)', color: '#fff' }}>
+                    <h6 className="mb-0">
+                      <i className="bi bi-bell me-2"></i>
+                      {t("notifications.title", "Notifications")}
+                    </h6>
+                    {unreadCount > 0 && (
+                      <button 
+                        className="btn btn-sm btn-light"
+                        onClick={handleMarkAllAsRead}
+                      >
+                        {t("notifications.markAllRead", "Mark all read")}
+                      </button>
+                    )}
+                  </div>
+                  <div className="card-body p-0">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-4 text-muted">
+                        <i className="bi bi-bell-slash display-6 mb-2"></i>
+                        <p className="mb-0">{t("notifications.empty", "No notifications yet")}</p>
+                      </div>
+                    ) : (
+                      <ul className="list-group list-group-flush">
+                        {notifications.slice(0, 10).map((notif) => (
+                          <li 
+                            key={notif._id} 
+                            className={`list-group-item ${!notif.isRead ? 'bg-light' : ''}`}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <div className="d-flex justify-content-between align-items-start">
+                              <div className="flex-grow-1" onClick={() => handleMarkAsRead(notif._id)}>
+                                <div className="d-flex align-items-center mb-1">
+                                  <i className={`bi ${notif.type === 'appointment_accepted' ? 'bi-check-circle-fill text-success' : notif.type === 'appointment_rejected' ? 'bi-x-circle-fill text-danger' : 'bi-info-circle-fill text-info'} me-2`}></i>
+                                  <strong className="small">{notif.title}</strong>
+                                  {!notif.isRead && <span className="badge bg-primary ms-2" style={{ fontSize: '0.6rem' }}>NEW</span>}
+                                </div>
+                                <p className="mb-1 small text-muted">{notif.message}</p>
+                                <small className="text-muted">{new Date(notif.createdAt).toLocaleString()}</small>
+                              </div>
+                              <button 
+                                className="btn btn-sm btn-link text-danger p-0 ms-2"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteNotification(notif._id); }}
+                                title="Delete"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {showFormatPopup && (
-              <div className="report-popup-overlay" onClick={()=>setShowFormatPopup(false)}>
-                <div className="report-popup" onClick={e=>e.stopPropagation()}>
-                  <h6>{t("report.selectFormat", "Select Report Format")}</h6>
-                  <div className="report-options">
+              <div 
+                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                style={{zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)'}} 
+                onClick={()=>setShowFormatPopup(false)}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="format-popup-title"
+              >
+                <div 
+                  className="card p-4 position-relative shadow-lg" 
+                  style={{
+                    minWidth: '300px', 
+                    maxWidth: '500px', 
+                    width: '90%',
+                    animation: 'fadeInScale 0.3s ease-out'
+                  }} 
+                  onClick={e=>e.stopPropagation()}
+                >
+                  <button 
+                    className="btn-close position-absolute top-0 end-0 m-3" 
+                    onClick={()=>setShowFormatPopup(false)} 
+                    aria-label={t("common.close", "Close")}
+                  ></button>
+                  <h5 id="format-popup-title" className="card-title mb-4 text-center fw-bold">
+                    {t("report.selectFormat", "Select Report Format")}
+                  </h5>
+                  <div className="d-flex gap-3 flex-wrap justify-content-center">
                     {["pdf","csv","json"].map(fmt => (
-                      <button key={fmt} className="report-option-btn" onClick={()=>{handleDownloadReport(fmt); setShowFormatPopup(false);}}>
-                        {fmt.toUpperCase()} 
-                        <span className="info-tooltip" data-format={fmt}>
-                          <i className="info-icon">ℹ</i>
-                          <span className="tooltip-text">
-                            {t(`report.formatTooltip.${fmt}`, fmt === "pdf" ? "Download a professionally formatted PDF report with colored metrics and interpretations" : fmt === "csv" ? "Export data to CSV format for spreadsheet analysis with detailed descriptions" : "Export structured data in JSON format for technical analysis or integration")}
-                          </span>
-                        </span>
+                      <button 
+                        key={fmt} 
+                        className="btn btn-outline-primary d-flex flex-column align-items-center gap-2 p-3" 
+                        style={{
+                          minWidth: '100px',
+                          transition: 'all 0.2s ease',
+                          borderWidth: '2px'
+                        }}
+                        onClick={()=>{handleDownloadReport(fmt); setShowFormatPopup(false);}}
+                        aria-label={`Download ${fmt.toUpperCase()} report`}
+                      >
+                        <span className="fw-bold fs-5">{fmt.toUpperCase()}</span>
+                        <small className="text-muted">{fmt === 'pdf' ? 'Document' : fmt === 'csv' ? 'Spreadsheet' : 'Data'}</small>
                       </button>
                     ))}
                   </div>
-                  <button className="report-popup-close" onClick={()=>setShowFormatPopup(false)}>✕</button>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <ul className="dashboard-tabs">
-          {["chatbot","chart","todo","reminder","dementia"].map(tab => (
-            <li key={tab} className="dashboard-tab-item">
+        <ul className="dashboard-tabs nav nav-tabs list-unstyled mb-0" role="tablist">
+          {["chatbot","chart","todo","dementia"].map(tab => (
+            <li key={tab} className="nav-item" role="presentation">
               <button
-                className={`dashboard-tab-btn ${activeTab===tab?"active":""}`}
-                onClick={()=>setActiveTab(tab)}
+                className={`btn ${activeTab===tab?"btn-primary":"btn-outline-secondary"} dashboard-tab-btn ${activeTab===tab?"active":""} d-flex align-items-center gap-2`}
+                onClick={()=>handleTabChange(tab)}
+                role="tab"
+                aria-selected={activeTab===tab}
+                aria-controls={`tabpanel-${tab}`}
+                id={`tab-${tab}`}
+                style={{
+                  transition: 'all 0.2s ease',
+                  minHeight: '44px'
+                }}
               >
-                {t(`dashboard.tab.${tab}`, tab === "reminder" ? t("reminder.title", "Reminders") : tab === "dementia" ? t("dementia.title", "Dementia Checker") : tab.charAt(0).toUpperCase()+tab.slice(1))}
+                {t(`dashboard.tab.${tab}`, tab === "dementia" ? t("dementia.title", "Dementia Checker") : tab.charAt(0).toUpperCase()+tab.slice(1))}
               </button>
             </li>
           ))}
         </ul>
 
-        <div className="dashboard-content">{renderContent()}</div>
+        <div 
+          className="dashboard-page-content card mt-4" 
+          role="tabpanel"
+          id={`tabpanel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          {renderContent()}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

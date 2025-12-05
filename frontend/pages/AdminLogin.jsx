@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosClient";
-import "../css/AdminLogin.css";
+import Footer from "../components/Footer";
+import "../css/pages/AdminLogin.css";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -15,9 +16,9 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   const MAX_ATTEMPTS = 3;
-  const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
+  const LOCKOUT_DURATION = 5 * 60 * 1000; 
 
-  // Check existing session
+  
   useEffect(() => {
     let isMounted = true;
     const checkSession = async () => {
@@ -46,7 +47,7 @@ export default function AdminLogin() {
     return () => { isMounted = false; };
   }, [navigate]);
 
-  // Lockout handling
+  
   useEffect(() => {
     const lockoutTime = localStorage.getItem("adminLockoutTime");
     if (lockoutTime) {
@@ -111,27 +112,27 @@ export default function AdminLogin() {
       console.log("Admin login success response:", res);
 
       if (res?.success && res.user?.isAdmin) {
-        // Save admin session in localStorage (matching Dashboard.jsx pattern)
+        
         localStorage.setItem("userId", res.user._id || "");
         localStorage.setItem("userEmail", res.user.email || "");
         localStorage.setItem("userName", res.user.name || "");
         localStorage.setItem("isAdmin", "true");
         localStorage.setItem("sessionTime", Date.now().toString());
-        // Store profile picture if available
+        
         if (res.user.avatar || res.user.profilePic || res.user.picture) {
           localStorage.setItem("userProfilePic", res.user.avatar || res.user.profilePic || res.user.picture || "");
         }
 
-        // Clear lockout attempts
+        
         setAttempts(0);
         localStorage.removeItem("adminLockoutTime");
 
-        // Redirect immediately to admin panel
+        
         navigate("/admin", { replace: true });
         return;
       }
 
-      // Login failed but no exception
+      
       console.warn("Admin login failed response:", res);
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -203,6 +204,8 @@ export default function AdminLogin() {
           <div className="input-group">
             <input
               type={showPassword ? "text" : "password"}
+              id="admin-password-input"
+              name="admin-password-input"
               placeholder="Enter Admin Password"
               value={password}
               onChange={handleChange}
@@ -273,6 +276,7 @@ export default function AdminLogin() {
           </small>
         </div>
       </form>
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,121 @@
+
+@import '../unified-design-system.css';
+
+.therapist-container {
+  padding: 2.5rem;
+  max-width: 700px;
+  margin: 2rem auto;
+  background: var(--dementia-bg-primary);
+  color: var(--dementia-text-primary);
+  box-shadow: 0 4px 12px var(--dementia-shadow);
+  border: 3px solid var(--dementia-border);
+  border-radius: 12px;
+}
+
+.therapist-container h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--dementia-text-primary);
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--dementia-text-primary);
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 3px solid var(--dementia-border);
+  background: var(--dementia-bg-primary);
+  color: var(--dementia-text-primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  outline: none;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+.form-control::placeholder {
+  color: var(--dementia-text-tertiary);
+  opacity: 0.7;
+  font-size: 1.1rem;
+}
+
+.form-control:focus {
+  border-color: var(--dementia-border-dark);
+  box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1);
+  background: var(--dementia-bg-primary);
+}
+
+.form-control textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: 3px solid var(--dementia-text-primary);
+  background: var(--dementia-text-primary);
+  color: var(--dementia-bg-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--dementia-shadow);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  min-height: 56px;
+  margin-top: 1rem;
+}
+
+.submit-btn:hover {
+  background: var(--dementia-bg-secondary);
+  color: var(--dementia-text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--dementia-shadow-hover);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+@media (max-width: 768px) {
+  .therapist-container {
+    padding: 2rem 1.5rem;
+    margin: 1.5rem auto;
+  }
+  .therapist-container h1 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .therapist-container {
+    padding: 1.5rem 1rem;
+    margin: 1rem auto;
+  }
+  .therapist-container h1 {
+    font-size: 1.5rem;
+  }
+  .form-control {
+    font-size: 1rem;
+    padding: 0.875rem 1rem;
+  }
+}

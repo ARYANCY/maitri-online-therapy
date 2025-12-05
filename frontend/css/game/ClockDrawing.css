@@ -1,0 +1,80 @@
+
+
+.clock-canvas-wrapper {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: visible;
+  margin: 1.5rem auto;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: none;
+  width: 100%;
+  max-width: 500px;
+  min-height: 500px;
+}
+
+.clock-stage {
+  background-color: #ffffff;
+  display: block;
+  width: 500px;
+  height: 500px;
+}
+
+.clock-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.clock-controls .btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.clock-controls .btn-primary {
+  background: #667eea;
+  color: #ffffff;
+  border-color: #667eea;
+}
+
+.clock-controls .btn-warning {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+.clock-controls .btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.clock-controls .btn-success {
+  background: #22c55e;
+  color: #ffffff;
+  border-color: #22c55e;
+}
+
+@media (max-width: 768px) {
+  .clock-canvas-wrapper {
+    margin: 1rem 0;
+  }
+  
+  .clock-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .clock-controls .btn {
+    width: 100%;
+  }
+}

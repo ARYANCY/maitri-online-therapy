@@ -11,7 +11,7 @@ const validate = (schema, property = 'body') => {
     if (error) {
       return res.status(400).json({
         success: false,
-        error: 'Validation Error',
+        error: req.t ? req.t("general.validationError") : 'Validation Error',
         message: error.details.map(d => d.message).join(', '),
         details: error.details,
       });
@@ -27,8 +27,8 @@ const handleValidationErrors = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      error: 'Validation Error',
-      message: 'Invalid input data',
+      error: req.t ? req.t("general.validationError") : 'Validation Error',
+      message: req.t ? req.t("general.validationError") : 'Invalid input data',
       details: errors.array(),
     });
   }

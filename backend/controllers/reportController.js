@@ -18,7 +18,7 @@ async function generateReportData(userId, language = "en", req) {
     const dementiaSessions = await DementiaAssessment.find({ userId }).sort({ createdAt: 1 }).lean();
 
     const stats = calculateStatistics(metricsData, screeningData);
-    const recommendations = generateRecommendations(stats, language);
+    const recommendations = generateRecommendations(stats, language, req);
     const chartData = generateChartData(metricsData, screeningData);
 
     const latestDementia = dementiaSessions.length ? dementiaSessions[dementiaSessions.length - 1] : null;
@@ -334,12 +334,19 @@ function sendPDF(reportData, res) {
 
     if (reportData.dementiaSummary) {
       const dsum = reportData.dementiaSummary;
-      doc.fontSize(16).text("Dementia Screening", { underline: true });
+      doc.fontSize(16).text("Cognitive Impairment Assessment", { underline: true });
       doc.moveDown(0.5);
       doc.fontSize(12).text(`Latest Risk Level: ${dsum.latestRiskLevel}`);
       doc.fontSize(12).text(`Latest Risk Score: ${Math.round((dsum.latestRiskScore || 0) * 100)}%`);
       doc.fontSize(12).text(`Latest Difficulty: ${dsum.latestDifficulty}`);
       if (dsum.latestDate) doc.fontSize(12).text(`Latest Date: ${new Date(dsum.latestDate).toLocaleString()}`);
+      doc.moveDown(0.5);
+      doc.fontSize(12).text("Assessment Tools Used:", { underline: true });
+      doc.fontSize(11).text("• MMSE (Mini-Mental State Examination)");
+      doc.fontSize(11).text("• MoCA (Montreal Cognitive Assessment)");
+      doc.fontSize(11).text("• ACE-III (Addenbrooke's Cognitive Examination-III)");
+      doc.fontSize(11).text("• Mini-Cog");
+      doc.fontSize(11).text("• RUDAS (Rowland Universal Dementia Assessment Scale)");
       if (dsum.explanation) {
         doc.moveDown(0.5);
         doc.fontSize(12).text(`Explanation: ${dsum.explanation}`);
@@ -376,14 +383,14 @@ function sendPDF(reportData, res) {
   } catch (err) {
     res
       .status(500)
-      .json({ success: false, error: "Failed to generate PDF report" });
+      .json({ success: false, error: req.t("report.pdfGenerationFailed") });
   }
 }
 
 const downloadReport = asyncHandler(async (req, res) => {
   const userId = req.user?._id || req.session?.userId;
-  if (!userId)
-    return res.status(401).json({ success: false, error: "Unauthorized" });
+    if (!userId)
+    return res.status(401).json({ success: false, error: req.t("auth.unauthorized") });
 
   const userLanguage = req.getLanguage ? req.getLanguage() : "en";
   const { format = "json" } = req.query;
@@ -414,7 +421,7 @@ const downloadReport = asyncHandler(async (req, res) => {
     } else {
       return res
         .status(400)
-        .json({ success: false, error: "Invalid format specified" });
+        .json({ success: false, error: req.t("report.invalidFormat") });
     }
 
     logger.info("Report successfully generated", {
@@ -428,7 +435,7 @@ const downloadReport = asyncHandler(async (req, res) => {
       error: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: "Failed to generate report" });
+    res.status(500).json({ success: false, error: req.t("report.reportGenerationFailed") });
   }
 });
 

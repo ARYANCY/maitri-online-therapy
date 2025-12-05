@@ -1,102 +1,48 @@
-/* Container */
-.reaction-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  color: #222;
-  background-color: #f5f5f5;
-  min-height: 100vh;
-}
 
-/* Header */
-.reaction-header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #d9e6f2; /* soft blue */
-  border-radius: 8px;
-}
 
-.btn-exit {
-  padding: 6px 12px;
-  border: none;
-  background-color: #ff8a65; /* soft orange */
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn-exit:hover {
-  background-color: #ff7043;
-}
-
-/* Instructions / Box */
 .reaction-box {
-  width: 300px;
-  height: 150px;
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+  margin: 1.5rem auto;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  margin-top: 40px;
-  border-radius: 12px;
   cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s, transform 0.1s;
+  border: 3px solid;
+  transition: none;
 }
 
-.reaction-box.wait {
-  background-color: #f0ad4e; /* soft yellow/orange */
+.reaction-box.waiting {
+  background: #f59e0b;
+  border-color: #d97706;
 }
 
-.reaction-box.go {
-  background-color: #4ade80; /* soft green */
+.reaction-box.ready {
+  background: #22c55e;
+  border-color: #16a34a;
 }
 
-.reaction-box:hover {
-  transform: scale(1.05);
+.reaction-box.too-early {
+  background: #ef4444;
+  border-color: #dc2626;
 }
 
-/* Menu */
-.reaction-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
+.reaction-box-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.reaction-difficulty button {
-  margin: 10px;
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  background-color: #a3c4f3; /* soft blue */
-  cursor: pointer;
-  color: #222;
-}
 
-.reaction-difficulty button:hover {
-  background-color: #6497b1;
-}
-
-/* Submit button placeholder (optional) */
-.btn-submit {
-  padding: 10px 20px;
-  border: none;
-  background-color: #4ade80; /* soft green */
-  color: white;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-submit:hover {
-  background-color: #22c55e;
+@media (max-width: 768px) {
+  .reaction-box {
+    height: 250px;
+  }
+  
+  .reaction-box-text {
+    font-size: 1.25rem;
+  }
 }

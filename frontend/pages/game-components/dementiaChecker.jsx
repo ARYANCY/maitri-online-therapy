@@ -14,14 +14,16 @@ function useCountdown(initialSec, running, onExpire) {
   const intervalRef = useRef(null);
   const onExpireRef = useRef(onExpire);
 
-  useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   useEffect(() => {
     if (running) {
       setSeconds(initialSec);
       clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
-        setSeconds(prev => {
+        setSeconds((prev) => {
           const next = prev - 1;
           if (next <= 0) {
             clearInterval(intervalRef.current);
@@ -49,20 +51,25 @@ export default function DementiaChecker({ onFinish, onExit }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [sessionId, setSessionId] = useState(localStorage.getItem(LS_SESSION) || "");
+  const [sessionId, setSessionId] = useState(
+    localStorage.getItem(LS_SESSION) || ""
+  );
   const [currentIdx, setCurrentIdx] = useState(0);
   const [input, setInput] = useState("");
   const [difficulty, setDifficulty] = useState("easy");
 
   const [answers, setAnswers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_ANSWERS) || "[]"); }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(LS_ANSWERS) || "[]");
+    } catch {
+      return [];
+    }
   });
 
   const [running, setRunning] = useState(false);
   const [timeLimit, setTimeLimit] = useState(30);
   const [showQuestion, setShowQuestion] = useState(true);
-  const [cardStatus, setCardStatus] = useState(""); // '' | empty | correct
+  const [cardStatus, setCardStatus] = useState("");
 
   const startAudioRef = useRef(new Audio(startAudioFile));
   const tickAudioRef = useRef(new Audio(tickAudioFile));
@@ -90,6 +97,20 @@ export default function DementiaChecker({ onFinish, onExit }) {
     return () => clearTimeout(timer);
   }, [currentIdx, questions]);
 
+  
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onExit?.();
+      } else if (e.key === "Backspace" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA" && input.length > 0) {
+        e.preventDefault();
+        setInput(prev => prev.slice(0, -1));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [input.length, onExit]);
+
   useEffect(() => {
     startAudioRef.current.preload = "auto";
     tickAudioRef.current.preload = "auto";
@@ -97,8 +118,14 @@ export default function DementiaChecker({ onFinish, onExit }) {
 
     const handleVisibility = () => {
       if (document.hidden) {
-        [startAudioRef.current, tickAudioRef.current, emptyAudioRef.current].forEach(a => {
-          try { a.pause(); } catch {}
+        [
+          startAudioRef.current,
+          tickAudioRef.current,
+          emptyAudioRef.current,
+        ].forEach((a) => {
+          try {
+            a.pause();
+          } catch {}
         });
       }
     };
@@ -120,21 +147,28 @@ export default function DementiaChecker({ onFinish, onExit }) {
       setError(null);
       setLoading(true);
 
-      const { success, sessionId: sid, questions: qs } = await API.dementia.getQuestions(difficulty);
-      if (!success) throw new Error("Failed to load questions");
+      const response = await API.dementia.getQuestions(difficulty);
+      const responseData = response?.data || response;
+      
+      if (!response?.success || !responseData) {
+        throw new Error(t("dementia.failedToLoadQuestions"));
+      }
 
-      setQuestions(qs);
-      setSessionId(sid);
-      localStorage.setItem(LS_SESSION, sid);
+      setQuestions(responseData.questions || []);
+      setSessionId(responseData.sessionId || "");
+      localStorage.setItem(LS_SESSION, responseData.sessionId || "");
 
       setCurrentIdx(0);
       setInput("");
-      setTimeLimit(qs[0]?.timeLimitSec || 30);
+      setTimeLimit(responseData.questions?.[0]?.timeLimitSec || 30);
       setRunning(true);
       setCardStatus("");
       persistAnswers([]);
     } catch (e) {
-      setError(e.message || "Failed to start");
+      setError(
+        e.message ||
+          t("dementia.failedToStart", "Failed to start the test. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
@@ -148,7 +182,7 @@ export default function DementiaChecker({ onFinish, onExit }) {
       mediaRecorderRef.current = mr;
       audioChunksRef.current = [];
 
-      mr.ondataavailable = e => {
+      mr.ondataavailable = (e) => {
         if (e.data?.size > 0) audioChunksRef.current.push(e.data);
       };
 
@@ -158,14 +192,16 @@ export default function DementiaChecker({ onFinish, onExit }) {
         const qid = questions[currentIdx]?.id;
 
         if (qid) {
-          setAudioById(prev => ({ ...prev, [qid]: url }));
+          setAudioById((prev) => ({ ...prev, [qid]: url }));
         }
       };
 
       mr.start();
       setIsRecording(true);
     } catch (e) {
-      setError(e.message || "Microphone permission denied");
+      setError(
+        e.message || t("dementia.microphonePermissionDenied")
+      );
     }
   };
 
@@ -197,8 +233,8 @@ export default function DementiaChecker({ onFinish, onExit }) {
       {
         id: q.id,
         answer,
-        durationSec: (q.timeLimitSec || timeLimit) - seconds
-      }
+        durationSec: (q.timeLimitSec || timeLimit) - seconds,
+      },
     ];
 
     persistAnswers(next);
@@ -226,6 +262,7 @@ export default function DementiaChecker({ onFinish, onExit }) {
 
       const payload = { sessionId, answers };
       const res = await API.dementia.submit(payload);
+      const responseData = res?.data || res;
 
       localStorage.removeItem(LS_SESSION);
       localStorage.removeItem(LS_ANSWERS);
@@ -236,9 +273,18 @@ export default function DementiaChecker({ onFinish, onExit }) {
       setInput("");
       setRunning(false);
 
-      onFinish && onFinish({ key: "dementia_checker", score: Math.round((res.riskScore||0)*100), detail: { riskLevel: res.riskLevel, explanation: res.explanation, suggestions: res.suggestions || [] } });
+      onFinish &&
+        onFinish({
+          key: "dementia_checker",
+          score: Math.round((responseData.riskScore || 0) * 100),
+          detail: {
+            riskLevel: responseData.riskLevel,
+            explanation: responseData.explanation,
+            suggestions: responseData.suggestions || [],
+          },
+        });
     } catch (e) {
-      setError(e.message || "Submission error");
+      setError(e.message || t("dementia.submissionError"));
     } finally {
       setLoading(false);
     }
@@ -248,17 +294,24 @@ export default function DementiaChecker({ onFinish, onExit }) {
 
   return (
     <div className="game-wrapper">
-      {/* Game Name Headline */}
-      <h2 style={{ textAlign: "center", marginBottom: "16px", fontSize: "1.5rem", fontWeight: "bold", color: "#333" }}>
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "16px",
+          fontSize: "1.5rem",
+          fontWeight: "bold",
+          color: "#333",
+        }}
+      >
         {t("dementia.games.textRecall")}
       </h2>
-      
+
       <header className="game-header">
         <h2>{t("dementia.title")}</h2>
 
         {!questions.length && (
           <div className="difficulty-selector">
-            {["easy", "moderate", "hard"].map(d => (
+            {["easy", "moderate", "hard"].map((d) => (
               <button
                 key={d}
                 className={`btn ${difficulty === d ? "btn-primary" : ""}`}
@@ -271,7 +324,11 @@ export default function DementiaChecker({ onFinish, onExit }) {
         )}
 
         {!questions.length ? (
-          <button className="btn btn-primary start-btn" onClick={startTest} disabled={loading}>
+          <button
+            className="btn btn-primary start-btn"
+            onClick={startTest}
+            disabled={loading}
+          >
             {loading ? t("dementia.starting") : t("dementia.start")}
           </button>
         ) : (
@@ -281,13 +338,23 @@ export default function DementiaChecker({ onFinish, onExit }) {
         )}
       </header>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
 
       {questions.length > 0 && q && (
         <main className={`game-card ${cardStatus}`}>
           <div className="question-meta">
-            <span className="badge">{q.category}</span>
-            <span className="badge">{q.timeLimitSec}s</span>
+            {q.category && (
+              <span className="badge">
+                {t("dementia.category")}: {q.category}
+              </span>
+            )}
+            {q.timeLimitSec && (
+              <span className="badge">{q.timeLimitSec}s</span>
+            )}
           </div>
 
           {showQuestion ? (
@@ -299,29 +366,56 @@ export default function DementiaChecker({ onFinish, onExit }) {
           )}
 
           <textarea
+            id="dementia-checker-input"
+            name="dementia-checker-input"
             className="game-input"
             rows={3}
             placeholder={t("dementia.placeholder")}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && running && !loading) {
+                e.preventDefault();
+                handleNext(false);
+              }
+            }}
             disabled={!running}
+            aria-label={t("dementia.placeholder")}
           />
 
           <div className="recording-controls">
             {!isRecording ? (
-              <button className="btn" disabled={!running} onClick={startRecording}>
+              <button
+                className="btn"
+                disabled={!running}
+                onClick={startRecording}
+                aria-label={t("dementia.record")}
+              >
                 {t("dementia.record")}
               </button>
             ) : (
-              <button className="btn btn-danger" onClick={stopRecording}>
+              <button
+                className="btn btn-danger"
+                onClick={stopRecording}
+                aria-label={t("dementia.stopRecording")}
+              >
                 {t("dementia.stopRecording")}
               </button>
             )}
-            {isRecording && <span className="recording-status">Recording...</span>}
+            {isRecording && (
+              <span className="recording-status" role="status">
+                {t("dementia.recording")}
+              </span>
+            )}
           </div>
 
           <div className="game-actions">
-            <button className="btn next-btn" onClick={() => handleNext(false)} disabled={!running}>
+            <button
+              className="btn next-btn"
+              onClick={() => handleNext(false)}
+              disabled={!running}
+              aria-label={t("dementia.next")}
+            >
               {t("dementia.next")}
             </button>
 
@@ -329,13 +423,17 @@ export default function DementiaChecker({ onFinish, onExit }) {
               className="btn btn-secondary submit-btn"
               onClick={handleSubmit}
               disabled={loading || running}
+              aria-label={t("dementia.submit")}
             >
               {t("dementia.submit")}
             </button>
           </div>
 
           <div className="game-progress">
-            {t("dementia.progress", { current: currentIdx + 1, total: questions.length })}
+            {t("dementia.progress", {
+              current: currentIdx + 1,
+              total: questions.length,
+            })}
           </div>
         </main>
       )}
@@ -347,17 +445,30 @@ export default function DementiaChecker({ onFinish, onExit }) {
             {answers.map((a, i) => (
               <li key={i}>
                 <strong>{a.id}:</strong>{" "}
-                {a.answer || <span className="empty-answer-text">{t("dementia.emptyAnswer")}</span>}{" "}
+                {a.answer || (
+                  <span className="empty-answer-text">
+                    {t("dementia.emptyAnswer")}
+                  </span>
+                )}{" "}
                 <em>({a.durationSec || 0}s)</em>
-
-                {audioById[a.id] && <audio controls src={audioById[a.id]} />}
+                {audioById[a.id] && (
+                  <audio controls src={audioById[a.id]} aria-label={t("dementia.hasAudio")} />
+                )}
               </li>
             ))}
           </ul>
         </aside>
       )}
-      <div style={{ display:"flex", justifyContent:"center", marginTop: 12 }}>
-        <button className="btn btn-outline-secondary" onClick={()=> onExit && onExit()}>Exit</button>
+      <div
+        style={{ display: "flex", justifyContent: "center", marginTop: 12 }}
+      >
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => onExit && onExit()}
+          aria-label={t("dementia.exit")}
+        >
+          {t("dementia.exit")}
+        </button>
       </div>
     </div>
   );

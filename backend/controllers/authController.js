@@ -33,7 +33,7 @@ const checkRateLimit = (identifier) => {
     return { 
       allowed: false, 
       timeLeft: Math.ceil(timeLeft / 1000),
-      message: `Too many login attempts. Please wait ${Math.ceil(timeLeft / 60000)} minutes.`
+      message: req.t ? req.t("auth.tooManyLoginAttempts", { minutes: Math.ceil(timeLeft / 60000) }) : `Too many login attempts. Please wait ${Math.ceil(timeLeft / 60000)} minutes.`
     };
   }
   
@@ -88,7 +88,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
     });
     return res.status(400).json({ 
       success: false,
-      error: "Email and password are required" 
+      error: req.t("auth.emailPasswordRequired", "Email and password are required")
     });
   }
 
@@ -100,7 +100,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
     });
     return res.status(400).json({ 
       success: false,
-      error: "Please provide a valid email address" 
+      error: req.t("auth.validEmailRequired", "Please provide a valid email address")
     });
   }
 
@@ -112,10 +112,10 @@ exports.loginUser = asyncHandler(async (req, res) => {
     });
     return res.status(400).json({ 
       success: false,
-      error: "Password must be at least 6 characters long" 
+      error: req.t("auth.passwordMinLength", "Password must be at least 6 characters long")
     });
   }
-  const rateLimit = checkRateLimit(email);
+  const rateLimit = checkRateLimit(email, req);
   if (!rateLimit.allowed) {
     logger.warn('Login attempt blocked by rate limit', {
       email,
@@ -139,7 +139,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
     });
     return res.status(401).json({ 
       success: false,
-      error: "Invalid credentials" 
+      error: req.t("auth.invalidCredentials", "Invalid credentials")
     });
   }
   const isMatch = await user.comparePassword(password);
@@ -153,7 +153,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
     });
     return res.status(401).json({ 
       success: false,
-      error: "Invalid credentials" 
+      error: req.t("auth.invalidCredentials", "Invalid credentials")
     });
   }
 
@@ -179,16 +179,20 @@ exports.loginUser = asyncHandler(async (req, res) => {
 
   req.session.save(err => {
     if (err) {
-      logger.error('Session save error during login', {
+      const errorDetails = {
         error: err.message,
+        stack: err.stack,
+        name: err.name,
         email,
         userId: user._id,
         ip: req.ip,
         requestId: req.id,
-      });
+      };
+      logger.error('Session save error during login', errorDetails);
+      console.error('[SESSION ERROR] Login - Session save failed:', errorDetails);
       return res.status(500).json({ 
         success: false,
-        error: "Session save failed" 
+        error: req.t("auth.sessionSaveFailed", "Session save failed")
       });
     }
     
@@ -231,7 +235,7 @@ exports.googleLogin = asyncHandler(async (req, res) => {
   if (!token) {
     return res.status(400).json({ 
       success: false,
-      message: "Google token is required" 
+      message: req.t("auth.googleTokenRequired", "Google token is required")
     });
   }
 
@@ -244,7 +248,7 @@ exports.googleLogin = asyncHandler(async (req, res) => {
   if (!payload) {
     return res.status(400).json({ 
       success: false,
-      message: "Invalid Google token" 
+      message: req.t("auth.invalidGoogleToken", "Invalid Google token")
     });
   }
 
@@ -255,7 +259,7 @@ exports.googleLogin = asyncHandler(async (req, res) => {
   if (!email) {
     return res.status(400).json({ 
       success: false,
-      message: "Google account missing email" 
+      message: req.t("auth.googleAccountMissingEmail", "Google account missing email")
     });
   }
 
@@ -297,9 +301,20 @@ exports.googleLogin = asyncHandler(async (req, res) => {
 
   req.session.save(err => {
     if (err) {
+      const errorDetails = {
+        error: err.message,
+        stack: err.stack,
+        name: err.name,
+        email: user.email,
+        userId: user._id,
+        ip: req.ip,
+        requestId: req.id,
+      };
+      logger.error('Session save error during Google login', errorDetails);
+      console.error('[SESSION ERROR] Google Login - Session save failed:', errorDetails);
       return res.status(500).json({ 
         success: false,
-        message: "Session save failed" 
+        message: req.t("auth.sessionSaveFailed", "Session save failed")
       });
     }
 
@@ -334,7 +349,7 @@ exports.requireLogin = (req, res, next) => {
     });
     return res.status(401).json({ 
       success: false,
-      error: "Unauthorized: Please login" 
+      error: req.t("general.unauthorized", "Unauthorized: Please login")
     });
   }
   
@@ -358,7 +373,7 @@ exports.requireAdmin = (req, res, next) => {
     });
     return res.status(401).json({ 
       success: false,
-      error: "Unauthorized: Please login" 
+      error: req.t("general.unauthorized", "Unauthorized: Please login")
     });
   }
   
@@ -375,7 +390,7 @@ exports.requireAdmin = (req, res, next) => {
       });
       return res.status(403).json({ 
         success: false,
-        error: "Admin access only" 
+        error: req.t("auth.adminAccessOnly", "Admin access only")
       });
     }
   }
@@ -396,7 +411,7 @@ exports.logoutUser = (req, res) => {
   if (!req.session) {
     return res.json({ 
       success: true, 
-      message: "Logged out successfully" 
+      message: req.t("auth.logoutSuccess", "Logged out successfully")
     });
   }
   
@@ -411,7 +426,7 @@ exports.logoutUser = (req, res) => {
       });
       return res.status(500).json({ 
         success: false,
-        message: "Logout failed" 
+        message: req.t("auth.logoutFailed", "Logout failed")
       });
     }
     
@@ -437,7 +452,7 @@ exports.getSessionInfo = asyncHandler(async (req, res) => {
     return res.json({ 
       success: false, 
       user: null,
-      message: "No active session" 
+      message: req.t("auth.noActiveSession", "No active session")
     });
   }
 
@@ -454,7 +469,7 @@ exports.getSessionInfo = asyncHandler(async (req, res) => {
     return res.json({ 
       success: false, 
       user: null,
-      message: "User not found" 
+      message: req.t("auth.userNotFound", "User not found")
     });
   }
 

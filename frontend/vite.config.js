@@ -16,4 +16,11 @@ export default defineConfig({
       "/auth": "http://localhost:5000",
     },
   },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
 });

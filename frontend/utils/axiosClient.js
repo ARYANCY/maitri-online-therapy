@@ -1,26 +1,41 @@
 import axios from "axios";
 
-// --- Axios Instance ---
+axios.defaults.withCredentials = true;
+
+const pendingRequests = new Map();
+
+const getRequestKey = (method, url, params) => {
+  const methodUpper = method?.toUpperCase() || 'GET';
+  const paramsStr = params ? '?' + new URLSearchParams(params).toString() : '';
+  return `${methodUpper}:${url}${paramsStr}`;
+};
+
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  console.error('[AxiosClient] VITE_API_URL is not configured. API requests will fail.');
+  console.error('[AxiosClient] Current origin:', window.location.origin);
+}
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
-  withCredentials: true,
+  baseURL: API_URL || '/api', 
+  withCredentials: true, 
   headers: { "Content-Type": "application/json" },
+  timeout: 30000, 
 });
 
-// Inject Accept-Language on every request from preferredLang
 API.interceptors.request.use((config) => {
   const lang = localStorage.getItem("preferredLang") || "en";
   config.headers = config.headers || {};
   config.headers["Accept-Language"] = lang;
+  
+  
   return config;
 });
 
-// --- Helper: sanitize input ---
 function sanitizeString(str) {
   return str?.trim() || "";
 }
 
-// --- Helper: Create next date for schedules ---
 function createNextDate({ dayOfWeek, dayOfMonth, time }) {
   const date = new Date();
   const [hours, minutes] = time.split(":").map(Number);
@@ -35,100 +50,6 @@ function createNextDate({ dayOfWeek, dayOfMonth, time }) {
   return date;
 }
 
-// --- Reminder Validation ---
-function validateReminderData(data) {
-  if (!data || typeof data !== "object") throw new Error("Reminder data must be an object");
-
-  const message = (data.message || "").trim();
-  const email = (data.email || "").trim();
-  const dateTime = new Date(data.dateTime);
-  const repeat = data.repeat || "none";
-  const customInterval = Number(data.customInterval) || null;
-  const endDate = data.endDate ? new Date(data.endDate) : null;
-
-  if (!message) throw new Error("Reminder message is required");
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email format");
-  if (isNaN(dateTime.getTime())) throw new Error("Invalid date/time");
-
-  return { message, email, dateTime, repeat, customInterval, endDate };
-}
-
-// --- Local time helpers ---
-function toLocalISOString(d) {
-  const dt = new Date(d);
-  const ms = dt.getTime() - dt.getTimezoneOffset() * 60000;
-  return new Date(ms).toISOString();
-}
-
-// --- Reminder API ---
-API.reminder = {
-  add: (data) => {
-    const validData = validateReminderData(data);
-    const payload = {
-      message: validData.message,
-      email: validData.email,
-      dateTime: toLocalISOString(validData.dateTime),
-      repeat: validData.repeat,
-      customInterval: validData.customInterval,
-      endDate: validData.endDate ? toLocalISOString(validData.endDate) : null,
-    };
-    return API.post("/api/reminders/add", payload).then((d) => d?.reminder ?? d);
-  },
-  getAll: async () => {
-    const res = await API.get("/api/reminders");
-    const items = res?.reminders || [];
-    return items.sort((a, b) => {
-      const aTime = new Date(a.nextRunAt || a.dateTime).getTime();
-      const bTime = new Date(b.nextRunAt || b.dateTime).getTime();
-      return aTime - bTime;
-    });
-  },
-  update: (id, data) => {
-    const validData = validateReminderData(data);
-    const payload = {
-      message: validData.message,
-      email: validData.email,
-      dateTime: toLocalISOString(validData.dateTime),
-      repeat: validData.repeat,
-      customInterval: validData.customInterval,
-      endDate: validData.endDate ? toLocalISOString(validData.endDate) : null,
-    };
-    return API.put(`/api/reminders/${id}`, payload).then((d) => d?.reminder ?? d);
-  },
-  delete: (id) => API.delete(`/api/reminders/${id}`).then((d) => d?.message ?? d),
-  deleteBulk: (ids = []) => {
-    if (!Array.isArray(ids) || !ids.length) throw new Error("IDs array required");
-    return API.delete("/api/reminders/bulk", { data: { ids } });
-  },
-  updateBulk: (reminders = []) => {
-    if (!Array.isArray(reminders) || !reminders.length) throw new Error("Reminders array required");
-    const validData = reminders.map(validateReminderData);
-    return API.put("/api/reminders/bulk", validData);
-  },
-  scheduleDaily: (message, email, time) =>
-    API.reminder.add({
-      message,
-      email,
-      dateTime: createNextDate({ time }),
-      repeat: "daily",
-    }),
-  scheduleWeekly: (message, email, dayOfWeek, time) =>
-    API.reminder.add({
-      message,
-      email,
-      dateTime: createNextDate({ dayOfWeek, time }),
-      repeat: "weekly",
-    }),
-  scheduleMonthly: (message, email, dayOfMonth, time) =>
-    API.reminder.add({
-      message,
-      email,
-      dateTime: createNextDate({ dayOfMonth, time }),
-      repeat: "monthly",
-    }),
-};
-
-// --- Dementia Assessment API ---
 API.dementia = {
   getQuestions: (difficulty = "easy") => {
     const d = ["easy","moderate","hard"].includes(String(difficulty).toLowerCase()) ? String(difficulty).toLowerCase() : "easy";
@@ -138,47 +59,134 @@ API.dementia = {
   submitGameResults: (payload) => API.post("/api/dementia/game-results", payload),
 };
 
-// --- Axios Response Interceptor ---
 API.interceptors.response.use(
-  (res) => res.data,
+  (res) => {
+    
+    return res.data;
+  },
   (err) => {
-    const { response, config } = err;
+    const { response, config, code, message, request } = err;
+    
+    
     if (!response) {
-      console.error(`[API Network Error] ${err.message}`);
-      return Promise.reject(err);
+      
+      if (!API_URL && config?.url) {
+        console.error('[AxiosClient] API URL not configured. Request URL:', config.url);
+        return Promise.reject(new Error("API configuration error. Please contact support."));
+      }
+      
+      
+      console.error('[AxiosClient] Network error:', {
+        code,
+        message,
+        url: config?.url,
+        baseURL: config?.baseURL,
+        fullURL: config?.baseURL ? `${config.baseURL}${config.url}` : config?.url,
+        origin: window.location.origin,
+        apiUrl: API_URL
+      });
+      
+      
+      if (code === "ECONNABORTED" || code === "ETIMEDOUT" || message?.includes("timeout")) {
+        return Promise.reject(new Error("Request timeout. Please try again."));
+      }
+      
+      
+      
+      
+      
+      
+      const isLikelyCORS = (
+        code === "ERR_CORS" || 
+        message?.includes("CORS") || 
+        message?.includes("cross-origin") ||
+        message?.includes("Access-Control") ||
+        (code === "ERR_NETWORK" && 
+         (message?.includes("Failed to fetch") || 
+          message === "Network Error")) ||
+        (code === undefined && message?.includes("Failed to fetch"))
+      );
+      
+      if (isLikelyCORS) {
+        console.error('[AxiosClient] CORS error detected:', {
+          origin: window.location.origin,
+          apiUrl: API_URL,
+          url: config?.url,
+          message: 'Frontend origin may not be allowed by backend CORS configuration'
+        });
+        return Promise.reject(new Error(
+          `CORS error: ${window.location.origin} is not allowed to access ${API_URL}. ` +
+          "Please check backend CORS configuration."
+        ));
+      }
+      
+      
+      if (code === "ERR_NETWORK" || 
+          code === "ERR_INTERNET_DISCONNECTED" ||
+          message?.includes("Network Error") ||
+          message?.includes("Network request failed")) {
+        return Promise.reject(new Error("Network error. Please check your internet connection."));
+      }
+      
+      
+      if (code === "ECONNREFUSED" || message?.includes("refused") || message?.includes("unreachable")) {
+        return Promise.reject(new Error("Cannot connect to server. Please try again later."));
+      }
+      
+      
+      return Promise.reject(new Error(message || "Connection error. Please try again."));
     }
 
-    // Gracefully handle missing sessions for session-check without throwing
-    if (response.status === 401 && config?.url?.includes("/auth/session-check")) {
+    
+    
+    if (config?.url?.includes("/auth/session-check")) {
       const body = response?.data ?? { success: false, user: null, message: "No active session" };
-      console.warn("[Session] No active session");
-      return body; // resolve with data so callers can branch on success
+      return body; 
     }
 
-    // Clear admin flags if admin routes return 401
+    
     if (response.status === 401 && config?.url?.includes("/admin")) {
-      ["isAdmin", "adminEmail", "userId", "userName"].forEach((k) => localStorage.removeItem(k));
-      console.warn("Admin session expired. Cleared localStorage.");
+      clearAdminSession();
     }
 
-    const message =
-      response?.data?.error || response?.data?.message || err.message || "Unknown API error";
-    console.error(`[API Error] ${config?.method?.toUpperCase()} ${config?.url}:`, message);
-    return Promise.reject(new Error(message));
+    
+    if (response.status === 401) {
+      clearUserSession(true); 
+    }
+
+    
+    const errorMessage = response?.data?.error || 
+                        response?.data?.message || 
+                        message || 
+                        `Server error (${response.status})`;
+
+    
+    const enhancedError = new Error(errorMessage);
+    enhancedError.status = response.status;
+    enhancedError.statusText = response.statusText;
+    enhancedError.data = response.data;
+    enhancedError.url = config?.url;
+
+    return Promise.reject(enhancedError);
   }
 );
 
-// --- Admin Session Management ---
+import { 
+  storeUserSession, 
+  clearUserSession, 
+  storeAdminSession, 
+  clearAdminSession 
+} from './session';
+
 export async function ensureAdminSession() {
   try {
     const session = await API.get("/auth/session-check");
     if (!session?.user?.isAdmin) throw new Error("Not an admin");
 
-    localStorage.setItem("isAdmin", "true");
-    localStorage.setItem("adminEmail", session.user.email || "");
-    localStorage.setItem("userId", session.user._id || "");
-    localStorage.setItem("userName", session.user.name || "");
+    
+    storeUserSession(session.user, session.sessionInfo);
 
+    
     const adminSession = {
       user: {
         _id: session.user._id || "",
@@ -190,33 +198,60 @@ export async function ensureAdminSession() {
       lastActiveAt: new Date().toISOString(),
       status: "active",
     };
-    try { localStorage.setItem("admin_session", JSON.stringify(adminSession)); } catch {}
+    storeAdminSession(adminSession);
 
     return session.user;
-  } catch {
-    ["isAdmin", "adminEmail", "userId", "userName", "admin_session"].forEach((k) => localStorage.removeItem(k));
+  } catch (error) {
+    console.error('[AdminSession] Failed to ensure admin session:', error);
+    clearUserSession(true); 
     return null;
   }
 }
 
-// --- Auth API ---
 API.auth = {
   login: (data) => API.post("/auth/login", data),
   logout: async () => {
-    await API.get("/auth/logout");
-    ["isAdmin", "adminEmail", "userId", "userName", "admin_session"].forEach((k) => localStorage.removeItem(k));
+    try {
+      await API.get("/auth/logout");
+    } catch (error) {
+      console.error('[Auth] Logout request failed:', error);
+    } finally {
+      
+      clearUserSession(true); 
+    }
   },
   register: (data) => API.post("/auth/register", data),
-  checkSession: () => API.get("/auth/session-check"),
+  testCookie: () => API.get("/auth/cookie-test"),
+  cookieDebug: () => API.get("/auth/cookie-debug"),
+  checkSession: () => {
+    
+    const requestKey = getRequestKey('GET', '/auth/session-check');
+    
+    if (pendingRequests.has(requestKey)) {
+      return pendingRequests.get(requestKey);
+    }
+    
+    const requestPromise = API.get("/auth/session-check")
+      .then(response => {
+        pendingRequests.delete(requestKey);
+        return response;
+      })
+      .catch(error => {
+        pendingRequests.delete(requestKey);
+        throw error;
+      });
+    
+    pendingRequests.set(requestKey, requestPromise);
+    return requestPromise;
+  },
   adminLogin: async (data) => {
     const response = await API.post("/auth/admin-login", data);
     if (!response?.user?.isAdmin) throw new Error("Not an admin");
 
-    localStorage.setItem("isAdmin", "true");
-    localStorage.setItem("adminEmail", response.user.email || "");
-    localStorage.setItem("userId", response.user._id || "");
-    localStorage.setItem("userName", response.user.name || "");
+    
+    storeUserSession(response.user, response.sessionInfo);
 
+    
     const adminSession = {
       user: {
         _id: response.user._id || "",
@@ -228,7 +263,7 @@ API.auth = {
       lastActiveAt: new Date().toISOString(),
       status: "active",
     };
-    try { localStorage.setItem("admin_session", JSON.stringify(adminSession)); } catch {}
+    storeAdminSession(adminSession);
 
     await ensureAdminSession();
     return response;
@@ -237,60 +272,101 @@ API.auth = {
   updateLanguage: (language) => API.post("/auth/update-language", { language }),
 };
 
-// --- Therapist Validation ---
-function validateTherapistData(data) {
-  if (!data || typeof data !== "object") throw new Error("Therapist data must be an object");
+function validateDOCTData(data) {
+  if (!data || typeof data !== "object") throw new Error("DOCT data must be an object");
 
-  const name = sanitizeString(data.name);
+  const fullName = sanitizeString(data.fullName || data.name);
   const email = sanitizeString(data.email).toLowerCase();
-  const phone = (data.phone || "").replace(/\D/g, "");
-  const specialization = sanitizeString(data.specialization);
-  const experience = Number(data.experience);
-  const qualifications = sanitizeString(data.qualifications);
+  const yearsOfPractice = Number(data.yearsOfPractice || data.experience);
+  const availability = Array.isArray(data.availability) ? data.availability : [];
 
-  if (!name || name.length < 3) throw new Error("Name must be at least 3 characters");
+  if (!fullName || fullName.length < 3) throw new Error("Name must be at least 3 characters");
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email format");
-  if (!phone || !/^\d{10}$/.test(phone)) throw new Error("Phone must be 10 digits");
-  if (!specialization) throw new Error("Specialization is required");
-  if (isNaN(experience) || experience < 0) throw new Error("Experience must be non-negative");
+  if (isNaN(yearsOfPractice) || yearsOfPractice < 0) throw new Error("Years of practice must be non-negative");
 
-  return { name, email, phone, specialization, experience, qualifications };
+  return { 
+    ...data,
+    fullName, 
+    email, 
+    yearsOfPractice,
+    availability,
+    name: fullName,
+    experience: yearsOfPractice,
+    specialization: data.specializations?.[0] || data.specialization || ""
+  };
 }
 
-// --- Therapist API ---
-API.therapist = {
+API.doct = {
   apply: (data) => {
-    const validData = validateTherapistData(data);
-    return API.post("/api/therapists/apply", validData);
+    const validData = validateDOCTData(data);
+    return API.post("/api/doct/apply", validData);
   },
-  getAccepted: () => API.get("/api/therapists/accepted"),
+  getAccepted: () => API.get("/api/doct/accepted"),
+  getMyProfile: () => API.get("/api/doct/my-profile"),
+  createAppointment: (data) => API.post("/api/doct/appointments", data),
+  getAppointments: () => API.get("/api/doct/appointments"),
+  updateAppointmentStatus: (appointmentId, status, message = "") => API.patch(`/api/doct/appointments/${appointmentId}/status`, { status, message }),
 };
 
-// --- Admin Therapist API ---
-API.adminTherapist = {
+API.adminDOCT = {
   getAll: async () => {
     await ensureAdminSession();
-    return API.get("/api/admin/therapists");
+    return API.get("/api/admin/doct");
   },
   getAccepted: async () => {
     await ensureAdminSession();
-    return API.get("/api/therapists/accepted");
+    return API.get("/api/doct/accepted");
+  },
+  update: async (id, data) => {
+    await ensureAdminSession();
+    return API.put(`/api/admin/doct/${id}`, data);
   },
   updateStatus: async (id, status) => {
     await ensureAdminSession();
-    return API.patch(`/api/admin/therapists/${id}/status`, { status });
+    return API.patch(`/api/admin/doct/${id}/status`, { status });
   },
   updateBulkStatus: async (ids = [], status) => {
     await ensureAdminSession();
-    return API.patch(`/api/admin/therapists/bulk/status`, { ids, status });
+    return API.patch(`/api/admin/doct/bulk/status`, { ids, status });
   },
   delete: async (id) => {
     await ensureAdminSession();
-    return API.delete(`/api/admin/therapists/${id}`);
+    return API.delete(`/api/admin/doct/${id}`);
   },
 };
 
-// --- Dashboard & Reports API ---
+API.doch = {
+  getAll: () => API.get("/api/doch"),
+  apply: (data) => API.post("/api/doch/apply", data),
+  getMyProfile: () => API.get("/api/doch/my-profile"),
+  createAppointment: (data) => API.post("/api/doch/appointments", data),
+  getAppointments: () => API.get("/api/doch/appointments"),
+  updateAppointmentStatus: (appointmentId, status, message = "") => API.patch(`/api/doch/appointments/${appointmentId}/status`, { status, message }),
+};
+
+API.adminDOCH = {
+  getAll: async () => {
+    await ensureAdminSession();
+    return API.get("/api/admin/doch");
+  },
+  getById: async (id) => {
+    await ensureAdminSession();
+    return API.get(`/api/admin/doch/${id}`);
+  },
+  update: async (id, data) => {
+    await ensureAdminSession();
+    return API.put(`/api/admin/doch/${id}`, data);
+  },
+  updateStatus: async (id, status) => {
+    await ensureAdminSession();
+    return API.patch(`/api/admin/doch/${id}/status`, { status });
+  },
+  delete: async (id) => {
+    await ensureAdminSession();
+    return API.delete(`/api/admin/doch/${id}`);
+  },
+};
+
 API.dashboard = {
   get: (params = {}) => {
     const queryParams = new URLSearchParams();
@@ -322,6 +398,25 @@ API.report = {
     if (format !== "json") throw new Error("Only JSON format supported");
     return API.get("/api/reports?format=json");
   },
+};
+
+API.upload = {
+  profilePhoto: (formData) => API.post("/api/upload/profile-photo", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  }),
+  certificates: (formData) => API.post("/api/upload/certificates", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  }),
+  deleteFile: (publicId, resourceType = "image") => API.delete(`/api/upload/file/${publicId}?resourceType=${resourceType}`),
+};
+
+// Notifications API
+API.notifications = {
+  getAll: () => API.get("/api/notifications"),
+  getUnreadCount: () => API.get("/api/notifications/unread-count"),
+  markAsRead: (id) => API.patch(`/api/notifications/${id}/read`),
+  markAllAsRead: () => API.patch("/api/notifications/mark-all-read"),
+  delete: (id) => API.delete(`/api/notifications/${id}`),
 };
 
 export default API;

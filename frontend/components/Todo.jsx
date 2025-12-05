@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { v4 as uuidv4 } from "uuid";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import "../css/Todo.css";
+import "../css/components/Todo.css";
 
 const STORAGE_KEY = "maitri_tasks";
 const STORAGE_VERSION = "1.1";
@@ -11,7 +11,7 @@ const STORAGE_VERSION = "1.1";
 export default function Todo({
   tasks: initialTasks = [],
   onUpdate,
-  onFetch, // prop to fetch tasks from backend
+  onFetch, 
   maxTasks = 10,
   showChatContext = false,
 }) {
@@ -29,9 +29,9 @@ export default function Todo({
   const [retryCount, setRetryCount] = useState(0);
   const [pendingSync, setPendingSync] = useState(false);
 
-  // ---------------------------
-  // NETWORK STATUS HANDLING
-  // ---------------------------
+  
+  
+  
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -50,9 +50,9 @@ export default function Todo({
     };
   }, [tasks, pendingSync]);
 
-  // ---------------------------
-  // LOAD TASKS (LOCAL + INITIAL)
-  // ---------------------------
+  
+  
+  
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -79,9 +79,9 @@ export default function Todo({
     if (inputRef.current) inputRef.current.focus();
   }, [initialTasks]);
 
-  // ---------------------------
-  // SAVE TO LOCALSTORAGE
-  // ---------------------------
+  
+  
+  
   const persistTasks = useCallback((next) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -99,9 +99,9 @@ export default function Todo({
     }, 300);
   }, []);
 
-  // ---------------------------
-  // BACKEND SYNC
-  // ---------------------------
+  
+  
+  
   const syncWithBackend = useCallback(
     async (nextTasks) => {
       if (!onUpdate || !isOnline) {
@@ -135,9 +135,9 @@ export default function Todo({
     [onUpdate, isOnline, retryCount, t]
   );
 
-  // ---------------------------
-  // CENTRAL TASK UPDATE HANDLER
-  // ---------------------------
+  
+  
+  
   const updateTasks = useCallback(
     (updater) => {
       setTasks((prev) => {
@@ -151,9 +151,9 @@ export default function Todo({
     [persistTasks, syncWithBackend]
   );
 
-  // ---------------------------
-  // TASK OPERATIONS
-  // ---------------------------
+  
+  
+  
   const handleAdd = useCallback(() => {
     const text = input.trim();
     if (!text) return setError(t("todo.emptyInput", "Task cannot be empty."));
@@ -210,15 +210,15 @@ export default function Todo({
     [handleAdd]
   );
 
-  // ---------------------------
-  // REFRESH BUTTON
-  // ---------------------------
+  
+  
+  
   const handleRefresh = useCallback(async () => {
   if (!onFetch) return;
   try {
     setLoading(true);
     const data = await onFetch();
-    console.log("Todo refresh data:", data); // <-- debug
+    console.log("Todo refresh data:", data); 
     if (Array.isArray(data)) updateTasks(data);
     else if (data?.todos && Array.isArray(data.todos)) updateTasks(data.todos);
     else console.warn("Invalid refresh response format:", data);
@@ -230,9 +230,9 @@ export default function Todo({
   }
 }, [onFetch, updateTasks, t]);
 
-  // ---------------------------
-  // DRAG & DROP
-  // ---------------------------
+  
+  
+  
   const onDragEnd = useCallback(
     (result) => {
       if (!result.destination) return;
@@ -244,9 +244,9 @@ export default function Todo({
     [tasks, updateTasks]
   );
 
-  // ---------------------------
-  // CLEANUP
-  // ---------------------------
+  
+  
+  
   useEffect(() => {
     return () => {
       unmounted.current = true;
@@ -260,9 +260,18 @@ export default function Todo({
     [tasks]
   );
 
-  // ---------------------------
-  // TASK ITEM COMPONENT
-  // ---------------------------
+  
+  const stats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = total - completed;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, pending, completionRate };
+  }, [tasks]);
+
+  
+  
+  
   const TaskItem = useCallback(
     ({ task, index }) => (
       <Draggable
@@ -271,125 +280,231 @@ export default function Todo({
         index={index}
         isDragDisabled={task.completed}
       >
-        {(provided) => (
-          <li
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            className={`todo-item ${task.completed ? "completed" : ""}`}
-          >
-            <div className="todo-item-content">
-              <label htmlFor={`task-${task._id}`}>
-                <input
-                  id={`task-${task._id}`}
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleDone(task._id)}
-                />
-                <span className="todo-text">{task.title}</span>
-                {task.createdAt && (
-                  <span className="todo-date">
-                    {format(new Date(task.createdAt), "MMM d")}
-                  </span>
-                )}
-              </label>
-              <button
-                onClick={() => handleDelete(task._id)}
-                className="todo-delete"
+            {(provided, snapshot) => (
+              <li
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+                className={`todo-item list-group-item ${task.completed ? "completed" : ""} ${snapshot.isDragging ? "dragging" : ""}`}
               >
-                ✕
-              </button>
-            </div>
-            {showChatContext && task.chatMessage && (
-              <div className="todo-chat-context">
-                <span>{t("todo.chatContext", "From chat")}: "{task.chatMessage}"</span>
-                {task.chatTimestamp && (
-                  <span>
-                    {format(new Date(task.chatTimestamp), "MMM d, yyyy h:mm a")}
-                  </span>
+                <div className="todo-item-content d-flex align-items-center gap-3 w-100">
+                  <label htmlFor={`task-${task._id}`} className="todo-checkbox-label d-flex align-items-center gap-2 flex-grow-1 mb-0">
+                    <input
+                      id={`task-${task._id}`}
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => toggleDone(task._id)}
+                      className="todo-checkbox form-check-input"
+                      style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                    />
+                    <span className="todo-text flex-grow-1">{task.title}</span>
+                  </label>
+                  <div className="todo-item-meta d-flex align-items-center gap-2 flex-shrink-0">
+                    {task.createdAt && (
+                      <span className="todo-date badge bg-light text-dark d-flex align-items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                        </svg>
+                        <small>{format(new Date(task.createdAt), "MMM d")}</small>
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleDelete(task._id)}
+                      className="todo-delete btn btn-sm btn-link text-danger p-1"
+                      aria-label={t("todo.delete", "Delete task")}
+                      style={{minWidth: '32px', minHeight: '32px'}}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {showChatContext && task.chatMessage && (
+                  <div className="todo-chat-context mt-2 p-2 bg-light rounded small text-muted">
+                    <span className="d-block"><strong>{t("todo.chatContext", "From chat")}:</strong> "{task.chatMessage}"</span>
+                    {task.chatTimestamp && (
+                      <span className="d-block mt-1">
+                        {format(new Date(task.chatTimestamp), "MMM d, yyyy h:mm a")}
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
+              </li>
             )}
-          </li>
-        )}
       </Draggable>
     ),
     [toggleDone, handleDelete, showChatContext, t]
   );
 
-  // ---------------------------
-  // RENDER
-  // ---------------------------
+  
+  
+  
   return (
-    <div className="todo-container">
-      <div className="todo-header">
-        <h2>{t("todo.title", "My Tasks")}</h2>
-        <div className="todo-header-buttons">
+    <div className="todo-container card animate-fade-in">
+      <div className="todo-header card-header d-flex justify-content-between align-items-start flex-wrap gap-3 pb-3 border-bottom">
+        <div className="todo-header-main d-flex align-items-center gap-3 flex-grow-1">
+          <div className="todo-header-icon">✅</div>
+          <div>
+            <h2 className="h3 mb-1">{t("todo.title", "My Tasks")}</h2>
+            <p className="text-muted mb-0 small">{t("todo.subtitle", "Stay organized and productive")}</p>
+          </div>
+        </div>
+        <div className="todo-header-buttons d-flex gap-2 flex-wrap">
           {onFetch && (
-            <button onClick={handleRefresh} disabled={loading} className="todo-refresh-btn">
-              {t("todo.refresh", "Refresh")}
+            <button 
+              onClick={handleRefresh} 
+              disabled={loading} 
+              className="btn btn-outline-secondary d-flex align-items-center gap-2"
+              aria-label={t("todo.refresh", "Refresh")}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                className={loading ? 'spinning' : ''}
+                viewBox="0 0 16 16"
+              >
+                <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"></path>
+                <path fillRule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"></path>
+              </svg>
+              <span>{loading ? t("todo.refreshing", "Refreshing...") : t("todo.refresh", "Refresh")}</span>
             </button>
           )}
-          <button onClick={handleDeleteAll} disabled={loading || tasks.length === 0} className="todo-delete-all">
-            {t("todo.deleteAll", "Delete All")}
+          <button 
+            onClick={handleDeleteAll} 
+            disabled={loading || tasks.length === 0} 
+            className="btn btn-outline-danger d-flex align-items-center gap-2"
+            aria-label={t("todo.deleteAll", "Delete All")}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+              <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+            </svg>
+            <span>{t("todo.deleteAll", "Delete All")}</span>
           </button>
         </div>
       </div>
 
-      <div className="todo-input-area">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder={t("todo.placeholder", "Add a new task...")}
-          maxLength={200}
-        />
-        <button onClick={handleAdd} disabled={!input.trim() || loading}>
-          {loading ? t("todo.saving", "Saving...") : t("todo.add", "Add")}
-        </button>
-      </div>
+      <div className="card-body">
+        
+        {tasks.length > 0 && (
+          <div className="row g-3 mb-4">
+            <div className="col-6 col-md-3">
+              <div className="card text-center todo-stat-card animate-scale-in" style={{animationDelay: '0.1s'}}>
+                <div className="card-body p-3">
+                  <div className="fs-3 mb-2">📊</div>
+                  <div className="h4 mb-0 fw-bold">{stats.total}</div>
+                  <div className="text-muted small">{t("todo.total", "Total")}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="card text-center todo-stat-card border-success animate-scale-in" style={{animationDelay: '0.2s'}}>
+                <div className="card-body p-3">
+                  <div className="fs-3 mb-2">✅</div>
+                  <div className="h4 mb-0 text-success fw-bold">{stats.completed}</div>
+                  <div className="text-muted small">{t("todo.completed", "Completed")}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="card text-center todo-stat-card border-warning animate-scale-in" style={{animationDelay: '0.3s'}}>
+                <div className="card-body p-3">
+                  <div className="fs-3 mb-2">⏳</div>
+                  <div className="h4 mb-0 text-warning fw-bold">{stats.pending}</div>
+                  <div className="text-muted small">{t("todo.pending", "Pending")}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="card text-center todo-stat-card border-info animate-scale-in" style={{animationDelay: '0.4s'}}>
+                <div className="card-body p-3">
+                  <div className="fs-3 mb-2">📈</div>
+                  <div className="h4 mb-0 text-info fw-bold">{stats.completionRate}%</div>
+                  <div className="text-muted small">{t("todo.completion", "Progress")}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {error && <div className="todo-error">{error}</div>}
-      {!isOnline && (
-        <div className="todo-offline-notice">
-          {t("todo.offlineMode", "You're offline. Sync will resume automatically.")}
-        </div>
-      )}
-
-      {tasks.length === 0 ? (
-        loading ? (
-          <p className="todo-empty">{t("todo.loading", "Loading tasks...")}</p>
-        ) : (
-          <p className="todo-empty">{t("todo.empty", "No tasks yet.")}</p>
-        )
-      ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="todo-list">
-            {(provided) => (
-              <ul ref={provided.innerRef} {...provided.droppableProps} className="todo-list">
-                {tasks.map((task, index) => (
-                  <TaskItem key={task._id} task={task} index={index} />
-                ))}
-                {provided.placeholder}
-              </ul>
+        <div className="todo-input-area input-group mb-3">
+          <input
+            ref={inputRef}
+            type="text"
+            id="todo-input"
+            name="todo-input"
+            className="form-control"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder={t("todo.placeholder", "Add a new task...")}
+            maxLength={200}
+            autoComplete="off"
+          />
+          <button className="btn btn-primary d-flex align-items-center gap-2" onClick={handleAdd} disabled={!input.trim() || loading}>
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm"></span>
+                <span>{t("todo.saving", "Saving...")}</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                <span>{t("todo.add", "Add")}</span>
+              </>
             )}
-          </Droppable>
-        </DragDropContext>
-      )}
-
-      {allCompleted && tasks.length > 0 && (
-        <div className="todo-celebration">
-          🎉 {t("todo.allCompleted", "All tasks completed!")} 🎉
+          </button>
         </div>
-      )}
 
-      {pendingSync && (
-        <div className="todo-sync-status">
-          {t("todo.pendingSync", "Pending sync with server")}
-        </div>
-      )}
+        {error && <div className="alert alert-danger">{error}</div>}
+        {!isOnline && (
+          <div className="alert alert-warning">
+            {t("todo.offlineMode", "You're offline. Sync will resume automatically.")}
+          </div>
+        )}
+
+        {tasks.length === 0 ? (
+          <div className="text-center py-5 animate-fade-in">
+            <div className="display-1 mb-3 animate-float">📝</div>
+            <h3 className="h4">{loading ? t("todo.loading", "Loading tasks...") : t("todo.emptyTitle", "No tasks yet")}</h3>
+            <p className="text-muted">{loading ? (
+              <span className="spinner-border spinner-border-sm me-2"></span>
+            ) : t("todo.emptyDescription", "Add your first task above to get started!")}</p>
+          </div>
+        ) : (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="todo-list">
+              {(provided) => (
+                <ul ref={provided.innerRef} {...provided.droppableProps} className="list-group">
+                  {tasks.map((task, index) => (
+                    <TaskItem key={task._id} task={task} index={index} />
+                  ))}
+                  {provided.placeholder}
+                </ul>
+              )}
+            </Droppable>
+          </DragDropContext>
+        )}
+
+        {allCompleted && tasks.length > 0 && (
+          <div className="alert alert-success text-center d-flex align-items-center justify-content-center gap-2 animate-scale-in">
+            <span className="fs-4">🎉</span>
+            <span className="fw-bold">{t("todo.allCompleted", "All tasks completed!")}</span>
+            <span className="fs-4">🎉</span>
+          </div>
+        )}
+
+        {pendingSync && (
+          <div className="alert alert-info">
+            {t("todo.pendingSync", "Pending sync with server")}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,16 +3,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const crypto = require('crypto');
 
-// Load environment variables
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
-// Rate limiters for different parts of the application
 const rateLimits = {
   general: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200, // Allow 200 requests per 15 minutes for general usage
+    windowMs: 15 * 60 * 1000,
+    max: 200,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -21,8 +19,8 @@ const rateLimits = {
     },
   }),
   auth: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // Allow fewer requests for auth
+    windowMs: 15 * 60 * 1000,
+    max: 50,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -31,8 +29,8 @@ const rateLimits = {
     },
   }),
   admin: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Admin endpoints allow more frequent interactions
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -41,8 +39,8 @@ const rateLimits = {
     },
   }),
   chat: rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // Allow a reasonable number of requests for chatbot
+    windowMs: 60 * 1000,
+    max: 30,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -51,8 +49,8 @@ const rateLimits = {
     },
   }),
   reminder: rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 20, // Allow up to 20 requests per minute for reminder operations
+    windowMs: 60 * 1000,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -62,19 +60,18 @@ const rateLimits = {
   }),
 };
 
-// CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'https://maitri.vercel.app',
-  'https://maitri-frontend.vercel.app',
-+ 'https://maitri-online-therapy.vercel.app',
-  process.env.CLIENT_URL, // dynamically allow client URL from env if provided
+  'https://app.maitri.cloud',
+  'https://api.maitri.cloud',
+  'https://maitri-online-therapy-1.onrender.com',
+  process.env.CLIENT_URL,
+  process.env.CORS_ORIGIN,
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow REST tools or same-origin (no origin)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
@@ -98,38 +95,42 @@ const corsOptions = {
   maxAge: 86400,
 };
 
-// Security Headers Middleware
+const buildConnectSrc = () => {
+  const sources = [
+    "'self'",
+    "https://maitri-online-therapy-1.onrender.com",
+    "https://maitri-online-therapy.onrender.com",
+  ];
+  
+  if (process.env.CLIENT_URL && 
+      typeof process.env.CLIENT_URL === 'string' && 
+      process.env.CLIENT_URL.startsWith('http') &&
+      process.env.CLIENT_URL !== 'NaN') {
+    sources.push(process.env.CLIENT_URL);
+  }
+  
+  if (process.env.CORS_ORIGIN && 
+      typeof process.env.CORS_ORIGIN === 'string' && 
+      process.env.CORS_ORIGIN.startsWith('http') &&
+      process.env.CORS_ORIGIN !== 'NaN' &&
+      !sources.includes(process.env.CORS_ORIGIN)) {
+    sources.push(process.env.CORS_ORIGIN);
+  }
+  
+  return sources;
+};
+
 const securityHeaders = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
-      connectSrc: [
-        "'self'",
-        'https://maitri.vercel.app',
-        'https://maitri-frontend.vercel.app',
-+       'https://maitri-online-therapy.vercel.app',
-        'https://maitri-online-therapy.onrender.com',
-        'https://maitri-online-therapy.onrender.com/',
-      ],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-    },
-  },
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 });
 
-// Middleware to add a unique request ID
 const requestId = (req, res, next) => {
   req.id = crypto.randomUUID();
   res.setHeader('X-Request-ID', req.id);
   next();
 };
 
-// Exporting the modules
 module.exports = {
   rateLimits,
   corsOptions,

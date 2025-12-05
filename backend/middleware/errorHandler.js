@@ -22,15 +22,18 @@ const errorHandler = (err, req, res, next) => {
     userId: req.user?.id || 'anonymous',
   });
 
+  // Get translation function if available
+  const t = req.t || ((key, fallback) => fallback);
+
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
-    const message = 'Resource not found';
+    const message = t('general.notFound', 'Resource not found');
     error = { message, statusCode: 404 };
   }
 
   // Mongoose duplicate key
   if (err.code === 11000) {
-    const message = 'Duplicate field value entered';
+    const message = t('general.duplicateField', 'Duplicate field value entered');
     error = { message, statusCode: 400 };
   }
 
@@ -42,36 +45,36 @@ const errorHandler = (err, req, res, next) => {
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    const message = 'Invalid token';
+    const message = t('auth.invalidToken', 'Invalid token');
     error = { message, statusCode: 401 };
   }
 
   if (err.name === 'TokenExpiredError') {
-    const message = 'Token expired';
+    const message = t('auth.tokenExpired', 'Token expired');
     error = { message, statusCode: 401 };
   }
 
   // Rate limit errors
   if (err.status === 429) {
-    const message = 'Too many requests, please try again later';
+    const message = t('general.rateLimitExceeded', 'Too many requests, please try again later');
     error = { message, statusCode: 429 };
   }
 
   // Session errors
   if (err.message && err.message.includes('session')) {
-    const message = 'Session error, please login again';
+    const message = t('auth.sessionExpired', 'Session error, please login again');
     error = { message, statusCode: 401 };
   }
 
   // Database connection errors
   if (err.name === 'MongoNetworkError' || err.name === 'MongoTimeoutError') {
-    const message = 'Database connection error, please try again later';
+    const message = t('general.databaseError', 'Database connection error, please try again later');
     error = { message, statusCode: 503 };
   }
 
   // Default error
   const statusCode = error.statusCode || 500;
-  const message = error.message || 'Internal Server Error';
+  const message = error.message || t('general.serverError', 'Internal Server Error');
 
   // Don't leak error details in production
   const response = {

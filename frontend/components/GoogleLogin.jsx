@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import API from "../utils/axiosClient";
 
 export default function GoogleLogin() {
   const { t } = useTranslation();
@@ -8,8 +11,8 @@ export default function GoogleLogin() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await API.get("/api/session-check");
-        if (res.data.user) {
+        const res = await API.auth.checkSession();
+        if (res?.success && res?.user) {
           navigate("/dashboard");
         } else {
           setLoading(false);

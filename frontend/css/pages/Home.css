@@ -1,0 +1,117 @@
+
+@import '../unified-design-system.css';
+
+.home {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.home-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-overlay);
+  padding: var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-content {
+  text-align: center;
+  color: var(--cloud-white-pure);
+  max-width: 700px;
+  padding: var(--space-8);
+  animation: fadeInUp 1s ease-in-out;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.home-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  line-height: 1.2;
+}
+
+.home-title span {
+  color: var(--soft-jade-light);
+  text-shadow: 0 0 10px rgba(171, 209, 198, 0.7);
+}
+
+.home-subtitle {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  margin-bottom: var(--space-8);
+  line-height: var(--line-height-normal);
+  color: var(--cloud-white);
+}
+
+.google-login-btn {
+  padding: var(--button-padding-y) var(--button-padding-x-lg);
+  background: var(--gradient-primary);
+  color: var(--text-dark);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border: 2px solid var(--soft-jade);
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+  min-height: var(--button-height-md);
+}
+
+.google-login-btn:hover {
+  background: var(--soft-jade-hover);
+  border-color: var(--soft-jade-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow);
+}
+
+.google-login-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+@media (max-width: 1024px) {
+  .home-overlay {
+    padding: 2rem 3rem;
+  }
+  .home-content {
+    max-width: 90%;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 1rem;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-content {
+    padding: 1.5rem;
+  }
+  .google-login-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-overlay {
+    padding: 1.5rem;
+  }
+  .home-content {
+    padding: 1.25rem;
+  }
+}

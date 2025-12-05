@@ -1,119 +1,69 @@
-/* Container */
-.nback-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  color: #222;
-  background-color: #f5f5f5;
-  min-height: 100vh;
-}
 
-/* Header */
-.nback-header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #d9e6f2; /* soft blue */
-  border-radius: 8px;
-}
 
-.btn-exit {
-  padding: 6px 12px;
-  border: none;
-  background-color: #ff8a65; /* soft orange */
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn-exit:hover {
-  background-color: #ff7043;
-}
-
-/* Instructions */
-.nback-instructions {
-  margin-bottom: 20px;
+.nback-display {
   text-align: center;
-  font-size: 18px;
+  margin: 1.5rem 0;
 }
 
-.show-phase {
-  color: #0b5394; /* dark blue */
-}
-
-.input-phase {
-  color: #0b5345; /* dark green */
-}
-
-/* Grid buttons */
-.nback-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 80px);
-  gap: 15px;
+.nback-number {
+  width: 200px;
+  height: 200px;
+  background: #667eea;
+  color: #ffffff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  font-size: 5rem;
+  font-weight: 600;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.nback-grid button {
-  width: 80px;
-  height: 80px;
-  font-size: 24px;
-  border-radius: 10px;
-  border: 2px solid #999;
-  background-color: #e0e0e0;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.nback-grid button:hover {
-  background-color: #b3cde0;
-}
-
-/* Submit button */
-.nback-actions {
-  margin-top: 10px;
-}
-
-.btn-submit {
-  padding: 10px 20px;
-  border: none;
-  background-color: #4ade80; /* soft green */
-  color: white;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-submit:hover {
-  background-color: #22c55e;
-}
-
-/* Menu */
-.nback-menu {
+.nback-inputs {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.nback-input-row {
+  display: flex;
   align-items: center;
-  padding: 40px;
+  gap: 1rem;
 }
 
-.nback-difficulty button {
-  margin: 10px;
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  background-color: #a3c4f3; /* soft blue */
-  cursor: pointer;
-  color: #222;
+.nback-input-label {
+  font-weight: 500;
+  color: #1a1a1a;
+  min-width: 60px;
 }
 
-.nback-difficulty button:hover {
-  background-color: #6497b1;
+.nback-input {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1.25rem;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  max-width: 100px;
 }
 
-/* Result Popup overrides (optional if using same ResultPopup.css) */
+.nback-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+
+@media (max-width: 768px) {
+  .nback-number {
+    width: 150px;
+    height: 150px;
+    font-size: 4rem;
+  }
+  
+  .nback-input {
+    font-size: 1rem;
+  }
+}

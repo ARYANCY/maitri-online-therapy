@@ -7,6 +7,7 @@ const compression = require('compression');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const flash = require('connect-flash');
 
 const { validateEnv, getConfig } = require('./config/env');
@@ -14,7 +15,6 @@ const { connectDB } = require('./config/database');
 const logger = require('./utils/logger');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
-const { initReminderScheduler } = require('./controllers/reminderController');
 
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { requestId, securityHeaders } = require('./middleware/security');
@@ -26,11 +26,14 @@ const chatbotRoutes = require('./routes/chatbotRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const therapistRoutes = require('./routes/therapistRoutes');
 const therapistAdminRoutes = require('./routes/therapistAdminRoutes');
+const healthcareProfessionalRoutes = require('./routes/healthcareProfessionalRoutes');
+const healthcareProfessionalAdminRoutes = require('./routes/healthcareProfessionalAdminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const languageRoutes = require('./routes/languageRoutes');
-const reminderRoutes = require('./routes/reminder');
 const healthRoutes = require('./routes/healthRoutes');
 const dementiaRoutes = require('./routes/dementiaRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { requireLogin } = require('./middleware/authMiddleware');
 
 try {
@@ -46,28 +49,35 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const buildConnectSrc = () => {
+  const sources = [
+    "'self'",
+    "https://maitri-online-therapy-1.onrender.com",
+    "https://maitri-online-therapy.onrender.com",
+    "https://app.maitri.cloud",
+    "https://api.maitri.cloud",
+  ];
+  
+  if (process.env.CLIENT_URL && 
+      typeof process.env.CLIENT_URL === 'string' && 
+      process.env.CLIENT_URL.startsWith('http') &&
+      process.env.CLIENT_URL !== 'NaN') {
+    sources.push(process.env.CLIENT_URL);
+  }
+  
+  if (process.env.CORS_ORIGIN && 
+      typeof process.env.CORS_ORIGIN === 'string' && 
+      process.env.CORS_ORIGIN.startsWith('http') &&
+      process.env.CORS_ORIGIN !== 'NaN' &&
+      !sources.includes(process.env.CORS_ORIGIN)) {
+    sources.push(process.env.CORS_ORIGIN);
+  }
+  
+  return sources;
+};
 
 app.use(helmet(config.security.enableHelmet ? {
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
-      connectSrc: [
-        "'self'",
-        config.cors.origin,
-        process.env.CLIENT_URL,
-        "https://maitri-online-therapy.vercel.app",
-        "https://maitri-online-therapy.onrender.com",
-      ].filter(Boolean),
-
-
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-    },
-  },
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 } : false));
 
@@ -77,73 +87,251 @@ app.use(requestId);
 
 app.use(securityHeaders);
 
-  if (config.security.enableCORS) {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://maitri-online-therapy.vercel.app',
-      'https://maitri-online-therapy.vercel.app/',
-      'https://maitri-online-therapy.onrender.com',
-      'https://maitri-online-therapy.onrender.com/',
-      process.env.CLIENT_URL,
-    ].filter(Boolean);
+app.use((req, res, next) => {
+  const connectSrc = buildConnectSrc().join(' ');
+  const cspHeader = 
+    `default-src 'self'; ` +
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ` +
+    `font-src 'self' https://fonts.gstatic.com; ` +
+    `img-src 'self' data: https:; ` +
+    `script-src 'self' https://www.gstatic.com https://accounts.google.com https://apis.google.com; ` +
+    `connect-src ${connectSrc} https://www.googleapis.com https://accounts.google.com https://www.gstatic.com; ` +
+    `frame-src 'self' https://accounts.google.com https://www.google.com; ` +
+    `object-src 'none'; ` +
+    `base-uri 'self'; ` +
+    `form-action 'self' https://accounts.google.com; ` +
+    `frame-ancestors 'self'; ` +
+    `script-src-attr 'none'; ` +
+    `upgrade-insecure-requests`;
+  
+  res.setHeader('Content-Security-Policy', cspHeader);
+  next();
+});
 
-  app.use(cors({
+const cookieDebug = require('./middleware/cookieDebug');
+app.use(cookieDebug);
+
+if (config.security.enableCORS) {
+  const normalizeOrigin = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    
+    try {
+      url = url.trim();
+      if (!url) return null;
+      
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`;
+      }
+      
+      const u = new URL(url);
+      return `${u.protocol}//${u.host.toLowerCase()}`;
+    } catch (error) {
+      logger.warn('[CORS] Invalid URL format:', { url, error: error.message });
+      return null;
+    }
+  };
+
+  const parseOriginsFromEnv = (envValue) => {
+    if (!envValue || typeof envValue !== 'string') return [];
+    
+    return envValue
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean)
+      .map(normalizeOrigin)
+      .filter(Boolean);
+  };
+
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://app.maitri.cloud',
+    'https://api.maitri.cloud',
+    'https://maitri-online-therapy-1.onrender.com',
+  ];
+
+  const envOrigins = [
+    ...parseOriginsFromEnv(process.env.CLIENT_URL),
+    ...parseOriginsFromEnv(process.env.CORS_ORIGIN),
+    ...parseOriginsFromEnv(process.env.CORS_ORIGINS),
+  ];
+
+  const allOrigins = [...defaultOrigins, ...envOrigins];
+  const normalizedOriginsSet = new Set();
+  
+  allOrigins.forEach(origin => {
+    const normalized = normalizeOrigin(origin);
+    if (normalized) {
+      normalizedOriginsSet.add(normalized);
+    }
+  });
+
+  const normalizedOrigins = Array.from(normalizedOriginsSet).sort();
+
+  const corsOptions = {
     origin: function (origin, callback) {
-      const normalize = (url) => {
-        try { const u = new URL(url); return `${u.protocol}//${u.host}`; } catch { return url?.replace(/\/+$/, ''); }
-      };
-      const allowed = new Set(allowedOrigins.map(normalize));
-      if (!origin) return callback(null, true);
-      const normalized = normalize(origin);
-      if (allowed.has(normalized)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
+      if (!origin) {
+        if (config.server.isDevelopment) {
+          logger.debug('[CORS] Request with no origin - allowing (development mode)');
+        }
+        return callback(null, true);
+      }
+
+      const normalized = normalizeOrigin(origin);
+      
+      if (!normalized) {
+        logger.warn('[CORS] Invalid origin format:', { original: origin });
+        return callback(new Error(`CORS: Invalid origin format: ${origin}`));
+      }
+
+      const isAllowed = normalizedOrigins.includes(normalized);
+      
+      if (isAllowed) {
+        if (config.server.isDevelopment) {
+          logger.debug('[CORS] Origin allowed:', { origin: normalized });
+        }
+        return callback(null, true);
+      }
+
+      logger.warn('[CORS] Origin blocked:', {
+        origin: normalized,
+        originalOrigin: origin,
+        allowedCount: normalizedOrigins.length,
+        environment: config.server.env,
+      });
+
+      const errorMessage = config.server.isDevelopment
+        ? `CORS: Origin ${normalized} is not allowed. Allowed origins: ${normalizedOrigins.join(', ')}`
+        : `CORS: Origin ${normalized} is not allowed by CORS policy`;
+
+      return callback(new Error(errorMessage));
     },
+    
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    
+    methods: [
+      'GET',
+      'POST',
+      'PUT',
+      'DELETE',
+      'PATCH',
+      'OPTIONS',
+      'HEAD',
+    ],
+    
     allowedHeaders: [
-      'Origin',
-      'X-Requested-With',
       'Content-Type',
-      'Accept',
       'Authorization',
+      'Accept',
+      'Accept-Language',
+      'X-Requested-With',
+      'Origin',
+      'X-CSRF-Token',
       'Cache-Control',
       'Pragma',
     ],
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+    
+    exposedHeaders: [
+      'X-Total-Count',
+      'X-Page-Count',
+      'Set-Cookie',
+      'Content-Range',
+      'X-Request-ID',
+    ],
+    
     maxAge: 86400,
-  }));
-}
+    
+    preflightContinue: false,
+    
+    optionsSuccessStatus: 204,
+  };
 
+  app.use(cors(corsOptions));
+
+  logger.info('[CORS] CORS configuration initialized', {
+    enabled: true,
+    allowedOriginsCount: normalizedOrigins.length,
+    credentials: true,
+    environment: config.server.env,
+    methods: corsOptions.methods.length,
+    maxAge: corsOptions.maxAge,
+  });
+
+  if (config.server.isDevelopment || process.env.LOG_LEVEL === 'debug') {
+    normalizedOrigins.forEach((origin, index) => {
+      logger.info(`[CORS] Allowed origin ${index + 1}/${normalizedOrigins.length}: ${origin}`);
+    });
+  } else {
+    if (normalizedOrigins.length > 0) {
+      logger.info('[CORS] Allowed origins:', {
+        count: normalizedOrigins.length,
+        first: normalizedOrigins[0],
+        last: normalizedOrigins[normalizedOrigins.length - 1],
+      });
+    }
+  }
+} else {
+  logger.warn('[CORS] CORS is disabled in configuration');
+}
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+app.use(cookieParser());
+
 app.use(sanitizeInput);
 
 app.use(rateLimits.general);
+
+const cookieConfig = {
+  httpOnly: true,
+  secure: config.session.secure,
+  sameSite: config.session.sameSite,
+  maxAge: config.session.maxAge,
+  path: '/',
+};
+
+if (cookieConfig.sameSite === 'none' && !cookieConfig.secure) {
+  logger.warn('[Session] SameSite=None requires Secure=true. Forcing secure cookies.');
+  cookieConfig.secure = true;
+}
+
+logger.info('[Session] Cookie configuration', {
+  secure: cookieConfig.secure,
+  sameSite: cookieConfig.sameSite,
+  httpOnly: cookieConfig.httpOnly,
+  maxAge: cookieConfig.maxAge,
+  environment: config.server.env,
+});
 
 app.use(
   session({
     secret: config.session.secret,
     name: config.session.name,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({
       mongoUrl: config.database.uri,
       collectionName: 'sessions',
       ttl: config.session.maxAge / 1000,
       touchAfter: 24 * 3600,
     }),
-    cookie: {
-      maxAge: config.session.maxAge,
-      httpOnly: config.session.httpOnly,
-      secure: config.server.env === 'production',
-      sameSite: config.server.env === 'production' ? 'none' : 'lax',
-      path: '/',
-    },
+    cookie: cookieConfig,
+    rolling: false,
   })
 );
+
+logger.info('[Session] Session middleware configured', {
+  sessionName: config.session.name,
+  cookieConfig: {
+    secure: cookieConfig.secure,
+    sameSite: cookieConfig.sameSite,
+    httpOnly: cookieConfig.httpOnly,
+    maxAge: cookieConfig.maxAge,
+    path: cookieConfig.path,
+    domain: cookieConfig.domain || 'not set (correct for cross-site)'
+  }
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -152,21 +340,58 @@ app.use(flash());
 
 app.use(i18nMiddleware);
 
+app.use((req, res, next) => {
+  const isHealthCheck = req.path.startsWith('/health') || 
+                       (req.path === '/' && (req.get('User-Agent')?.includes('Go-http-client') || 
+                                            req.get('User-Agent')?.includes('curl') ||
+                                            req.get('User-Agent')?.includes('Wget')));
+  
+  if (isHealthCheck) {
+    return next();
+  }
+  
+  const originalEnd = res.end;
+  res.end = function(chunk, encoding) {
+    if (req.session && req.sessionID) {
+      req.session.touch();
+      req.session.save((err) => {
+        if (err) {
+          logger.error('[Session] Error saving session:', err);
+        }
+        originalEnd.call(this, chunk, encoding);
+      });
+    } else {
+      originalEnd.call(this, chunk, encoding);
+    }
+  };
+  
+  next();
+});
+
 app.use('/health', healthRoutes);
 
-// API routes with rate limiting
 app.use('/auth', rateLimits.auth, authRoutes);
 app.use('/api/chatbot', rateLimits.chat, requireLogin, chatbotRoutes);
 app.use('/api/dashboard', requireLogin, dashboardRoutes);
-app.use('/api/therapists', requireLogin, therapistRoutes);
-app.use('/api/admin/therapists', rateLimits.admin, therapistAdminRoutes);
+app.use('/api/doct', requireLogin, therapistRoutes);
+app.use('/api/admin/doct', rateLimits.admin, therapistAdminRoutes);
+app.use('/api/doch', rateLimits.general, healthcareProfessionalRoutes);
+app.use('/api/admin/doch', rateLimits.admin, healthcareProfessionalAdminRoutes);
 app.use('/api/reports', requireLogin, reportRoutes);
 app.use('/api/language', requireLogin, languageRoutes);
-app.use('/api/reminders', requireLogin, reminderRoutes);
 app.use('/api/dementia', rateLimits.chat, requireLogin, dementiaRoutes);
+app.use('/api/upload', requireLogin, uploadRoutes);
+app.use('/api/notifications', requireLogin, notificationRoutes);
 
-// Root endpoint
 app.get('/', (req, res) => {
+  const isHealthCheck = req.get('User-Agent')?.includes('Go-http-client') || 
+                        req.get('User-Agent')?.includes('curl') ||
+                        req.get('User-Agent')?.includes('Wget');
+  
+  if (isHealthCheck && req.session) {
+    req.session.destroy(() => {});
+  }
+  
   res.json({
     message: 'Maitri API Server',
     version: process.env.npm_package_version || '1.0.0',
@@ -176,13 +401,10 @@ app.get('/', (req, res) => {
   });
 });
 
-// 404 handler
 app.use(notFound);
 
-// Global error handler
 app.use(errorHandler);
 
-// Graceful shutdown handling
 const gracefulShutdown = (signal) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
   
@@ -201,30 +423,23 @@ const gracefulShutdown = (signal) => {
   }, 10000);
 };
 
-
-// Handle shutdown signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
   process.exit(1);
 });
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
 
-// Start server
 const startServer = async () => {
   try {
-    // Connect to database
     await connectDB();
     
-    // Start HTTP server
     const port = config.server.port || 10000;
     const host = config.server.isProduction ? '0.0.0.0' : (config.server.host || 'localhost');
     const server = app.listen(port, host, () => {
@@ -233,17 +448,12 @@ const startServer = async () => {
       logger.info(`🔗 Health check: http://${host}:${port}/health`);
     });
     
-    // Store server reference for graceful shutdown
     global.server = server;
 
-    // Initialize reminder scheduler
-    initReminderScheduler();
-    
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };
 
-// Start the server
 startServer();
