@@ -22,6 +22,8 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
   const [phase, setPhase] = useState("show");
   const [showResult, setShowResult] = useState(false);
   const [shuffledColors, setShuffledColors] = useState([]);
+  const [accumulatedTime, setAccumulatedTime] = useState(0);
+  const [timePausedAt, setTimePausedAt] = useState(0);
 
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
@@ -33,7 +35,13 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
     setUserSequence([]);
     setPhase("show");
     setShuffledColors(shuffledColors);
-  }, [difficulty]);
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const currentTime = Date.now();
+    const activeTime = currentTime - (timePausedAt || gameStartRef.current);
+    setAccumulatedTime(prev => prev + activeTime);
+    setTimePausedAt(Date.now());
+  }, [difficulty, timePausedAt]);
 
   const startGame = (level) => {
     setDifficulty(level);
@@ -42,12 +50,11 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
     setTotalScore(0);
     setTimer(0);
     setShowResult(false);
+    setAccumulatedTime(0);
+    setTimePausedAt(Date.now());
     gameStartRef.current = Date.now();
     
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setTimer((t) => t + 1);
-    }, 1000);
     
     setTimeout(() => {
       const { sequence, shuffledColors } = generateSequence(level);
@@ -66,8 +73,20 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
 
   useEffect(() => {
     if (phase === "show" && sequence.length > 0) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setTimePausedAt(Date.now());
+      
       const timeout = setTimeout(() => {
         setPhase("input");
+        const resumeTime = Date.now();
+        const pausedDuration = resumeTime - timePausedAt;
+        setAccumulatedTime(prev => prev + pausedDuration);
+        
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(() => {
+          setTimer((t) => t + 1);
+        }, 1000);
+        
         if (difficulty && shuffledColors.length === 0) {
           const { shuffledColors: newShuffled } = generateSequence(difficulty);
           setShuffledColors(newShuffled);
@@ -75,7 +94,7 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
       }, 1000 * sequence.length);
       return () => clearTimeout(timeout);
     }
-  }, [phase, sequence.length, difficulty, shuffledColors.length]);
+  }, [phase, sequence.length, difficulty, shuffledColors.length, timePausedAt]);
 
   useEffect(() => {
     if (phase === "input" && isSequenceComplete(userSequence, sequence)) {
@@ -89,6 +108,10 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
         }, 500);
       } else {
         if (intervalRef.current) clearInterval(intervalRef.current);
+        const currentTime = Date.now();
+        const activeTime = currentTime - (timePausedAt || gameStartRef.current);
+        const finalAccumulated = accumulatedTime + activeTime;
+        setTotalTime(Math.floor(finalAccumulated / 1000));
         setShowResult(true);
       }
     }
@@ -124,7 +147,11 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareColorSequenceResult(totalScore, timer, difficulty, maxRounds, ageGroup);
+      const currentTime = Date.now();
+      const activeTime = currentTime - (timePausedAt || gameStartRef.current);
+      const finalAccumulated = accumulatedTime + activeTime;
+      const totalTime = Math.floor(finalAccumulated / 1000);
+      const result = prepareColorSequenceResult(totalScore, totalTime, difficulty, maxRounds, ageGroup);
       onFinish?.(result);
     }
   };

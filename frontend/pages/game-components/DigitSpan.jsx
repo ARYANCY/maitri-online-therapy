@@ -22,6 +22,8 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   const [timer, setTimer] = useState(0);
   const [gameStartTime, setGameStartTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [accumulatedTime, setAccumulatedTime] = useState(0);
+  const [timePausedAt, setTimePausedAt] = useState(0);
 
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -34,15 +36,21 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
     setUserInput("");
     setPhase("show");
     setTimer(0);
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimePausedAt(Date.now());
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setPhase("input");
       setTimer(0);
       if (intervalRef.current) clearInterval(intervalRef.current);
+      const resumeTime = Date.now();
+      const pausedDuration = resumeTime - timePausedAt;
+      setAccumulatedTime(prev => prev + pausedDuration);
       intervalRef.current = setInterval(() => setTimer((t) => t + 1), 1000);
     }, 2000);
-  }, [difficulty]);
+  }, [difficulty, timePausedAt]);
 
   useEffect(() => {
     return () => {
@@ -63,6 +71,8 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
     setTotalScore(0);
     setGameStartTime(Date.now());
     setTotalTime(0);
+    setAccumulatedTime(0);
+    setTimePausedAt(Date.now());
     setShowResult(false);
     setPhase("show");
     setTimeout(() => initRound(level), 100);
@@ -104,14 +114,19 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
     if (intervalRef.current) clearInterval(intervalRef.current);
     const result = calculateScore(userInput, sequence);
     setTotalScore((prev) => prev + result.score);
+    
+    const currentTime = Date.now();
+    const activeTime = currentTime - (timePausedAt || gameStartTime);
+    const finalAccumulated = accumulatedTime + activeTime;
 
     if (round < maxRounds) {
+      setAccumulatedTime(finalAccumulated);
       setTimeout(() => {
         setRound((prev) => prev + 1);
         initRound();
       }, 500);
     } else {
-      const finalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+      const finalTime = Math.floor(finalAccumulated / 1000);
       setTotalTime(finalTime);
       setShowResult(true);
     }

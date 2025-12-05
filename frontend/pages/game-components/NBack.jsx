@@ -23,6 +23,8 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
   const [timer, setTimer] = useState(0);
   const [gameStartTime, setGameStartTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [accumulatedTime, setAccumulatedTime] = useState(0);
+  const [timePausedAt, setTimePausedAt] = useState(0);
   const [error, setError] = useState(null);
 
   const intervalRef = useRef(null);
@@ -47,10 +49,12 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
       setUserInputs([]);
       setPhase("show");
       setTimer(0);
+      
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setTimePausedAt(Date.now());
 
       if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
 
       setCurrentIndex(0);
       
@@ -65,6 +69,9 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
           setPhase("input");
           setCurrentIndex(-1);
           setTimer(0);
+          const resumeTime = Date.now();
+          const pausedDuration = resumeTime - (timePausedAt || Date.now());
+          setAccumulatedTime(prev => prev + pausedDuration);
           intervalRef.current = setInterval(() => setTimer((t) => t + 1), 1000);
         }
       }, 1500);
@@ -100,6 +107,8 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
     setTotalScore(0);
     setGameStartTime(Date.now());
     setTotalTime(0);
+    setAccumulatedTime(0);
+    setTimePausedAt(Date.now());
     setShowResult(false);
     setSequence([]);
     setUserInputs([]);
@@ -124,13 +133,18 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
       const result = calculateScore(sequence, userInputs, level);
       setTotalScore((prev) => prev + result.score);
 
+      const currentTime = Date.now();
+      const activeTime = currentTime - (timePausedAt || gameStartTime);
+      const finalAccumulated = accumulatedTime + activeTime;
+      
       if (round < maxRounds) {
+        setAccumulatedTime(finalAccumulated);
         setTimeout(() => {
           setRound((prev) => prev + 1);
           initRound();
         }, 500);
       } else {
-        const finalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+        const finalTime = Math.floor(finalAccumulated / 1000);
         setTotalTime(finalTime);
         setShowResult(true);
       }
@@ -168,6 +182,10 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
     if (retry) {
       startGame(difficulty);
     } else {
+      const currentTime = Date.now();
+      const activeTime = currentTime - (timePausedAt || gameStartTime);
+      const finalAccumulated = accumulatedTime + activeTime;
+      const totalTime = Math.floor(finalAccumulated / 1000);
       const level = DIFFICULTY[difficulty].level;
       const lastRoundScore = calculateScore(sequence, userInputs, level);
       const result = prepareNBackResult(totalScore, totalTime, difficulty, maxRounds, lastRoundScore, ageGroup);

@@ -26,6 +26,8 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const [activeIndex, setActiveIndex] = useState(-1);
   const [error, setError] = useState(false);
   const [gameStartTime, setGameStartTime] = useState(0);
+  const [accumulatedTime, setAccumulatedTime] = useState(0);
+  const [timePausedAt, setTimePausedAt] = useState(0);
 
   const intervalRef = useRef(null);
   const showTimeoutRef = useRef(null);
@@ -44,6 +46,9 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     setActiveIndex(-1);
     setError(false);
     isShowingSequenceRef.current = false;
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimePausedAt(Date.now());
   }, [difficulty]);
 
   const startGame = (level) => {
@@ -54,12 +59,11 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     setTimer(0);
     setShowResult(false);
     setGameStartTime(Date.now());
+    setAccumulatedTime(0);
+    setTimePausedAt(Date.now());
     gameStartRef.current = Date.now();
     
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setTimer((t) => t + 1);
-    }, 1000);
     
     setTimeout(() => {
       generateNewSequence();
@@ -88,6 +92,14 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
                 setActiveIndex(-1);
                 isShowingSequenceRef.current = false;
                 
+                const resumeTime = Date.now();
+                const pausedDuration = resumeTime - timePausedAt;
+                setAccumulatedTime(prev => prev + pausedDuration);
+                
+                if (intervalRef.current) clearInterval(intervalRef.current);
+                intervalRef.current = setInterval(() => {
+                  setTimer((t) => t + 1);
+                }, 1000);
                 
                 if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
                 inputTimeoutRef.current = setTimeout(() => {
@@ -111,6 +123,12 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
 
   const handleRoundComplete = useCallback((isCorrect) => {
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    
+    const currentTime = Date.now();
+    const activeTime = currentTime - (timePausedAt || gameStartTime);
+    const finalAccumulated = accumulatedTime + activeTime;
+    setAccumulatedTime(finalAccumulated);
     
     if (isCorrect) {
       const roundScore = calculateRoundScore(sequence.length);
@@ -124,12 +142,12 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
         setRound((prev) => prev + 1);
         generateNewSequence();
       } else {
-        
-        if (intervalRef.current) clearInterval(intervalRef.current);
+        const finalTime = Math.floor(finalAccumulated / 1000);
+        setTotalTime(finalTime);
         setShowResult(true);
       }
     }, 1500);
-  }, [round, maxRounds, sequence.length, generateNewSequence]);
+  }, [round, maxRounds, sequence.length, generateNewSequence, accumulatedTime, timePausedAt, gameStartTime]);
 
   
   useEffect(() => {
@@ -187,7 +205,10 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     if (retry) {
       startGame(difficulty);
     } else {
-      const totalTime = Math.floor((Date.now() - gameStartRef.current) / 1000);
+      const currentTime = Date.now();
+      const activeTime = currentTime - (timePausedAt || gameStartTime);
+      const finalAccumulated = accumulatedTime + activeTime;
+      const totalTime = Math.floor(finalAccumulated / 1000);
       const result = preparePatternRecallResult(totalScore, totalTime, difficulty, maxRounds, round, sequence.length, ageGroup);
       onFinish?.(result);
     }
