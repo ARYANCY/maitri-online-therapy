@@ -506,8 +506,8 @@ export default function Game({ onDataUpdate }) {
                 }}>
                   {t("dementia.title", "Cognitive Games")}
                 </h1>
-                <p className="lead text-muted mb-4">
-                  {t("dementia.subtitle", "Assess and improve your cognitive abilities through engaging games")}
+                <p className="lead text-muted mb-4" style={{ maxWidth: "800px", margin: "0 auto", lineHeight: 1.8 }}>
+                  {t("dementia.subtitle", "Engage with scientifically-designed cognitive assessments that evaluate key mental functions including memory, attention, language, and executive skills. Complete multiple games to receive a comprehensive AI-powered risk assessment and personalized insights into your cognitive health.")}
                 </p>
               </div>
               
@@ -733,6 +733,12 @@ export default function Game({ onDataUpdate }) {
                   <div className="card-body p-4">
                     <div className="small" style={{ maxHeight: "400px", overflowY: "auto" }}>
                       <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🎨 Color Sequence</h6>
+                        <p className="text-muted mb-1 small">Tests visual working memory and pattern recognition</p>
+                        <span className="badge bg-info text-dark me-1">Memory (70%)</span>
+                        <span className="badge bg-secondary">Attention (30%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
                         <h6 className="fw-bold mb-1">🔢 Digit Span</h6>
                         <p className="text-muted mb-1 small">Tests working memory capacity</p>
                         <span className="badge bg-info text-dark me-1">Memory (80%)</span>
@@ -745,16 +751,35 @@ export default function Game({ onDataUpdate }) {
                         <span className="badge bg-secondary">Executive (25%)</span>
                       </div>
                       <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🔄 N-Back</h6>
+                        <p className="text-muted mb-1 small">Evaluates working memory and attention</p>
+                        <span className="badge bg-info text-dark me-1">Memory (60%)</span>
+                        <span className="badge bg-secondary">Attention (40%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">⚡ Reaction Time</h6>
+                        <p className="text-muted mb-1 small">Measures processing speed and attention</p>
+                        <span className="badge bg-info text-dark me-1">Attention (85%)</span>
+                        <span className="badge bg-secondary">Executive (15%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
                         <h6 className="fw-bold mb-1">🎯 Stroop Test</h6>
                         <p className="text-muted mb-1 small">Assesses cognitive flexibility</p>
                         <span className="badge bg-info text-dark me-1">Executive (80%)</span>
                         <span className="badge bg-secondary">Attention (20%)</span>
+                      </div>
+                      <div className="mb-3 pb-3 border-bottom">
+                        <h6 className="fw-bold mb-1">🔁 Pattern Recall</h6>
+                        <p className="text-muted mb-1 small">Tests visual memory and pattern recognition</p>
+                        <span className="badge bg-info text-dark me-1">Memory (70%)</span>
+                        <span className="badge bg-secondary">Attention (30%)</span>
                       </div>
                       <div className="mb-0">
                         <h6 className="fw-bold mb-1">🕐 Clock Drawing</h6>
                         <p className="text-muted mb-1 small">Tests multiple cognitive domains</p>
                         <span className="badge bg-info text-dark me-1">Executive (50%)</span>
                         <span className="badge bg-secondary">Orientation (30%)</span>
+                        <span className="badge bg-secondary">Memory (20%)</span>
                       </div>
                     </div>
                   </div>
