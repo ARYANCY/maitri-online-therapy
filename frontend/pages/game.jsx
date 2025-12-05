@@ -672,19 +672,44 @@ export default function Game({ onDataUpdate }) {
                             : "linear-gradient(135deg, #667eea, #764ba2)",
                           color: "white",
                           borderRadius: "12px",
-                          padding: "0.875rem",
+                          padding: "0.875rem 1.25rem",
                           fontWeight: 600,
-                          transition: "all 0.3s ease"
+                          fontSize: "0.95rem",
+                          letterSpacing: "0.5px",
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                          boxShadow: "0 2px 8px rgba(102, 126, 234, 0.25)",
+                          position: "relative",
+                          overflow: "hidden"
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.transform = "scale(1.02)";
+                          e.target.style.transform = "translateY(-2px) scale(1.02)";
+                          e.target.style.boxShadow = completedKeys.includes(g.key)
+                            ? "0 8px 20px rgba(59, 130, 246, 0.4)"
+                            : "0 8px 20px rgba(102, 126, 234, 0.4)";
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.transform = "scale(1)";
+                          e.target.style.transform = "translateY(0) scale(1)";
+                          e.target.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.25)";
+                        }}
+                        onMouseDown={(e) => {
+                          e.target.style.transform = "translateY(0) scale(0.98)";
+                        }}
+                        onMouseUp={(e) => {
+                          e.target.style.transform = "translateY(-2px) scale(1.02)";
                         }}
                       >
-                        {completedKeys.includes(g.key) ? "🔄 " : "▶️ "}
-                        {t("dementia.play", "Play")}
+                        <span style={{ 
+                          display: "inline-flex", 
+                          alignItems: "center", 
+                          gap: "0.5rem",
+                          position: "relative",
+                          zIndex: 1
+                        }}>
+                          <span style={{ fontSize: "1.1rem" }}>
+                            {completedKeys.includes(g.key) ? "🔄" : "▶️"}
+                          </span>
+                          <span>{t("dementia.play", "Play")}</span>
+                        </span>
                       </button>
                     </div>
                   </div>
