@@ -116,11 +116,15 @@ export default function MemoryMatch({ onFinish, onExit }) {
     }
   }, [matched, grid, difficulty, round, maxRounds, generateGrid]);
 
-  const handleNext = () => {
+  const handleNext = (retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
-    const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length);
-    onFinish?.(result);
+    if (retry) {
+      startGame(difficulty);
+    } else {
+      const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length);
+      onFinish?.(result);
+    }
   };
 
   if (!difficulty) {
@@ -245,6 +249,7 @@ export default function MemoryMatch({ onFinish, onExit }) {
             attempts: Math.floor(matched.length / 2) + Math.floor(flipped.length / 2)
           }}
           onNext={handleNext}
+          onRetry={() => handleNext(true)}
         />
       )}
     </div>
