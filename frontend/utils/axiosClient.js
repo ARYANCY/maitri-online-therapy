@@ -51,7 +51,9 @@ function createNextDate({ dayOfWeek, dayOfMonth, time }) {
 }
 
 API.dementia = {
-  submitGameResults: (payload) => API.post("/api/dementia/game-results", payload),
+  submitGameResults: (payload) => API.post("/api/dementia/game-results", payload, {
+    timeout: 120000, // 2 minutes timeout for AI evaluation
+  }),
 };
 
 API.interceptors.response.use(

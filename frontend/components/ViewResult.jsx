@@ -165,7 +165,7 @@ export default function ViewResult({
           ×
         </button>
 
-        {loadingAssessment ? (
+        {loadingAssessment && (
           <div style={{ 
             padding: "2rem", 
             textAlign: "center", 
@@ -188,6 +188,9 @@ export default function ViewResult({
             </h2>
             <p style={{ color: "#666", marginTop: "1rem", fontSize: "0.875rem" }}>
               {t("dementia.pleaseWait", "Please wait while we analyze your results...")}
+            </p>
+            <p style={{ color: "#999", marginTop: "0.5rem", fontSize: "0.75rem", fontStyle: "italic" }}>
+              {t("dementia.aiEvaluationNote", "AI evaluation may take up to 2 minutes. Please be patient.")}
             </p>
             <div style={{
               width: "80%",
