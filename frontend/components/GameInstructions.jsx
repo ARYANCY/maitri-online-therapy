@@ -70,6 +70,7 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
           >
             ×
           </button>
+        </div>
         
         <div className="card-body">
           {gameDescription && (
