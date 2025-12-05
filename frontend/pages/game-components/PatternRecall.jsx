@@ -401,7 +401,7 @@ export default function PatternRecall({ onFinish, onExit }) {
             averageScore: Math.round(totalScore / maxRounds),
             accuracy: Math.round((totalScore / (maxRounds * sequence.length * 10)) * 100)
           }}
-          onNext={handleNext}
+          onNext={() => handleNext(false)}
         />
       )}
     </div>

@@ -23,20 +23,13 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
   }, [onClose]);
 
   const getGameInstructions = () => {
-    // Try to get instructions as array
-    let instructions = t(`dementia.games.instructions.${gameKey}`, [], { returnObjects: true });
+    const instructions = t(`dementia.games.instructions.${gameKey}`, [], { returnObjects: true });
+    const benefits = t(`dementia.games.benefits.${gameKey}`, "");
     
-    // If returnObjects returns the key itself (string), it means translation doesn't exist
-    if (typeof instructions === 'string' && instructions.includes('dementia.games.instructions')) {
-      instructions = [];
-    }
-    
-    // Check if it's a valid array with content
     if (Array.isArray(instructions) && instructions.length > 0) {
       return instructions;
     }
     
-    // Fallback to default instructions
     return [
       t("dementia.instruction1", "Follow the on-screen prompts"),
       t("dementia.instruction2", "Complete all rounds to finish"),
@@ -85,7 +78,7 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
           }}
         >
           <div className="d-flex justify-content-between align-items-center">
-            <div className="flex-grow-1">
+            <div>
               <h2 className="h3 mb-2 fw-bold">{gameTitle}</h2>
               {gameDescription && (
                 <p className="mb-0 opacity-90" style={{ fontSize: "0.95rem" }}>
@@ -173,15 +166,7 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
             </div>
             <div className="d-flex flex-wrap gap-2 mt-3">
               {(() => {
-                // Try to get domains as array
-                let domains = t(`dementia.games.domains.${gameKey}`, [], { returnObjects: true });
-                
-                // If returnObjects returns the key itself (string), it means translation doesn't exist
-                if (typeof domains === 'string' && domains.includes('dementia.games.domains')) {
-                  domains = [];
-                }
-                
-                // Check if it's a valid array with content
+                const domains = t(`dementia.games.domains.${gameKey}`, [], { returnObjects: true });
                 if (Array.isArray(domains) && domains.length > 0) {
                   return domains.map((domain, idx) => (
                     <span 
@@ -198,34 +183,7 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
                     </span>
                   ));
                 }
-                
-                // Fallback: Show default domains based on game type
-                const defaultDomains = {
-                  colorSequence: ["Memory", "Executive Function"],
-                  digitSpan: ["Memory", "Attention"],
-                  memory: ["Memory", "Executive Function"],
-                  nBack: ["Memory", "Executive Function"],
-                  reactionTime: ["Attention", "Processing Speed"],
-                  stroopTest: ["Executive Function", "Attention"],
-                  patternRecall: ["Memory", "Attention"],
-                  clockDrawing: ["Executive Function", "Orientation", "Memory"]
-                };
-                
-                const fallbackDomains = defaultDomains[gameKey] || ["Cognitive Function"];
-                return fallbackDomains.map((domain, idx) => (
-                  <span 
-                    key={idx} 
-                    className="badge rounded-pill px-3 py-2"
-                    style={{
-                      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                      color: "white",
-                      fontSize: "0.875rem",
-                      fontWeight: 600
-                    }}
-                  >
-                    {domain}
-                  </span>
-                ));
+                return null;
               })()}
             </div>
           </div>
