@@ -10,11 +10,11 @@ The system evaluates five primary cognitive domains:
 
 | Domain | Weight | Associated Games |
 |--------|--------|------------------|
-| Memory | 25% | Memory Match, Pattern Recall, Symbol Match, Text Recall |
-| Language | 15% | Text Recall, Stroop Test |
-| Attention | 25% | Digit Span, N-Back, Reaction Time, Stroop Test |
-| Orientation | 15% | Clock Drawing |
-| Executive | 20% | N-Back, Stroop Test, Pattern Recall |
+| Memory | 35% | Memory Match, Pattern Recall, Symbol Match, Text Recall |
+| Language | 20% | Text Recall, Stroop Test |
+| Attention | 20% | Digit Span, N-Back, Reaction Time, Stroop Test |
+| Orientation | 12.5% | Clock Drawing |
+| Executive | 12.5% | N-Back, Stroop Test, Pattern Recall |
 
 ## Game-to-Domain Mapping
 
@@ -135,11 +135,11 @@ const calculateDomainScores = (gameResults) => {
 ```javascript
 const calculateWeightedRiskScore = (domainScores) => {
   const domainWeights = {
-    memory: 0.25,
-    language: 0.15,
-    attention: 0.25,
-    orientation: 0.15,
-    executive: 0.20
+    memory: 0.35,
+    language: 0.20,
+    attention: 0.20,
+    orientation: 0.125,
+    executive: 0.125
   };
   
   let weightedSum = 0;

@@ -853,7 +853,7 @@ export default function Game({ onDataUpdate }) {
                     <div className="mb-3">
                       <h6 className="fw-bold mb-2">{t("dementia.weightedRiskScore", "Weighted Risk Score Calculation")}</h6>
                       <p className="small text-muted mb-0" style={{ lineHeight: 1.7 }}>
-                        {t("dementia.weightedRiskScoreText", "The final cognitive risk score uses a weighted domain model: Memory (30%), Language (20%), Attention (20%), Orientation (15%), Executive Function (15%).")}
+                        {t("dementia.weightedRiskScoreText", "The final cognitive risk score uses a weighted domain model: Memory (35%), Language (20%), Attention (20%), Orientation (12.5%), Executive Function (12.5%).")}
                       </p>
                     </div>
                   </div>

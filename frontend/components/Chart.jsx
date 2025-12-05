@@ -707,7 +707,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                 
                 <h5 className="mb-3 mt-4">{t("chart.weightedRiskCalculation", "Weighted Risk Score Calculation")}</h5>
                 <p className="mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.7" }}>
-                  {t("chart.weightedRiskExplanation", "The final cognitive risk score uses a weighted domain model based on clinical research: Memory (30% weight) - main early dementia marker, Language (20%) - word-finding issues appear early, Attention (20%) - executive decline affects attention, Orientation (15%) - moderate impact, Executive Function (15%) - important but typically late-stage. The formula calculates: Weighted Risk Score = Σ(Domain Risk × Domain Weight), where Domain Risk = 1 - (Domain Score / 10). Higher domain scores (0-10 scale) indicate better cognitive function, resulting in lower risk scores (0-1 scale). Risk levels are determined as: High (≥70%), Moderate (40-69%), Low (<40%).")}
+                  {t("chart.weightedRiskExplanation", "The final cognitive risk score uses a weighted domain model based on clinical research: Memory (35% weight) - main early dementia marker, Language (20%) - word-finding issues appear early, Attention (20%) - executive decline affects attention, Orientation (12.5%) - moderate impact, Executive Function (12.5%) - important but typically late-stage. The formula calculates: Weighted Risk Score = Σ(Domain Risk × Domain Weight), where Domain Risk = 1 - (Domain Score / 10). Higher domain scores (0-10 scale) indicate better cognitive function, resulting in lower risk scores (0-1 scale). Risk levels are determined as: High (≥70%), Moderate (40-69%), Low (<40%).")}
                 </p>
               </div>
             </div>
@@ -820,7 +820,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   <strong>📉 {t("chart.errorRate", "Error Analytics")}:</strong> {t("chart.errorAnalyticsDefinition", "Error patterns and types. Tracks total errors, repeated error rate (perseveration), and error classification. Lower error rates indicate better cognitive function.")}
                 </li>
                 <li>
-                  <strong>{t("chart.cognitiveRisk", "Cognitive Impairment Risk")} (%):</strong> {t("chart.dementiaRiskDefinition", "A percentage score (0-100%) indicating the risk level for cognitive impairment. Based on comprehensive game-based cognitive metrics with weighted domain scoring (Memory 30%, Language 20%, Attention 20%, Orientation 15%, Executive 15%). Lower scores indicate better cognitive function.")}
+                  <strong>{t("chart.cognitiveRisk", "Cognitive Impairment Risk")} (%):</strong> {t("chart.dementiaRiskDefinition", "A percentage score (0-100%) indicating the risk level for cognitive impairment. Based on comprehensive game-based cognitive metrics with weighted domain scoring (Memory 35%, Language 20%, Attention 20%, Orientation 12.5%, Executive 12.5%). Lower scores indicate better cognitive function.")}
                 </li>
               </ul>
               
@@ -828,11 +828,11 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               <div className="mt-3 p-3 bg-light rounded" style={{ fontSize: "0.875rem" }}>
                 <strong>📊 {t("chart.domainWeights", "Domain Weights")}:</strong>
                 <ul className="mb-0 mt-2" style={{ paddingLeft: "1.5rem" }}>
-                  <li><strong>Memory (30%):</strong> {t("chart.memoryWeightReason", "Main early dementia marker - hippocampal-dependent")}</li>
+                  <li><strong>Memory (35%):</strong> {t("chart.memoryWeightReason", "Main early dementia marker - hippocampal-dependent")}</li>
                   <li><strong>Language (20%):</strong> {t("chart.languageWeightReason", "Word-finding issues appear early in Alzheimer's")}</li>
                   <li><strong>Attention (20%):</strong> {t("chart.attentionWeightReason", "Executive decline affects attention networks")}</li>
-                  <li><strong>Orientation (15%):</strong> {t("chart.orientationWeightReason", "Moderate impact, more affected in later stages")}</li>
-                  <li><strong>Executive (15%):</strong> {t("chart.executiveWeightReason", "Important but typically late-stage marker")}</li>
+                  <li><strong>Orientation (12.5%):</strong> {t("chart.orientationWeightReason", "Moderate impact, more affected in later stages")}</li>
+                  <li><strong>Executive (12.5%):</strong> {t("chart.executiveWeightReason", "Important but typically late-stage marker")}</li>
                 </ul>
               </div>
             </div>

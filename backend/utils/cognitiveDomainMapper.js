@@ -6,11 +6,11 @@
 
 // Cognitive Domain Weights (clinically validated)
 const DOMAIN_WEIGHTS = {
-  memory: 0.30,        // 30% - Main early dementia marker
+  memory: 0.35,        // 35% - Main early dementia marker (increased)
   language: 0.20,      // 20% - Word-finding issues early
   attention: 0.20,     // 20% - Executive decline affects attention
-  orientation: 0.15,   // 15% - Moderate impact
-  executive: 0.15      // 15% - Important but late-stage
+  orientation: 0.125,  // 12.5% - Moderate impact
+  executive: 0.125     // 12.5% - Important but late-stage
 };
 
 // Game to Cognitive Domain Mapping

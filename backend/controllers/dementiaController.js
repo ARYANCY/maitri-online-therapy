@@ -303,11 +303,11 @@ Return a risk assessment based on these cognitive game results.`;
       orientation: Math.round(domainScores.orientation * 10) / 10,
       executive: Math.round(domainScores.executive * 10) / 10,
       domainWeights: {
-        memory: 0.30,
+        memory: 0.35,
         language: 0.20,
         attention: 0.20,
-        orientation: 0.15,
-        executive: 0.15
+        orientation: 0.125,
+        executive: 0.125
       },
       weightedRiskScore: Math.round(weightedRiskScore * 100) / 100
     };
