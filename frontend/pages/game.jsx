@@ -12,8 +12,6 @@ import GameInstructions from "../components/GameInstructions";
 import ViewResult from "../components/ViewResult";
 import GameKeyboardShortcuts from "../components/GameKeyboardShortcuts";
 import API from "../utils/axiosClient";
-import "../css/game/game.css";
-import "../css/game/GameComponentLayout.css";
 
 const LS_PROGRESS = "mini_game_progress";
 const LS_ASSESSMENT = "mini_game_assessment";

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import "../css/game/GameInstructions.css";
 
 export default function GameInstructions({ gameKey, onClose, onStart }) {
   const { t } = useTranslation();

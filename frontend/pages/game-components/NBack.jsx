@@ -377,20 +377,19 @@ export default function NBack({ onFinish, onExit }) {
       </div>
 
       {showResult && (
-          <ResultPopup
-            score={totalScore}
-            time={totalTime}
-            detail={{
-              rounds: maxRounds,
-              difficulty,
-              averageScore: Math.round(totalScore / maxRounds),
-              ...(sequence.length > 0 && userInputs.length > 0 ? calculateScore(sequence, userInputs, nLevel) : { score: 0, correct: 0, total: 0 }),
-            }}
-            onNext={handleNext}
-            onRetry={() => handleNext(true)}
-          />
-        )}
-      </div>
+        <ResultPopup
+          score={totalScore}
+          time={totalTime}
+          detail={{
+            rounds: maxRounds,
+            difficulty,
+            averageScore: Math.round(totalScore / maxRounds),
+            ...(sequence.length > 0 && userInputs.length > 0 ? calculateScore(sequence, userInputs, nLevel) : { score: 0, correct: 0, total: 0 }),
+          }}
+          onNext={handleNext}
+          onRetry={() => handleNext(true)}
+        />
+      )}
     </div>
   );
 }

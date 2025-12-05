@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import "../css/game/ResultPopup.css";
 
 export default function ViewResult({
   showModal,

@@ -282,21 +282,20 @@ export default function DigitSpan({ onFinish, onExit }) {
       </div>
 
       {showResult && (
-          <ResultPopup
-            score={totalScore}
-            time={totalTime}
-            detail={{
-              rounds: maxRounds,
-              difficulty,
-              averageScore: Math.round(totalScore / maxRounds),
-              correct: Math.round(totalScore / 10),
-              total: maxRounds * DIFFICULTY[difficulty].length,
-            }}
-            onNext={handleNext}
-            onRetry={() => handleNext(true)}
-          />
-        )}
-      </div>
+        <ResultPopup
+          score={totalScore}
+          time={totalTime}
+          detail={{
+            rounds: maxRounds,
+            difficulty,
+            averageScore: Math.round(totalScore / maxRounds),
+            correct: Math.round(totalScore / 10),
+            total: maxRounds * DIFFICULTY[difficulty].length,
+          }}
+          onNext={handleNext}
+          onRetry={() => handleNext(true)}
+        />
+      )}
     </div>
   );
 }

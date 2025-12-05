@@ -362,23 +362,22 @@ export default function ClockDrawing({ onFinish, onExit }) {
         </div>
       </div>
 
-        {showResult && analysisResult && (
-          <ResultPopup
-            score={score}
-            time={totalTime}
-            detail={{
-              hasCircle: analysisResult.details.hasCircle,
-              hasNumbers: analysisResult.details.hasNumbers,
-              hasHands: analysisResult.details.hasHands,
-              handPlacement: analysisResult.details.handPlacement,
-              numberCount: analysisResult.details.numberCount,
-              targetTime: formatTime(targetTime),
-            }}
-            onNext={handleNext}
-            onRetry={() => handleNext(true)}
-          />
-        )}
-      </div>
+      {showResult && analysisResult && (
+        <ResultPopup
+          score={score}
+          time={totalTime}
+          detail={{
+            hasCircle: analysisResult.details.hasCircle,
+            hasNumbers: analysisResult.details.hasNumbers,
+            hasHands: analysisResult.details.hasHands,
+            handPlacement: analysisResult.details.handPlacement,
+            numberCount: analysisResult.details.numberCount,
+            targetTime: formatTime(targetTime),
+          }}
+          onNext={handleNext}
+          onRetry={() => handleNext(true)}
+        />
+      )}
     </div>
   );
 }

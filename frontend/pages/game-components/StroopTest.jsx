@@ -261,19 +261,18 @@ export default function StroopTest({ onFinish, onExit }) {
       </div>
 
       {showResult && (
-          <ResultPopup
-            score={totalScore}
-            time={totalTime}
-            detail={{
-              rounds: maxRounds,
-              difficulty,
-              averageScore: Math.round(totalScore / maxRounds),
-            }}
-            onNext={handleNext}
-            onRetry={() => handleNext(true)}
-          />
-        )}
-      </div>
+        <ResultPopup
+          score={totalScore}
+          time={totalTime}
+          detail={{
+            rounds: maxRounds,
+            difficulty,
+            averageScore: Math.round(totalScore / maxRounds),
+          }}
+          onNext={handleNext}
+          onRetry={() => handleNext(true)}
+        />
+      )}
     </div>
   );
 }
