@@ -51,11 +51,6 @@ function createNextDate({ dayOfWeek, dayOfMonth, time }) {
 }
 
 API.dementia = {
-  getQuestions: (difficulty = "easy") => {
-    const d = ["easy","moderate","hard"].includes(String(difficulty).toLowerCase()) ? String(difficulty).toLowerCase() : "easy";
-    return API.get(`/api/dementia/questions?difficulty=${encodeURIComponent(d)}`);
-  },
-  submit: (payload) => API.post("/api/dementia/submit", payload),
   submitGameResults: (payload) => API.post("/api/dementia/game-results", payload),
 };
 

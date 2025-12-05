@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import "../../css/game/ResultPopup.css";
 
 export default function ResultPopup({ score, time, onNext, detail = {} }) {
   const { t } = useTranslation();

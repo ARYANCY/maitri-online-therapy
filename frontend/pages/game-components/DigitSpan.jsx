@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/DigitSpan.css";
-import "../../css/game/GameComponentLayout.css";
-
-const DIFFICULTY = {
-  easy: { length: 3, rounds: 5 },
-  medium: { length: 5, rounds: 7 },
-  hard: { length: 7, rounds: 10 },
-};
+import {
+  DIFFICULTY,
+  generateDigitSequence,
+  calculateScore,
+  validateInput,
+  prepareDigitSpanResult
+} from "./game-algo-js/digitSpan";
 
 export default function DigitSpan({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -30,10 +29,7 @@ export default function DigitSpan({ onFinish, onExit }) {
   const initRound = useCallback((levelOverride = null) => {
     const currentDifficulty = levelOverride || difficulty;
     if (!currentDifficulty) return;
-    const { length } = DIFFICULTY[currentDifficulty];
-    const newSequence = Array.from({ length }, () =>
-      Math.floor(Math.random() * 9) + 1
-    );
+    const newSequence = generateDigitSequence(currentDifficulty);
     setSequence(newSequence);
     setUserInput("");
     setPhase("show");
@@ -73,7 +69,7 @@ export default function DigitSpan({ onFinish, onExit }) {
   };
 
   const handleInputChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
+    const value = validateInput(e.target.value);
     setUserInput(value);
   };
 
@@ -103,22 +99,11 @@ export default function DigitSpan({ onFinish, onExit }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, userInput, handleExit]);
 
-  const calculateScore = () => {
-    if (!userInput || !sequence.length) return 0;
-    const userDigits = userInput.split("").map(Number);
-    let correct = 0;
-    for (let i = 0; i < Math.min(userDigits.length, sequence.length); i++) {
-      if (userDigits[i] === sequence[i]) {
-        correct++;
-      }
-    }
-    return correct * 10;
-  };
 
   const submit = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    const score = calculateScore();
-    setTotalScore((prev) => prev + score);
+    const result = calculateScore(userInput, sequence);
+    setTotalScore((prev) => prev + result.score);
 
     if (round < maxRounds) {
       setTimeout(() => {
@@ -139,17 +124,8 @@ export default function DigitSpan({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      onFinish?.({
-        key: "digit_span",
-        score: totalScore,
-        time: totalTime,
-        detail: {
-          rounds: maxRounds,
-          difficulty,
-          time: totalTime,
-          averageScore: Math.round(totalScore / maxRounds),
-        },
-      });
+      const result = prepareDigitSpanResult(totalScore, totalTime, difficulty, maxRounds);
+      onFinish?.(result);
     }
   };
 
@@ -194,32 +170,45 @@ export default function DigitSpan({ onFinish, onExit }) {
   }
 
   return (
-    <div className="game-component-wrapper" style={{ position: 'relative' }}>
-      <div className="game-component-container">
-        <div className="game-component-card">
-          <div className="game-component-header">
-            <h2>{t("dementia.games.digitSpan")}</h2>
-            <button className="btn btn-light btn-sm" onClick={handleExit}>
-              {t("dementia.exit")}
-            </button>
-          </div>
-          <div className="game-component-body">
-            <div className="game-stats-row">
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.round")}</div>
-                <div className="game-stat-value">{round} / {maxRounds}</div>
-              </div>
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.score")}</div>
-                <div className="game-stat-value" style={{ color: "#22c55e" }}>{totalScore}</div>
-              </div>
-              {phase === "input" && (
-                <div className="game-stat-box">
-                  <div className="game-stat-label">{t("dementia.timer")}</div>
-                  <div className="game-stat-value" style={{ color: "#667eea" }}>{timer}s</div>
-                </div>
-              )}
+    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h2 className="h4 mb-0 fw-bold">{t("dementia.games.digitSpan")}</h2>
+              <button className="btn btn-light btn-sm" onClick={handleExit}>
+                {t("dementia.exit")}
+              </button>
             </div>
+            <div className="card-body">
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.round")}</div>
+                      <div className="h5 mb-0 fw-bold">{round} / {maxRounds}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.score")}</div>
+                      <div className="h5 mb-0 fw-bold text-success">{totalScore}</div>
+                    </div>
+                  </div>
+                </div>
+                {phase === "input" && (
+                  <div className="col-md-4">
+                    <div className="card bg-light border-0">
+                      <div className="card-body text-center">
+                        <div className="small text-muted mb-1">{t("dementia.timer")}</div>
+                        <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {phase === "show" && sequence.length > 0 && (
                 <div className="text-center mb-4">
@@ -289,8 +278,10 @@ export default function DigitSpan({ onFinish, onExit }) {
               )}
             </div>
           </div>
+        </div>
+      </div>
 
-        {showResult && (
+      {showResult && (
           <ResultPopup
             score={totalScore}
             time={totalTime}

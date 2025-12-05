@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ColorSequence from "./game-components/ColorSequence";
-import DementiaChecker from "./game-components/dementiaChecker";
 import DigitSpan from "./game-components/DigitSpan";
 import Memory from "./game-components/MemoryMatch";
 import NBack from "./game-components/NBack";
@@ -110,11 +109,6 @@ export default function Game({ onDataUpdate }) {
         i18nKey: "colorSequence",
       },
       {
-        key: "dementia_checker",
-        component: DementiaChecker,
-        i18nKey: "textRecall",
-      },
-      {
         key: "digit_span",
         component: DigitSpan,
         i18nKey: "digitSpan",
@@ -156,7 +150,6 @@ export default function Game({ onDataUpdate }) {
   const getGameTitle = useCallback((game) => {
     const titles = {
       color_sequence: t("dementia.games.colorSequence", "Color Sequence"),
-      dementia_checker: t("dementia.games.textRecall", "Text Recall"),
       digit_span: t("dementia.games.digitSpan", "Digit Span"),
       memory: t("dementia.games.memory", "Memory Match"),
       n_back: t("dementia.games.nBack", "N-Back"),
@@ -171,7 +164,6 @@ export default function Game({ onDataUpdate }) {
   const getGameIcon = useCallback((game) => {
     const icons = {
       color_sequence: "🎨",
-      dementia_checker: "📝",
       digit_span: "🔢",
       memory: "🧩",
       n_back: "🔄",
@@ -653,13 +645,6 @@ export default function Game({ onDataUpdate }) {
                   <p className="small mb-2">{t("dementia.clockDrawingGameDesc", "A widely used screening tool for dementia that assesses multiple cognitive domains including visuospatial skills, executive function, attention, and semantic memory. This is a clinically validated test (CDT) used in MMSE, MoCA, and other assessments. Impairments in clock drawing are strong indicators of cognitive decline.")}</p>
                   <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Executive (50%)</span>
                   <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Orientation (30%) + Memory (20%)</span>
-                </div>
-                
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">📝 {t("dementia.textRecallGame", "Text Recall")}</h6>
-                  <p className="small mb-2">{t("dementia.textRecallGameDesc", "Evaluates memory and language by requiring you to read and recall text passages. Tests verbal memory, language comprehension, and retention capacity. Early Alzheimer's hallmark includes memory and language deficits, making this test highly relevant for early detection.")}</p>
-                  <span className="badge bg-info text-dark">{t("dementia.primaryDomain", "Primary Domain")}: Memory (60%)</span>
-                  <span className="badge bg-secondary ms-2">{t("dementia.secondaryDomain", "Secondary")}: Language (40%)</span>
                 </div>
               </div>
             </div>

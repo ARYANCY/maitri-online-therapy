@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/ReactionTimeTest.css";
-
-const DIFFICULTY = {
-  easy: { rounds: 5, minDelay: 2000, maxDelay: 4000 },
-  medium: { rounds: 7, minDelay: 1000, maxDelay: 3000 },
-  hard: { rounds: 10, minDelay: 500, maxDelay: 2000 },
-};
+import {
+  DIFFICULTY,
+  calculateDelay,
+  calculateRoundScore,
+  calculateAverageReactionTime,
+  prepareReactionTimeResult
+} from "./game-algo-js/reactionTime";
 
 export default function ReactionTimeTest({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -48,13 +48,7 @@ export default function ReactionTimeTest({ onFinish, onExit }) {
       setLastReactionTime(null);
       setError(null);
       
-      const { minDelay, maxDelay } = DIFFICULTY[currentDifficulty];
-      if (!minDelay || !maxDelay) {
-        setError("Invalid difficulty settings");
-        return;
-      }
-
-      const delay = Math.random() * (maxDelay - minDelay) + minDelay;
+      const delay = calculateDelay(currentDifficulty);
 
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       
@@ -91,7 +85,7 @@ export default function ReactionTimeTest({ onFinish, onExit }) {
         return;
       }
 
-      const roundScore = Math.max(0, 1000 - reactionTime);
+      const roundScore = calculateRoundScore(reactionTime);
       
       setReactionTimes((prev) => [...prev, reactionTime]);
       setLastReactionTime(reactionTime);
@@ -174,24 +168,8 @@ export default function ReactionTimeTest({ onFinish, onExit }) {
       if (retry) {
         startGame(difficulty);
       } else {
-        const avgReactionTime = reactionTimes.length > 0
-          ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
-          : 0;
-        
-        onFinish?.({
-          key: "reaction_time",
-          score,
-          time: totalTime,
-          detail: {
-            rounds: maxRounds,
-            difficulty,
-            time: totalTime,
-            averageScore: Math.round(score / maxRounds),
-            averageReactionTime: avgReactionTime,
-            bestReactionTime: reactionTimes.length > 0 ? Math.min(...reactionTimes) : 0,
-            reactionTimes: reactionTimes,
-          },
-        });
+        const result = prepareReactionTimeResult(score, totalTime, difficulty, maxRounds, reactionTimes);
+        onFinish?.(result);
       }
     } catch (err) {
       setError(err.message || "Error in handleNext");
@@ -199,9 +177,7 @@ export default function ReactionTimeTest({ onFinish, onExit }) {
     }
   };
 
-  const avgReactionTime = reactionTimes.length > 0
-    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
-    : 0;
+  const avgReactionTime = calculateAverageReactionTime(reactionTimes);
 
   const getBoxStyle = () => {
     if (tooEarly) {

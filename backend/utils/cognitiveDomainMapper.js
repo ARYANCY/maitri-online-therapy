@@ -70,13 +70,6 @@ const GAME_DOMAIN_MAPPING = {
     weight: { executive: 0.5, orientation: 0.3, memory: 0.2 },
     clinicalJustification: 'Visuospatial + Executive - Standard Clock Drawing Test (CDT) for dementia screening.',
     dementiaRelevance: 'Very High - Clinically validated test (CDT) used in MMSE, MoCA, and other assessments.'
-  },
-  dementia_checker: {
-    primaryDomain: 'memory',
-    secondaryDomain: 'language',
-    weight: { memory: 0.6, language: 0.4 },
-    clinicalJustification: 'Memory + Language - Tests text recall and language comprehension.',
-    dementiaRelevance: 'High - Early Alzheimer\'s hallmark includes memory and language deficits.'
   }
 };
 
@@ -121,8 +114,6 @@ function calculateMaxPossibleScore(gameKey, difficulty, gameDetail) {
       return rounds * baseScorePerRound * multiplier;
     case 'clock_drawing':
       return 100; // Clock drawing is scored 0-100
-    case 'dementia_checker':
-      return 100; // Text recall scored 0-100
     default:
       return rounds * baseScorePerRound * multiplier;
   }

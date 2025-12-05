@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/NBack.css";
-import "../../css/game/GameComponentLayout.css";
-
-const DIFFICULTY = {
-  easy: { level: 1, rounds: 5 },
-  medium: { level: 2, rounds: 7 },
-  hard: { level: 3, rounds: 10 },
-};
+import {
+  DIFFICULTY,
+  SEQUENCE_LENGTH,
+  generateSequence,
+  calculateScore,
+  prepareNBackResult
+} from "./game-algo-js/nBack";
 
 export default function NBack({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -41,9 +40,7 @@ export default function NBack({ onFinish, onExit }) {
       
       setError(null);
       const { level } = DIFFICULTY[currentDifficulty];
-      const newSequence = Array.from({ length: 7 }, () =>
-        Math.floor(Math.random() * 9) + 1
-      );
+      const newSequence = generateSequence(SEQUENCE_LENGTH);
       
       sequenceRef.current = newSequence;
       setSequence(newSequence);
@@ -117,35 +114,14 @@ export default function NBack({ onFinish, onExit }) {
     setUserInputs((prev) => [...prev, value]);
   };
 
-  const calculateScore = () => {
-    if (!difficulty || !sequence.length || !userInputs.length) {
-      return { score: 0, correct: 0, total: 0 };
-    }
-    
-    const level = DIFFICULTY[difficulty].level;
-    let score = 0;
-    let correct = 0;
-    let total = 0;
-
-    for (let i = level; i < sequence.length; i++) {
-      total++;
-      const expected = sequence[i - level];
-      const userInput = userInputs[i - level];
-      if (userInput === expected) {
-        score += 10;
-        correct++;
-      }
-    }
-
-    return { score, correct, total };
-  };
 
   const submit = () => {
     try {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
       
-      const result = calculateScore();
+      const level = DIFFICULTY[difficulty].level;
+      const result = calculateScore(sequence, userInputs, level);
       setTotalScore((prev) => prev + result.score);
 
       if (round < maxRounds) {
@@ -192,17 +168,10 @@ export default function NBack({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      onFinish?.({
-        key: "n_back",
-        score: totalScore,
-        time: totalTime,
-        detail: {
-          rounds: maxRounds,
-          difficulty,
-          time: totalTime,
-          averageScore: Math.round(totalScore / maxRounds),
-        },
-      });
+      const level = DIFFICULTY[difficulty].level;
+      const lastRoundScore = calculateScore(sequence, userInputs, level);
+      const result = prepareNBackResult(totalScore, totalTime, difficulty, maxRounds, lastRoundScore);
+      onFinish?.(result);
     }
   };
 
@@ -250,38 +219,51 @@ export default function NBack({ onFinish, onExit }) {
   const currentNumber = sequence[currentIndex];
 
   return (
-    <div className="game-component-wrapper" style={{ position: 'relative' }}>
-      <div className="game-component-container">
-        <div className="game-component-card">
-          <div className="game-component-header">
-            <h2>{t("dementia.games.nBack")}</h2>
-            <button className="btn btn-light btn-sm" onClick={handleExit}>
-              {t("dementia.exit")}
-            </button>
-          </div>
-          <div className="game-component-body">
-      {error && (
+    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h2 className="h4 mb-0 fw-bold">{t("dementia.games.nBack")}</h2>
+              <button className="btn btn-light btn-sm" onClick={handleExit}>
+                {t("dementia.exit")}
+              </button>
+            </div>
+            <div className="card-body">
+              {error && (
                 <div className="alert alert-danger d-flex justify-content-between align-items-center mb-4">
                   <span><strong>Error:</strong> {error}</span>
                   <button className="btn btn-sm btn-danger" onClick={() => setError(null)}>
-            Dismiss
-          </button>
-        </div>
-      )}
-
-              <div className="game-stats-row">
-                <div className="game-stat-box">
-                  <div className="game-stat-label">{t("dementia.round")}</div>
-                  <div className="game-stat-value">{round} / {maxRounds}</div>
+                    Dismiss
+                  </button>
                 </div>
-                <div className="game-stat-box">
-                  <div className="game-stat-label">{t("dementia.score")}</div>
-                  <div className="game-stat-value" style={{ color: "#22c55e" }}>{totalScore}</div>
+              )}
+
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.round")}</div>
+                      <div className="h5 mb-0 fw-bold">{round} / {maxRounds}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.score")}</div>
+                      <div className="h5 mb-0 fw-bold text-success">{totalScore}</div>
+                    </div>
+                  </div>
                 </div>
                 {phase === "input" && (
-                  <div className="game-stat-box">
-                    <div className="game-stat-label">{t("dementia.timer")}</div>
-                    <div className="game-stat-value" style={{ color: "#667eea" }}>{timer}s</div>
+                  <div className="col-md-4">
+                    <div className="card bg-light border-0">
+                      <div className="card-body text-center">
+                        <div className="small text-muted mb-1">{t("dementia.timer")}</div>
+                        <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -334,7 +316,7 @@ export default function NBack({ onFinish, onExit }) {
 
                   <div className="mb-4">
                     <div className="d-flex flex-column gap-3 align-items-center">
-              {Array.from({ length: sequence.length - nLevel }).map((_, idx) => {
+              {Array.from({ length: Math.max(0, sequence.length - nLevel) }).map((_, idx) => {
                 const position = idx + nLevel;
                 const userInput = userInputs[idx];
                 return (
@@ -389,10 +371,12 @@ export default function NBack({ onFinish, onExit }) {
           </div>
         </div>
       )}
+            </div>
           </div>
         </div>
+      </div>
 
-        {showResult && (
+      {showResult && (
           <ResultPopup
             score={totalScore}
             time={totalTime}
@@ -400,7 +384,7 @@ export default function NBack({ onFinish, onExit }) {
               rounds: maxRounds,
               difficulty,
               averageScore: Math.round(totalScore / maxRounds),
-              ...calculateScore(),
+              ...(sequence.length > 0 && userInputs.length > 0 ? calculateScore(sequence, userInputs, nLevel) : { score: 0, correct: 0, total: 0 }),
             }}
             onNext={handleNext}
             onRetry={() => handleNext(true)}

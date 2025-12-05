@@ -1,36 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/MemoryMatch.css";
-
-
-const DIFFICULTY = {
-  easy: { rounds: 5, pairs: 3 },
-  medium: { rounds: 7, pairs: 6 },
-  hard: { rounds: 10, pairs: 9 },
-};
-
-
-const FRUIT_SYMBOLS = [
-  "🍎", 
-  "🍌", 
-  "🍇", 
-  "🍊", 
-  "🍓", 
-  "🥝", 
-  "🍑", 
-  "🍉", 
-  "🍍", 
-  "🥭", 
-  "🍒", 
-  "🫐", 
-  "🍋", 
-  "🥑", 
-  "🍐", 
-];
-
-
-const shuffleArray = (arr) => arr.sort(() => Math.random() - 0.5);
+import {
+  DIFFICULTY,
+  FRUIT_SYMBOLS,
+  generateGrid,
+  checkMatch,
+  getMatchScore,
+  prepareMemoryMatchResult
+} from "./game-algo-js/memoryMatch";
 
 export default function MemoryMatch({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -90,9 +68,9 @@ export default function MemoryMatch({ onFinish, onExit }) {
 
     if (newFlipped.length === 2) {
       const [first, second] = newFlipped;
-      if (grid[first] === grid[second]) {
+      if (checkMatch(grid, first, second)) {
         setMatched((prev) => [...prev, first, second]);
-        setTotalScore((prev) => prev + 10);
+        setTotalScore((prev) => prev + getMatchScore());
       }
       setTimeout(() => setFlipped([]), 700);
     }
@@ -141,18 +119,8 @@ export default function MemoryMatch({ onFinish, onExit }) {
   const handleNext = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
-      onFinish?.({
-      key: "memory",
-        score: totalScore,
-      time: totalTime,
-      detail: { 
-        rounds: maxRounds, 
-        difficulty, 
-        time: totalTime,
-        averageScore: Math.round(totalScore / maxRounds),
-        matches: Math.floor(matched.length / 2)
-      },
-      });
+    const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length);
+    onFinish?.(result);
   };
 
   if (!difficulty) {

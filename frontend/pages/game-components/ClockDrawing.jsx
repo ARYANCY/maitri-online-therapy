@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Stage, Layer, Line } from "react-konva";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/ClockDrawing.css";
-import "../../css/game/GameComponentLayout.css";
-
-const CANVAS_SIZE = 500;
-const CLOCK_RADIUS = 200;
-const CLOCK_CENTER = { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
+import { 
+  CANVAS_SIZE, 
+  CLOCK_RADIUS, 
+  CLOCK_CENTER,
+  getRandomTargetTime,
+  formatTime,
+  analyzeClockDrawing as analyzeClockDrawingAlgo,
+  prepareClockDrawingResult
+} from "./game-algo-js/clockDrawing";
 
 export default function ClockDrawing({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -35,12 +38,7 @@ export default function ClockDrawing({ onFinish, onExit }) {
   
   useEffect(() => {
     // Set random target time once on mount
-    const times = [
-      { hour: 11, minute: 10 },
-      { hour: 3, minute: 0 },
-      { hour: 2, minute: 45 },
-    ];
-    const randomTime = times[Math.floor(Math.random() * times.length)];
+    const randomTime = getRandomTargetTime();
     setTargetTime(randomTime);
 
     // Update canvas size only if it actually changed
@@ -178,178 +176,7 @@ export default function ClockDrawing({ onFinish, onExit }) {
 
   
   const analyzeClockDrawing = useCallback(() => {
-    if (lines.length === 0) {
-      return {
-        score: 0,
-        details: {
-          hasCircle: false,
-          hasNumbers: false,
-          hasHands: false,
-          handPlacement: false,
-          numberPlacement: false,
-          overallQuality: 0,
-        },
-      };
-    }
-
-    
-    const canvas = document.createElement("canvas");
-    canvas.width = CANVAS_SIZE;
-    canvas.height = CANVAS_SIZE;
-    const ctx = canvas.getContext("2d");
-    
-    
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    
-    lines.forEach((line) => {
-      if (line.points.length < 4) return;
-      ctx.beginPath();
-      ctx.moveTo(line.points[0], line.points[1]);
-      for (let i = 2; i < line.points.length; i += 2) {
-        ctx.lineTo(line.points[i], line.points[i + 1]);
-      }
-      if (line.mode === "erase") {
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.lineWidth = 20;
-      } else {
-        ctx.globalCompositeOperation = "source-over";
-        ctx.lineWidth = 3;
-      }
-      ctx.stroke();
-      ctx.globalCompositeOperation = "source-over";
-    });
-
-    
-    const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-    const data = imageData.data;
-
-    
-    const centerX = CLOCK_CENTER.x;
-    const centerY = CLOCK_CENTER.y;
-    let hasCircle = false;
-    let circleQuality = 0;
-    
-    
-    for (let angle = 0; angle < 360; angle += 10) {
-      const rad = (angle * Math.PI) / 180;
-      const x = centerX + CLOCK_RADIUS * Math.cos(rad);
-      const y = centerY + CLOCK_RADIUS * Math.sin(rad);
-      const idx = (Math.floor(y) * CANVAS_SIZE + Math.floor(x)) * 4;
-      if (idx >= 0 && idx < data.length) {
-        const alpha = data[idx + 3];
-        if (alpha > 0) {
-          circleQuality++;
-        }
-      }
-    }
-    hasCircle = circleQuality > 20; 
-
-    
-    
-    let hasNumbers = false;
-    let numberCount = 0;
-    
-    
-    for (let hour = 1; hour <= 12; hour++) {
-      const angle = ((hour % 12) * 30 - 90) * (Math.PI / 180);
-      const radius = CLOCK_RADIUS * 0.85;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      
-      
-      let hasMark = false;
-      for (let dx = -15; dx <= 15; dx++) {
-        for (let dy = -15; dy <= 15; dy++) {
-          const checkX = Math.floor(x + dx);
-          const checkY = Math.floor(y + dy);
-          if (checkX >= 0 && checkX < CANVAS_SIZE && checkY >= 0 && checkY < CANVAS_SIZE) {
-            const idx = (checkY * CANVAS_SIZE + checkX) * 4;
-            if (idx >= 0 && idx < data.length) {
-              const alpha = data[idx + 3];
-              if (alpha > 50) {
-                hasMark = true;
-                break;
-              }
-            }
-          }
-        }
-        if (hasMark) break;
-      }
-      if (hasMark) numberCount++;
-    }
-    hasNumbers = numberCount >= 8; 
-
-    
-    let hasHands = false;
-    let handPlacement = false;
-    
-    
-    const centerRadius = 20;
-    let linesFromCenter = 0;
-    
-    
-    const hourAngle = ((targetTime.hour % 12) * 30 + targetTime.minute * 0.5 - 90) * (Math.PI / 180);
-    const minuteAngle = (targetTime.minute * 6 - 90) * (Math.PI / 180);
-    
-    
-    let hourHandPresent = false;
-    for (let r = centerRadius; r < CLOCK_RADIUS * 0.6; r += 10) {
-      const x = centerX + r * Math.cos(hourAngle);
-      const y = centerY + r * Math.sin(hourAngle);
-      const idx = (Math.floor(y) * CANVAS_SIZE + Math.floor(x)) * 4;
-      if (idx >= 0 && idx < data.length) {
-        const alpha = data[idx + 3];
-        if (alpha > 50) {
-          hourHandPresent = true;
-          break;
-        }
-      }
-    }
-    
-    
-    let minuteHandPresent = false;
-    for (let r = centerRadius; r < CLOCK_RADIUS * 0.8; r += 10) {
-      const x = centerX + r * Math.cos(minuteAngle);
-      const y = centerY + r * Math.sin(minuteAngle);
-      const idx = (Math.floor(y) * CANVAS_SIZE + Math.floor(x)) * 4;
-      if (idx >= 0 && idx < data.length) {
-        const alpha = data[idx + 3];
-        if (alpha > 50) {
-          minuteHandPresent = true;
-          break;
-        }
-      }
-    }
-    
-    hasHands = hourHandPresent || minuteHandPresent;
-    handPlacement = hourHandPresent && minuteHandPresent;
-
-    
-    let qualityScore = 0;
-    if (hasCircle) qualityScore += 25;
-    if (hasNumbers) qualityScore += 30;
-    if (hasHands) qualityScore += 25;
-    if (handPlacement) qualityScore += 20;
-    
-    
-    if (numberCount >= 12) qualityScore += 5;
-    else if (numberCount >= 10) qualityScore += 3;
-
-    return {
-      score: Math.min(100, qualityScore),
-      details: {
-        hasCircle,
-        hasNumbers,
-        hasHands,
-        handPlacement,
-        numberPlacement: numberCount >= 10,
-        numberCount,
-        overallQuality: qualityScore,
-      },
-    };
+    return analyzeClockDrawingAlgo(lines, targetTime);
   }, [lines, targetTime]);
 
   const submitDrawing = () => {
@@ -369,80 +196,77 @@ export default function ClockDrawing({ onFinish, onExit }) {
       setTotalTime(0);
       setScore(0);
       setGameStartTime(0);
-      const times = [
-        { hour: 11, minute: 10 },
-        { hour: 3, minute: 0 },
-        { hour: 2, minute: 45 },
-      ];
-      const randomTime = times[Math.floor(Math.random() * times.length)];
+      const randomTime = getRandomTargetTime();
       setTargetTime(randomTime);
     } else {
       const finalAnalysis = analysisResult || analyzeClockDrawing();
-      onFinish?.({
-        key: "clock_drawing",
-        score: finalAnalysis.score,
-        time: totalTime,
-        detail: {
-          ...finalAnalysis.details,
-          targetTime: `${targetTime.hour}:${targetTime.minute.toString().padStart(2, "0")}`,
-          totalTime,
-        },
-      });
+      const result = prepareClockDrawingResult(finalAnalysis, targetTime, totalTime);
+      onFinish?.(result);
     }
   };
 
   return (
-    <div className="clock-drawing-container game-component-wrapper" style={{ position: 'relative' }}>
-      <div className="game-component-container">
-        <div className="game-component-card">
-          <div className="game-component-header">
-            <h2>{t("dementia.games.clockDrawing", "Clock Drawing Test")}</h2>
-            <button className="btn btn-light btn-sm" onClick={handleExit}>
-              {t("dementia.exit", "Exit")}
-            </button>
-          </div>
-          <div className="game-component-body">
-            <div className="game-stats-row">
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.timer", "Time")}</div>
-                <div className="game-stat-value" style={{ color: "#667eea" }}>
-                  {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, "0")}
-                </div>
-              </div>
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.instruction", "Instruction")}</div>
-                <div className="game-stat-value" style={{ fontSize: "1rem" }}>
-                  {t("dementia.clockDrawing.instruction", "Draw a clock showing")} {targetTime.hour}:{targetTime.minute.toString().padStart(2, "0")}
-                </div>
-              </div>
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.mode", "Mode")}</div>
-                <div className="game-stat-value">{mode === "draw" ? t("dementia.clockDrawing.draw", "Draw") : t("dementia.clockDrawing.erase", "Erase")}</div>
-              </div>
+    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h2 className="h4 mb-0 fw-bold">{t("dementia.games.clockDrawing", "Clock Drawing Test")}</h2>
+              <button className="btn btn-light btn-sm" onClick={handleExit}>
+                {t("dementia.exit", "Exit")}
+              </button>
             </div>
-
-                <div className="alert alert-info text-center mb-4">
-                  <p className="mb-0 fw-bold">
-                    {t("dementia.clockDrawing.description", "Draw a clock face with all numbers (1-12) and set the time to")} {targetTime.hour}:{targetTime.minute.toString().padStart(2, "0")}
-                  </p>
+            <div className="card-body">
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.timer", "Time")}</div>
+                      <div className="h5 mb-0 fw-bold text-primary">
+                        {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, "0")}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.instruction", "Instruction")}</div>
+                      <div className="small fw-bold">
+                        {t("dementia.clockDrawing.instruction", "Draw a clock showing")} {formatTime(targetTime)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.mode", "Mode")}</div>
+                      <div className="h6 mb-0 fw-bold">{mode === "draw" ? t("dementia.clockDrawing.draw", "Draw") : t("dementia.clockDrawing.erase", "Erase")}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div 
-                  ref={containerRef}
-                  className="clock-canvas-wrapper" 
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    width: '100%', 
-                    maxWidth: '500px', 
-                    margin: '1.5rem auto',
-                    minHeight: '500px',
-                    padding: '1rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px'
-                  }}
-                >
+              <div className="alert alert-info text-center mb-4">
+                <p className="mb-0 fw-bold">
+                  {t("dementia.clockDrawing.description", "Draw a clock face with all numbers (1-12) and set the time to")} {formatTime(targetTime)}
+                </p>
+              </div>
+
+              <div 
+                ref={containerRef}
+                className="d-flex justify-content-center align-items-center mb-4"
+                style={{ 
+                  width: '100%', 
+                  maxWidth: '500px', 
+                  margin: '0 auto',
+                  minHeight: '500px',
+                  padding: '1rem',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px'
+                }}
+              >
                   {!isReady ? (
                     <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '300px' }}>
                       <div className="spinner-border text-primary mb-3" role="status">
@@ -497,46 +321,46 @@ export default function ClockDrawing({ onFinish, onExit }) {
                       </Stage>
                     </div>
                   )}
-                </div>
+              </div>
 
-                <div className="clock-controls mt-4">
-                  <div className="d-flex flex-wrap gap-3 justify-content-center align-items-center">
-                    <button
-                      className={`btn ${mode === "draw" ? "btn-primary" : "btn-outline-primary"}`}
-                      onClick={() => setMode("draw")}
-                    >
-                      {t("dementia.clockDrawing.draw", "Draw")}
-                    </button>
-                    <button
-                      className={`btn ${mode === "erase" ? "btn-warning" : "btn-outline-warning"}`}
-                      onClick={() => setMode("erase")}
-                    >
-                      {t("dementia.clockDrawing.erase", "Erase")}
-                    </button>
-                    <button
-                      className="btn btn-outline-danger"
-                      onClick={clearCanvas}
-                    >
-                      {t("dementia.clockDrawing.clear", "Clear All")}
-                    </button>
-                    <button
-                      className="btn btn-success btn-lg"
-                      onClick={submitDrawing}
-                      disabled={lines.length === 0}
-                    >
-                      {t("dementia.submitAnswer", "Submit")}
-                    </button>
-                  </div>
-                </div>
+              <div className="d-flex flex-wrap gap-3 justify-content-center align-items-center mb-4">
+                <button
+                  className={`btn ${mode === "draw" ? "btn-primary" : "btn-outline-primary"}`}
+                  onClick={() => setMode("draw")}
+                >
+                  {t("dementia.clockDrawing.draw", "Draw")}
+                </button>
+                <button
+                  className={`btn ${mode === "erase" ? "btn-warning" : "btn-outline-warning"}`}
+                  onClick={() => setMode("erase")}
+                >
+                  {t("dementia.clockDrawing.erase", "Erase")}
+                </button>
+                <button
+                  className="btn btn-outline-danger"
+                  onClick={clearCanvas}
+                >
+                  {t("dementia.clockDrawing.clear", "Clear All")}
+                </button>
+                <button
+                  className="btn btn-success btn-lg"
+                  onClick={submitDrawing}
+                  disabled={lines.length === 0}
+                >
+                  {t("dementia.submitAnswer", "Submit")}
+                </button>
+              </div>
 
-                <div className="alert alert-secondary mt-4">
-                  <p className="mb-0 small">
-                    <strong>{t("dementia.clockDrawing.tips", "Tips:")}</strong>{" "}
-                    {t("dementia.clockDrawing.tipsText", "Draw a circle for the clock face, add numbers 1-12 around it, and draw two hands pointing to the correct time.")}
-                  </p>
-                </div>
+              <div className="alert alert-secondary">
+                <p className="mb-0 small">
+                  <strong>{t("dementia.clockDrawing.tips", "Tips:")}</strong>{" "}
+                  {t("dementia.clockDrawing.tipsText", "Draw a circle for the clock face, add numbers 1-12 around it, and draw two hands pointing to the correct time.")}
+                </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
         {showResult && analysisResult && (
           <ResultPopup
@@ -548,7 +372,7 @@ export default function ClockDrawing({ onFinish, onExit }) {
               hasHands: analysisResult.details.hasHands,
               handPlacement: analysisResult.details.handPlacement,
               numberCount: analysisResult.details.numberCount,
-              targetTime: `${targetTime.hour}:${targetTime.minute.toString().padStart(2, "0")}`,
+              targetTime: formatTime(targetTime),
             }}
             onNext={handleNext}
             onRetry={() => handleNext(true)}

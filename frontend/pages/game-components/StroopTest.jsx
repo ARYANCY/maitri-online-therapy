@@ -1,23 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
-import "../../css/game/StroopTest.css";
-import "../../css/game/GameComponentLayout.css";
-
-const DIFFICULTY = {
-  easy: { rounds: 5, colors: ["red", "green", "blue"] },
-  medium: { rounds: 7, colors: ["red", "green", "blue", "yellow"] },
-  hard: { rounds: 10, colors: ["red", "green", "blue", "yellow", "purple"] },
-};
-
-const shuffle = (arr) => {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
+import {
+  DIFFICULTY,
+  generateStimulus,
+  calculateRoundScore,
+  getShuffledColors,
+  getColorStyle,
+  getTextColor,
+  prepareStroopTestResult
+} from "./game-algo-js/stroopTest";
 
 export default function StroopTest({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -35,44 +27,14 @@ export default function StroopTest({ onFinish, onExit }) {
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
 
-  const getColorStyle = (color) => {
-    const colorMap = {
-      red: "#dc2626",
-      green: "#16a34a",
-      blue: "#2563eb",
-      yellow: "#eab308",
-      purple: "#9333ea",
-    };
-    return {
-      backgroundColor: colorMap[color] || color,
-      color: "#fff",
-      border: "3px solid rgba(255, 255, 255, 0.3)",
-    };
-  };
-
-  const getTextColor = (color) => {
-    const colorMap = {
-      red: "#dc2626",
-      green: "#16a34a",
-      blue: "#2563eb",
-      yellow: "#eab308",
-      purple: "#9333ea",
-    };
-    return colorMap[color] || color;
-  };
-
   const initRound = () => {
     if (!difficulty) return;
-    const colors = DIFFICULTY[difficulty].colors;
-    if (!colors || colors.length === 0) return;
 
-    const word = colors[Math.floor(Math.random() * colors.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-
+    const { word, color } = generateStimulus(difficulty);
     setCurrentWord(word);
     setCurrentColor(color);
     setTimer(0);
-    setShuffledColors(shuffle([...colors]));
+    setShuffledColors(getShuffledColors(difficulty));
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => setTimer((t) => t + 1), 1000);
@@ -106,9 +68,7 @@ export default function StroopTest({ onFinish, onExit }) {
   const handleChoice = (color) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    const baseScore = color === currentColor ? 10 : 0;
-    const timePenalty = Math.min(timer, 10);
-    const score = Math.max(0, baseScore - timePenalty);
+    const score = calculateRoundScore(color, currentColor, timer);
     setTotalScore((prev) => prev + score);
 
     if (round < maxRounds) {
@@ -147,27 +107,18 @@ export default function StroopTest({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      onFinish?.({
-        key: "stroop_test",
-        score: totalScore,
-        time: totalTime,
-        detail: {
-          rounds: maxRounds,
-          difficulty,
-          time: totalTime,
-          averageScore: Math.round(totalScore / maxRounds),
-        },
-      });
+      const result = prepareStroopTestResult(totalScore, totalTime, difficulty, maxRounds);
+      onFinish?.(result);
     }
   };
 
   if (!difficulty) {
     return (
-      <div className="game-component-wrapper">
-        <div className="game-component-container">
-          <div className="game-component-card">
-            <div className="game-component-body">
-              <div className="text-center p-4">
+      <div className="container py-4">
+        <div className="row justify-content-center">
+          <div className="col-12 col-md-8 col-lg-6">
+            <div className="card shadow-sm border-0">
+              <div className="card-body text-center p-4">
                 <h2 className="h3 mb-3 fw-bold">{t("dementia.games.stroopTest", "Stroop Test")}</h2>
                 <p className="text-muted mb-3">
                   {t("dementia.stroopTest.description", "Test your cognitive flexibility by identifying the color of words, not the text itself.")}
@@ -210,30 +161,43 @@ export default function StroopTest({ onFinish, onExit }) {
   }
 
   return (
-    <div className="game-component-wrapper" style={{ position: 'relative' }}>
-      <div className="game-component-container">
-        <div className="game-component-card">
-          <div className="game-component-header">
-            <h2>{t("dementia.games.stroopTest", "Stroop Test")}</h2>
-            <button className="btn btn-light btn-sm" onClick={handleExit}>
-              {t("dementia.exit", "Exit")}
-            </button>
-          </div>
-          <div className="game-component-body">
-            <div className="game-stats-row">
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.round", "Round")}</div>
-                <div className="game-stat-value">{round} / {maxRounds}</div>
-              </div>
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.score", "Score")}</div>
-                <div className="game-stat-value" style={{ color: "#22c55e" }}>{totalScore}</div>
-              </div>
-              <div className="game-stat-box">
-                <div className="game-stat-label">{t("dementia.timer", "Timer")}</div>
-                <div className="game-stat-value" style={{ color: "#667eea" }}>{timer}s</div>
-              </div>
+    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h2 className="h4 mb-0 fw-bold">{t("dementia.games.stroopTest", "Stroop Test")}</h2>
+              <button className="btn btn-light btn-sm" onClick={handleExit}>
+                {t("dementia.exit", "Exit")}
+              </button>
             </div>
+            <div className="card-body">
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.round", "Round")}</div>
+                      <div className="h5 mb-0 fw-bold">{round} / {maxRounds}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.score", "Score")}</div>
+                      <div className="h5 mb-0 fw-bold text-success">{totalScore}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-light border-0">
+                    <div className="card-body text-center">
+                      <div className="small text-muted mb-1">{t("dementia.timer", "Timer")}</div>
+                      <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             <div className="alert alert-info text-center mb-4">
               <p className="mb-0 fw-bold">
@@ -243,47 +207,37 @@ export default function StroopTest({ onFinish, onExit }) {
 
             {currentWord && currentColor && shuffledColors.length > 0 ? (
               <>
-                <div className="stroop-word-display text-center mb-4">
+                <div className="text-center mb-4">
                   <div
-                    className="stroop-word"
+                    className="d-inline-block p-4 rounded bg-light"
                     style={{
                       color: getTextColor(currentColor),
                       fontSize: "3rem",
                       fontWeight: "bold",
-                      marginBottom: "1rem",
-                      padding: "2rem",
-                      backgroundColor: "#f8f9fa",
-                      borderRadius: "8px",
-                      display: "inline-block",
                       minWidth: "200px"
                     }}
                   >
                     {currentWord.toUpperCase()}
                   </div>
-                  <p
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#666",
-                      marginTop: "1rem",
-                      fontStyle: "italic",
-                    }}
-                  >
+                  <p className="text-muted mt-3 small fst-italic">
                     {t("dementia.stroopHint", "What color is this word?")}
                   </p>
                 </div>
 
-                <div className="stroop-grid d-flex justify-content-center flex-wrap gap-3 mb-4">
+                <div className="d-flex justify-content-center flex-wrap gap-3 mb-4">
                   {shuffledColors.map((color, idx) => (
                     <button
                       key={`${color}-${idx}`}
                       className="stroop-color-btn btn btn-lg"
-                      style={{
-                        ...getColorStyle(color),
-                        minWidth: "120px",
-                        minHeight: "80px",
-                        fontSize: "1rem",
-                        fontWeight: "600"
-                      }}
+                    style={{
+                      ...getColorStyle(color),
+                      color: "#fff",
+                      border: "3px solid rgba(255, 255, 255, 0.3)",
+                      minWidth: "120px",
+                      minHeight: "80px",
+                      fontSize: "1rem",
+                      fontWeight: "600"
+                    }}
                       onClick={() => handleChoice(color)}
                     >
                       {color.toUpperCase()}
@@ -301,10 +255,12 @@ export default function StroopTest({ onFinish, onExit }) {
                 </p>
               </div>
             )}
+            </div>
           </div>
         </div>
+      </div>
 
-        {showResult && (
+      {showResult && (
           <ResultPopup
             score={totalScore}
             time={totalTime}

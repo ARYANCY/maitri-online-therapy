@@ -778,12 +778,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   <span className="badge bg-secondary ms-2">{t("chart.secondaryDomain", "Secondary")}: Orientation (30%) + Memory (20%)</span>
                 </div>
                 
-                <div className="col-md-6 mb-3">
-                  <h6 className="fw-bold">📝 {t("chart.textRecallGame", "Text Recall")}</h6>
-                  <p className="small mb-2">{t("chart.textRecallGameDesc", "Evaluates memory and language by requiring you to read and recall text passages. Tests verbal memory, language comprehension, and retention capacity. Early Alzheimer's hallmark includes memory and language deficits, making this test highly relevant for early detection.")}</p>
-                  <span className="badge bg-info text-dark">{t("chart.primaryDomain", "Primary Domain")}: Memory (60%)</span>
-                  <span className="badge bg-secondary ms-2">{t("chart.secondaryDomain", "Secondary")}: Language (40%)</span>
-                </div>
+
               </div>
             </div>
           </div>

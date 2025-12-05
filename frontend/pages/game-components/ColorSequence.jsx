@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import ResultPopup from "./ResultPopup"; 
-import "../../css/game/ColorSequence.css";
-
-const DIFFICULTY = {
-  easy: { rounds: 5, sequenceLength: 3, colors: ["red", "green", "blue"] },
-  medium: { rounds: 7, sequenceLength: 4, colors: ["red", "green", "blue", "yellow"] },
-  hard: { rounds: 10, sequenceLength: 5, colors: ["red", "green", "blue", "yellow", "purple"] },
-};
-
-const shuffleArray = (arr) => arr.sort(() => Math.random() - 0.5);
+import ResultPopup from "./ResultPopup";
+import {
+  DIFFICULTY,
+  getColorStyle,
+  generateSequence,
+  calculateRoundScore,
+  isSequenceComplete,
+  prepareColorSequenceResult
+} from "./game-algo-js/colorSequence";
 
 export default function ColorSequence({ onFinish, onExit }) {
   const { t } = useTranslation();
@@ -27,27 +26,13 @@ export default function ColorSequence({ onFinish, onExit }) {
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
 
-  const getColorStyle = (color) => {
-    const colorMap = {
-      red: "#dc2626",
-      green: "#16a34a",
-      blue: "#2563eb",
-      yellow: "#eab308",
-      purple: "#9333ea"
-    };
-    return { backgroundColor: colorMap[color] || color };
-  };
-
-  const generateSequence = useCallback(() => {
+  const generateNewSequence = useCallback(() => {
     if (!difficulty) return;
-    const colors = DIFFICULTY[difficulty].colors;
-    const length = DIFFICULTY[difficulty].sequenceLength;
-    const seq = Array.from({ length }, () => colors[Math.floor(Math.random() * colors.length)]);
-    setSequence(seq);
+    const { sequence, shuffledColors } = generateSequence(difficulty);
+    setSequence(sequence);
     setUserSequence([]);
     setPhase("show");
-    const shuffled = shuffleArray([...colors]);
-    setShuffledColors(shuffled);
+    setShuffledColors(shuffledColors);
   }, [difficulty]);
 
   const startGame = (level) => {
@@ -65,13 +50,11 @@ export default function ColorSequence({ onFinish, onExit }) {
     }, 1000);
     
     setTimeout(() => {
-      const colors = DIFFICULTY[level].colors;
-      const length = DIFFICULTY[level].sequenceLength;
-      const seq = Array.from({ length }, () => colors[Math.floor(Math.random() * colors.length)]);
-      setSequence(seq);
+      const { sequence, shuffledColors } = generateSequence(level);
+      setSequence(sequence);
       setUserSequence([]);
       setPhase("show");
-      setShuffledColors(shuffleArray([...colors]));
+      setShuffledColors(shuffledColors);
     }, 100);
   };
 
@@ -86,8 +69,8 @@ export default function ColorSequence({ onFinish, onExit }) {
       const timeout = setTimeout(() => {
         setPhase("input");
         if (difficulty && shuffledColors.length === 0) {
-          const colors = DIFFICULTY[difficulty].colors;
-          setShuffledColors(shuffleArray([...colors]));
+          const { shuffledColors: newShuffled } = generateSequence(difficulty);
+          setShuffledColors(newShuffled);
         }
       }, 1000 * sequence.length);
       return () => clearTimeout(timeout);
@@ -95,24 +78,21 @@ export default function ColorSequence({ onFinish, onExit }) {
   }, [phase, sequence.length, difficulty, shuffledColors.length]);
 
   useEffect(() => {
-    if (phase === "input" && userSequence.length === sequence.length && sequence.length > 0) {
-      let score = 0;
-      userSequence.forEach((color, idx) => {
-        if (color === sequence[idx]) score += 10;
-      });
+    if (phase === "input" && isSequenceComplete(userSequence, sequence)) {
+      const score = calculateRoundScore(userSequence, sequence);
       setTotalScore((prev) => prev + score);
 
       if (round < maxRounds) {
         setTimeout(() => {
           setRound((prev) => prev + 1);
-          generateSequence();
+          generateNewSequence();
         }, 500);
       } else {
         if (intervalRef.current) clearInterval(intervalRef.current);
         setShowResult(true);
       }
     }
-  }, [userSequence, sequence, round, maxRounds, generateSequence, phase]);
+  }, [userSequence, sequence, round, maxRounds, generateNewSequence, phase]);
 
   const handleUserClick = (color) => {
     if (phase !== "input" || userSequence.length >= sequence.length) return;
@@ -144,12 +124,8 @@ export default function ColorSequence({ onFinish, onExit }) {
     if (retry) {
       startGame(difficulty);
     } else {
-      onFinish?.({
-        key: "color_sequence",
-        score: totalScore,
-        time: timer,
-        detail: { rounds: maxRounds, difficulty, time: timer },
-      });
+      const result = prepareColorSequenceResult(totalScore, timer, difficulty, maxRounds);
+      onFinish?.(result);
     }
   };
 
