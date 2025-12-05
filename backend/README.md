@@ -12,7 +12,6 @@ A production-ready Node.js backend API for the Maitri Mental Health Platform, bu
 - 📧 **Email System**: Reminder notifications with Nodemailer
 - 🤖 **AI Integration**: Google Gemini AI for chatbot functionality
 - 📈 **Performance**: Compression, connection pooling, caching
-- 🐳 **Docker Support**: Production-ready containerization
 - 🔄 **Graceful Shutdown**: Proper signal handling and cleanup
 
 ## Tech Stack
@@ -26,7 +25,6 @@ A production-ready Node.js backend API for the Maitri Mental Health Platform, bu
 - **Validation**: Joi, express-validator
 - **Email**: Nodemailer
 - **AI**: Google Generative AI
-- **Containerization**: Docker, Docker Compose
 
 ## Quick Start
 
@@ -62,18 +60,6 @@ A production-ready Node.js backend API for the Maitri Mental Health Platform, bu
    
    # Production
    npm start
-   ```
-
-### Docker Deployment
-
-1. **Build and run with Docker Compose**
-   ```bash
-   docker-compose up -d
-   ```
-
-2. **Build Docker image**
-   ```bash
-   docker build -t maitri-backend .
    ```
 
 ## Environment Variables
