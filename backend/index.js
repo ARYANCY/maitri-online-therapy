@@ -408,14 +408,22 @@ app.use(errorHandler);
 const gracefulShutdown = (signal) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
   
-  global.server.close(() => {
-    logger.info('HTTP server closed.');
-    
+  if (global.server) {
+    global.server.close(() => {
+      logger.info('HTTP server closed.');
+      
+      require('mongoose').connection.close(false, () => {
+        logger.info('MongoDB connection closed.');
+        process.exit(0);
+      });
+    });
+  } else {
+    logger.info('Server not initialized, closing MongoDB connection only.');
     require('mongoose').connection.close(false, () => {
       logger.info('MongoDB connection closed.');
       process.exit(0);
     });
-  });
+  }
 
   setTimeout(() => {
     logger.error('Could not close connections in time, forcefully shutting down');
