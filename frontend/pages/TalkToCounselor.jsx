@@ -200,7 +200,7 @@ export default function TalkToCounselor() {
   
   const handleConfirmBooking = async () => {
     if (!selectedProfessional || !selectedDate || !selectedTimeSlot) {
-      setError((prev) => ({ ...prev, booking: "Please select date and time slot" }));
+      setError((prev) => ({ ...prev, booking: t("talk.selectDateAndTime", "Please select date and time slot") }));
       return;
     }
 
@@ -269,16 +269,16 @@ export default function TalkToCounselor() {
     <div className="talk-page">
       <Navbar user={user} />
       <div className="navbar-spacer"></div>
-      <main className="talk-content container py-4 py-md-5">
+      <main className="talk-content container py-4 py-md-5 px-3 px-md-4">
         
         <header className="talk-header text-center mb-4 mb-md-5">
           <div className="card shadow-sm border-0 mb-4">
-            <div className="card-body p-4 p-md-5">
-              <h1 className="display-4 fw-bold mb-3">
+            <div className="card-body p-3 p-md-5">
+              <h1 className="display-5 display-md-4 fw-bold mb-3">
                 <i className="bi bi-heart-pulse-fill me-3 text-primary"></i>
                 {t("talk.title", "Connect with Healthcare Professionals")}
               </h1>
-              <p className="lead text-muted mb-0 mx-auto" style={{maxWidth: "700px"}}>
+              <p className="lead text-muted mb-0 mx-auto px-2" style={{maxWidth: "700px", lineHeight: 1.8, fontSize: "1.1rem"}}>
                 {t(
                   "talk.subtitle",
                   "Book appointments with our verified network of therapists and healthcare professionals. Get the support you need, when you need it."
@@ -531,8 +531,8 @@ export default function TalkToCounselor() {
                           <div className="col-6">
                             <div className="bg-light rounded p-2 text-center">
                               <i className="bi bi-briefcase text-primary"></i>
-                              <div className="small fw-bold">{c.yearsOfPractice || c.yearsInDementiaCare || c.experience || 0} yrs</div>
-                              <div className="text-muted" style={{ fontSize: '0.7rem' }}>Experience</div>
+                              <div className="small fw-bold">{c.yearsOfPractice || c.yearsInDementiaCare || c.experience || 0} {t("talk.years", "yrs")}</div>
+                              <div className="text-muted" style={{ fontSize: '0.7rem' }}>{t("talk.experience", "Experience")}</div>
                             </div>
                           </div>
                         )}
@@ -541,7 +541,7 @@ export default function TalkToCounselor() {
                             <div className="bg-light rounded p-2 text-center">
                               <i className="bi bi-calendar-check text-success"></i>
                               <div className="small fw-bold">{c.availability.length}</div>
-                              <div className="text-muted" style={{ fontSize: '0.7rem' }}>Available Slots</div>
+                              <div className="text-muted" style={{ fontSize: '0.7rem' }}>{t("talk.availableSlots", "Available Slots")}</div>
                             </div>
                           </div>
                         )}
@@ -562,7 +562,7 @@ export default function TalkToCounselor() {
                       {(!c.availability || c.availability.length === 0) && (
                         <div className="alert alert-warning py-2 mb-2 small">
                           <i className="bi bi-exclamation-triangle me-1"></i>
-                          No availability set yet
+                          {t("talk.noAvailabilitySet", "No availability set yet")}
                         </div>
                       )}
                       <div className="d-flex gap-2">
@@ -570,7 +570,7 @@ export default function TalkToCounselor() {
                           onClick={(e) => { e.stopPropagation(); handleViewDetails(c, activeTab); }}
                           className="btn btn-outline-primary flex-grow-1"
                         >
-                          <i className="bi bi-eye me-1"></i>View
+                          <i className="bi bi-eye me-1"></i>{t("talk.view", "View")}
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleBookAppointment(c, activeTab); }}
@@ -578,7 +578,7 @@ export default function TalkToCounselor() {
                           disabled={!c.availability || c.availability.length === 0}
                           style={{ background: c.availability && c.availability.length > 0 ? 'linear-gradient(135deg, #c0d7d6 0%, rgb(5, 82, 47) 100%)' : '#ccc', border: 'none' }}
                         >
-                          <i className="bi bi-calendar-plus me-1"></i>Book
+                          <i className="bi bi-calendar-plus me-1"></i>{t("talk.book", "Book")}
                         </button>
                       </div>
                     </div>
@@ -810,7 +810,9 @@ export default function TalkToCounselor() {
               <div className="modal-header" style={{ background: 'linear-gradient(135deg, #c0d7d6 0%, rgb(5, 82, 47) 100%)', color: '#fff', border: 'none' }}>
                 <h5 className="modal-title">
                   <i className="bi bi-person-badge me-2"></i>
-                  {selectedProfessionalType === 'healthcare' ? 'Healthcare Professional' : 'Therapist'} Profile
+                  {selectedProfessionalType === 'healthcare' 
+                    ? t("talk.healthcareProfessionalProfile", "Healthcare Professional Profile")
+                    : t("talk.therapistProfile", "Therapist Profile")}
                 </h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowDetailModal(false)}></button>
               </div>
@@ -838,7 +840,7 @@ export default function TalkToCounselor() {
                   <div className="col-md-8">
                     {selectedProfessional.shortBio && (
                       <div className="mb-4">
-                        <h6 className="text-muted mb-2"><i className="bi bi-person-lines-fill me-2"></i>About</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-person-lines-fill me-2"></i>{t("talk.about", "About")}</h6>
                         <p style={{ lineHeight: '1.7' }}>{selectedProfessional.shortBio}</p>
                       </div>
                     )}
@@ -846,28 +848,28 @@ export default function TalkToCounselor() {
                     <div className="row g-3 mb-4">
                       <div className="col-6">
                         <div className="bg-light rounded p-3">
-                          <small className="text-muted d-block">Experience</small>
-                          <strong>{selectedProfessional.yearsOfPractice || selectedProfessional.yearsInDementiaCare || selectedProfessional.experience || 0} years</strong>
+                          <small className="text-muted d-block">{t("talk.experience", "Experience")}</small>
+                          <strong>{selectedProfessional.yearsOfPractice || selectedProfessional.yearsInDementiaCare || selectedProfessional.experience || 0} {t("talk.yearsFull", "years")}</strong>
                         </div>
                       </div>
                       <div className="col-6">
                         <div className="bg-light rounded p-3">
-                          <small className="text-muted d-block">Session Duration</small>
-                          <strong>{selectedProfessional.sessionDuration || 60} mins</strong>
+                          <small className="text-muted d-block">{t("talk.sessionDuration", "Session Duration")}</small>
+                          <strong>{selectedProfessional.sessionDuration || 60} {t("talk.mins", "mins")}</strong>
                         </div>
                       </div>
                     </div>
 
                     {(selectedProfessional.primaryQualification || selectedProfessional.highestQualification) && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-award me-2"></i>Qualification</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-award me-2"></i>{t("talk.qualification", "Qualification")}</h6>
                         <p className="mb-0">{selectedProfessional.primaryQualification || selectedProfessional.highestQualification}</p>
                       </div>
                     )}
 
                     {(selectedProfessional.licensingBody || selectedProfessional.licenseNumber) && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-file-earmark-check me-2"></i>License</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-file-earmark-check me-2"></i>{t("talk.license", "License")}</h6>
                         <p className="mb-0">
                           {selectedProfessional.licensingBody || selectedProfessional.licenseNumber}
                           {selectedProfessional.therapistCouncilNumber && ` (${selectedProfessional.therapistCouncilNumber})`}
@@ -877,7 +879,7 @@ export default function TalkToCounselor() {
 
                     {(selectedProfessional.specializations?.length > 0 || selectedProfessional.roleCategories?.length > 0) && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-star me-2"></i>Specializations</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-star me-2"></i>{t("talk.specializations", "Specializations")}</h6>
                         <div className="d-flex flex-wrap gap-1">
                           {(selectedProfessional.specializations || selectedProfessional.roleCategories || []).map((s, i) => (
                             <span key={i} className="badge bg-light text-dark border">{s}</span>
@@ -888,7 +890,7 @@ export default function TalkToCounselor() {
 
                     {selectedProfessional.approachesUsed?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-lightbulb me-2"></i>Therapy Approaches</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-lightbulb me-2"></i>{t("talk.therapyApproaches", "Therapy Approaches")}</h6>
                         <div className="d-flex flex-wrap gap-1">
                           {selectedProfessional.approachesUsed.map((a, i) => (
                             <span key={i} className="badge bg-info text-dark">{a}</span>
@@ -899,21 +901,21 @@ export default function TalkToCounselor() {
 
                     {(selectedProfessional.languagesForSession?.length > 0 || selectedProfessional.languagesSpoken?.length > 0) && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-translate me-2"></i>Languages</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-translate me-2"></i>{t("talk.languages", "Languages")}</h6>
                         <p className="mb-0">{(selectedProfessional.languagesForSession || selectedProfessional.languagesSpoken || []).join(', ')}</p>
                       </div>
                     )}
 
                     {selectedProfessional.preferredCommunicationMode?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-chat-dots me-2"></i>Communication Mode</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-chat-dots me-2"></i>{t("talk.communicationMode", "Communication Mode")}</h6>
                         <p className="mb-0">{selectedProfessional.preferredCommunicationMode.join(', ')}</p>
                       </div>
                     )}
 
                     {selectedProfessional.areasComfortableWith?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-check-circle me-2 text-success"></i>Comfortable With</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-check-circle me-2 text-success"></i>{t("talk.comfortableWith", "Comfortable With")}</h6>
                         <div className="d-flex flex-wrap gap-1">
                           {selectedProfessional.areasComfortableWith.map((area, i) => (
                             <span key={i} className="badge bg-success">{area}</span>
@@ -924,7 +926,7 @@ export default function TalkToCounselor() {
 
                     {selectedProfessional.areasNotHandled?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-x-circle me-2 text-danger"></i>Does Not Handle</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-x-circle me-2 text-danger"></i>{t("talk.doesNotHandle", "Does Not Handle")}</h6>
                         <div className="d-flex flex-wrap gap-1">
                           {selectedProfessional.areasNotHandled.map((area, i) => (
                             <span key={i} className="badge bg-danger">{area}</span>
@@ -935,7 +937,7 @@ export default function TalkToCounselor() {
 
                     {selectedProfessional.ageGroupsServed?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-people me-2"></i>Age Groups Served</h6>
+                        <h6 className="text-muted mb-2"><i className="bi bi-people me-2"></i>{t("talk.ageGroupsServed", "Age Groups Served")}</h6>
                         <div className="d-flex flex-wrap gap-1">
                           {selectedProfessional.ageGroupsServed.map((age, i) => (
                             <span key={i} className="badge bg-light text-dark border">{age}</span>
@@ -946,15 +948,15 @@ export default function TalkToCounselor() {
 
                     {selectedProfessional.availability?.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2"><i className="bi bi-calendar-check me-2"></i>Availability</h6>
-                        <p className="mb-0 text-success"><strong>{selectedProfessional.availability.length}</strong> date slot(s) available</p>
+                        <h6 className="text-muted mb-2"><i className="bi bi-calendar-check me-2"></i>{t("talk.availability", "Availability")}</h6>
+                        <p className="mb-0 text-success"><strong>{selectedProfessional.availability.length}</strong> {t("talk.dateSlotsAvailable", "date slot(s) available")}</p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
               <div className="modal-footer" style={{ background: '#f0f7f4' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>Close</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>{t("talk.close", "Close")}</button>
                 <button 
                   type="button" 
                   className="btn btn-primary"
@@ -963,7 +965,7 @@ export default function TalkToCounselor() {
                   onClick={() => { setShowDetailModal(false); handleBookAppointment(selectedProfessional, selectedProfessionalType); }}
                 >
                   <i className="bi bi-calendar-plus me-2"></i>
-                  Book Appointment
+                  {t("talk.bookAppointment", "Book Appointment")}
                 </button>
               </div>
             </div>
