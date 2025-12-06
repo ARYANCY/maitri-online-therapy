@@ -16,6 +16,17 @@ export default function Navbar({ user, downloadReport }) {
   const languageDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
 
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.classList.add('navbar-menu-open');
+    } else {
+      document.body.classList.remove('navbar-menu-open');
+    }
+    return () => {
+      document.body.classList.remove('navbar-menu-open');
+    };
+  }, [menuOpen]);
+
   const [selectedLang, setSelectedLang] = useState(
     localStorage.getItem("preferredLang") || i18n.language || "en"
   );
@@ -158,6 +169,8 @@ export default function Navbar({ user, downloadReport }) {
         </div>
       </div>
 
+      
+      {menuOpen && <div className="navbar-overlay show" onClick={() => setMenuOpen(false)}></div>}
       
       <div className={`navbar-bottom ${menuOpen ? "navbar-bottom-open" : ""}`}>
         <div className="navbar-bottom-content">
