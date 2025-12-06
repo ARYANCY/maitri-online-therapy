@@ -14,216 +14,223 @@ import {
 
 export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
+  
   const [difficulty, setDifficulty] = useState(null);
   const [round, setRound] = useState(1);
   const [maxRounds, setMaxRounds] = useState(4);
   const [sequence, setSequence] = useState([]);
   const [userSequence, setUserSequence] = useState([]);
-  const [timer, setTimer] = useState(0);
-  const [totalScore, setTotalScore] = useState(0);
-  const [phase, setPhase] = useState("show"); 
-  const [showResult, setShowResult] = useState(false);
+  const [phase, setPhase] = useState("idle");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [error, setError] = useState(false);
-  const [gameStartTime, setGameStartTime] = useState(0);
-  const [accumulatedTime, setAccumulatedTime] = useState(0);
-  const [timePausedAt, setTimePausedAt] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
+  const [timer, setTimer] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [showResult, setShowResult] = useState(false);
 
   const intervalRef = useRef(null);
-  const showTimeoutRef = useRef(null);
+  const sequenceTimeoutRef = useRef(null);
   const inputTimeoutRef = useRef(null);
-  const sequenceShowTimeoutRef = useRef(null);
-  const gameStartRef = useRef(0);
-  const sequenceRef = useRef([]);
-  const isShowingSequenceRef = useRef(false);
-  const currentIndexRef = useRef(0);
-  const handleRoundCompleteRef = useRef(null);
+  const gameStartTimeRef = useRef(0);
+  const pausedTimeRef = useRef(0);
+  const accumulatedPausedTimeRef = useRef(0);
   const isMountedRef = useRef(true);
 
-  const generateNewSequence = useCallback(() => {
-    if (!difficulty) return;
-    try {
-      const seq = generateSequence(difficulty);
-      if (!seq || seq.length === 0) {
-        throw new Error("Failed to generate sequence");
-      }
-      if (isMountedRef.current) {
-        setSequence(seq);
-        sequenceRef.current = seq;
-        setUserSequence([]);
-        setPhase("show");
-        setActiveIndex(-1);
-        setError(false);
-        isShowingSequenceRef.current = false;
-        currentIndexRef.current = 0;
-        
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        setTimePausedAt(Date.now());
-      }
-    } catch (error) {
-      console.error("Error generating sequence:", error);
-    }
-  }, [difficulty]);
-
-  const handleRoundComplete = useCallback((isCorrect) => {
-    if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
-    
-    const currentTime = Date.now();
-    const pausedTime = timePausedAt || gameStartTime;
-    const activeTime = currentTime - pausedTime;
-    const finalAccumulated = accumulatedTime + activeTime;
-    setAccumulatedTime(finalAccumulated);
-    
-    if (isCorrect) {
-      const roundScore = calculateRoundScore(sequence.length);
-      setTotalScore((prev) => prev + roundScore);
-    }
-    
-    setPhase("complete");
-    
-    setTimeout(() => {
-      if (round < maxRounds) {
-        setRound((prev) => prev + 1);
-        generateNewSequence();
-      } else {
-        const finalTime = Math.floor(finalAccumulated / 1000);
-        setTotalTime(finalTime);
-        setShowResult(true);
-      }
-    }, 1500);
-  }, [round, maxRounds, sequence.length, accumulatedTime, timePausedAt, gameStartTime, generateNewSequence]);
-
   useEffect(() => {
-    handleRoundCompleteRef.current = handleRoundComplete;
-  }, [handleRoundComplete]);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
+      if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    };
+  }, []);
 
-  const startGame = (level) => {
+  const startGame = useCallback((level) => {
+    if (!DIFFICULTY[level]) {
+      console.error("Invalid difficulty:", level);
+      return;
+    }
+
     setDifficulty(level);
     setRound(1);
     setMaxRounds(DIFFICULTY[level].rounds);
     setTotalScore(0);
     setTimer(0);
-    setShowResult(false);
-    setGameStartTime(Date.now());
-    setAccumulatedTime(0);
-    setTimePausedAt(Date.now());
     setTotalTime(0);
-    gameStartRef.current = Date.now();
-    
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
-    if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
-    
-    setTimeout(() => {
-      generateNewSequence();
-    }, 100);
-  };
+    setShowResult(false);
+    setError(false);
+    setUserSequence([]);
+    setActiveIndex(-1);
+    gameStartTimeRef.current = Date.now();
+    accumulatedPausedTimeRef.current = 0;
+    pausedTimeRef.current = 0;
 
-  useEffect(() => {
-    if (phase === "show" && sequence.length > 0 && difficulty && !isShowingSequenceRef.current) {
-      isShowingSequenceRef.current = true;
-      currentIndexRef.current = 0;
-      const showDuration = DIFFICULTY[difficulty]?.showDuration || 800;
-      const pauseStartTime = Date.now();
-      
-      const showNextColor = () => {
-        if (!isMountedRef.current || currentIndexRef.current >= sequence.length) {
-          isShowingSequenceRef.current = false;
-          return;
-        }
-        
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
+    if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        startRound(level);
+      }
+    }, 100);
+  }, []);
+
+  const startRound = useCallback((levelOverride = null) => {
+    const currentLevel = levelOverride || difficulty;
+    if (!currentLevel || !DIFFICULTY[currentLevel]) return;
+
+    try {
+      const newSequence = generateSequence(currentLevel);
+      if (!newSequence || newSequence.length === 0) {
+        throw new Error("Failed to generate sequence");
+      }
+
+      setSequence(newSequence);
+      setUserSequence([]);
+      setError(false);
+      setActiveIndex(-1);
+      setPhase("showing");
+      setTimer(0);
+
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      pausedTimeRef.current = Date.now();
+
+      showSequence(newSequence, currentLevel);
+    } catch (error) {
+      console.error("Error starting round:", error);
+    }
+  }, [difficulty]);
+
+  const showSequence = useCallback((seq, level) => {
+    if (!seq || seq.length === 0) return;
+
+    const showDuration = DIFFICULTY[level]?.showDuration || 800;
+    let currentIdx = 0;
+
+    const showNext = () => {
+      if (!isMountedRef.current || currentIdx >= seq.length) {
         if (isMountedRef.current) {
-          setActiveIndex(currentIndexRef.current);
-        }
-        
-        sequenceShowTimeoutRef.current = setTimeout(() => {
-          if (!isMountedRef.current) return;
-          
           setActiveIndex(-1);
-          currentIndexRef.current++;
-          
-          if (currentIndexRef.current < sequence.length) {
-            setTimeout(showNextColor, showDuration / 2);
-          } else {
-            setTimeout(() => {
-              if (!isMountedRef.current) return;
-              
+          setTimeout(() => {
+            if (isMountedRef.current) {
               setPhase("input");
-              setActiveIndex(-1);
-              isShowingSequenceRef.current = false;
-              
               const resumeTime = Date.now();
-              const pausedDuration = resumeTime - pauseStartTime;
-              setAccumulatedTime(prev => prev + pausedDuration);
-              setTimePausedAt(Date.now());
-              
+              const pausedDuration = resumeTime - pausedTimeRef.current;
+              accumulatedPausedTimeRef.current += pausedDuration;
+              pausedTimeRef.current = 0;
+              gameStartTimeRef.current = Date.now();
+
               if (intervalRef.current) clearInterval(intervalRef.current);
-              if (isMountedRef.current) {
-                intervalRef.current = setInterval(() => {
-                  if (isMountedRef.current) {
-                    setTimer((t) => t + 1);
-                  }
-                }, 1000);
-              }
-              
+              intervalRef.current = setInterval(() => {
+                if (isMountedRef.current) {
+                  setTimer((prev) => prev + 1);
+                }
+              }, 1000);
+
+              const inputTimeout = DIFFICULTY[level]?.inputTimeout || 15000;
               if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-              const inputTimeout = DIFFICULTY[difficulty]?.inputTimeout || 15000;
               inputTimeoutRef.current = setTimeout(() => {
-                if (handleRoundCompleteRef.current && isMountedRef.current) {
-                  handleRoundCompleteRef.current(false);
+                if (isMountedRef.current) {
+                  handleRoundComplete(false);
                 }
               }, inputTimeout);
-            }, 500);
-          }
-        }, showDuration);
-      };
-      
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          showNextColor();
+            }
+          }, 500);
         }
-      }, 100);
-    }
-    
-    return () => {
-      if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
+        return;
+      }
+
+      if (isMountedRef.current) {
+        setActiveIndex(currentIdx);
+      }
+
+      if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
+      sequenceTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setActiveIndex(-1);
+          currentIdx++;
+          setTimeout(showNext, showDuration / 2);
+        }
+      }, showDuration);
     };
-  }, [phase, sequence.length, difficulty]);
 
-  useEffect(() => {
-    if (phase === "input" && userSequence.length === sequence.length && sequence.length > 0) {
-      const isCorrect = checkSequence(userSequence, sequence);
-      setError(!isCorrect);
-      handleRoundComplete(isCorrect);
-    }
-  }, [userSequence, sequence, phase, handleRoundComplete]);
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        showNext();
+      }
+    }, 200);
+  }, []);
 
-  const handleUserClick = (color) => {
+  const handleUserClick = useCallback((color) => {
     if (phase !== "input" || userSequence.length >= sequence.length) return;
-    
+
     const newSequence = [...userSequence, color];
     setUserSequence(newSequence);
-    
+    setError(false);
+
     if (newSequence.length <= sequence.length) {
       const isCorrect = isLatestInputCorrect(newSequence, sequence);
       if (!isCorrect) {
         setError(true);
         setTimeout(() => {
-          handleRoundComplete(false);
+          if (isMountedRef.current) {
+            handleRoundComplete(false);
+          }
         }, 500);
+        return;
+      }
+
+      if (newSequence.length === sequence.length) {
+        const isFullCorrect = checkSequence(newSequence, sequence);
+        if (isFullCorrect) {
+          handleRoundComplete(true);
+        } else {
+          setError(true);
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              handleRoundComplete(false);
+            }
+          }, 500);
+        }
       }
     }
-  };
+  }, [phase, userSequence, sequence]);
+
+  const handleRoundComplete = useCallback((isCorrect) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+    if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
+
+    const currentTime = Date.now();
+    const activeTime = currentTime - gameStartTimeRef.current;
+    const finalTime = Math.floor((accumulatedPausedTimeRef.current + activeTime) / 1000);
+    setTotalTime(finalTime);
+
+    if (isCorrect) {
+      const roundScore = calculateRoundScore(sequence.length);
+      setTotalScore((prev) => prev + roundScore);
+    }
+
+    setPhase("complete");
+
+    setTimeout(() => {
+      if (!isMountedRef.current) return;
+
+      if (round < maxRounds) {
+        setRound((prev) => prev + 1);
+        startRound();
+      } else {
+        setShowResult(true);
+      }
+    }, 1500);
+  }, [round, maxRounds, sequence.length, startRound]);
 
   const handleExit = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+    if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
     onExit?.();
   }, [onExit]);
 
@@ -231,9 +238,11 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         handleExit();
-      } else if (e.key === "Backspace" && phase === "input" && userSequence.length > 0 && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+      } else if (e.key === "Backspace" && phase === "input" && userSequence.length > 0 && 
+                 document.activeElement?.tagName !== "INPUT" && 
+                 document.activeElement?.tagName !== "TEXTAREA") {
         e.preventDefault();
-        setUserSequence(prev => prev.slice(0, -1));
+        setUserSequence((prev) => prev.slice(0, -1));
         setError(false);
       }
     };
@@ -241,34 +250,27 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, userSequence.length, handleExit]);
 
-  const handleNext = (retry = false) => {
+  const handleNext = useCallback((retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-    if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
+    if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current);
+    
     setShowResult(false);
     if (retry) {
       startGame(difficulty);
     } else {
-      const currentTime = Date.now();
-      const pausedTime = timePausedAt || gameStartTime;
-      const activeTime = currentTime - pausedTime;
-      const finalAccumulated = accumulatedTime + activeTime;
-      const totalTime = Math.floor(finalAccumulated / 1000);
-      const result = preparePatternRecallResult(totalScore, totalTime, difficulty, maxRounds, round, sequence.length, ageGroup);
+      const result = preparePatternRecallResult(
+        totalScore,
+        totalTime,
+        difficulty,
+        maxRounds,
+        round,
+        sequence.length,
+        ageGroup
+      );
       onFinish?.(result);
     }
-  };
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
-      if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-      if (sequenceShowTimeoutRef.current) clearTimeout(sequenceShowTimeoutRef.current);
-    };
-  }, []);
+  }, [totalScore, totalTime, difficulty, maxRounds, round, sequence.length, ageGroup, onFinish, startGame]);
 
   if (!difficulty) {
     return (
@@ -347,37 +349,39 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
                     </div>
                   </div>
                 </div>
-                <div className="col-md-4">
-                  <div className="card bg-light border-0">
-                    <div className="card-body text-center">
-                      <div className="small text-muted mb-1">{t("dementia.timer", "Timer")}</div>
-                      <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                {phase === "input" && (
+                  <div className="col-md-4">
+                    <div className="card bg-light border-0">
+                      <div className="card-body text-center">
+                        <div className="small text-muted mb-1">{t("dementia.timer", "Timer")}</div>
+                        <div className="h5 mb-0 fw-bold text-primary">{timer}s</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
-            <div className="alert alert-info text-center mb-4">
-              {phase === "show" && (
-                <p className="mb-0 fw-bold">
-                  {t("dementia.patternRecall.watchSequence", "Watch the sequence carefully...")}
-                </p>
-              )}
-              {phase === "input" && (
-                <p className="mb-0 fw-bold">
-                  {t("dementia.patternRecall.repeatSequence", "Now repeat the sequence by clicking the colors in order!")}
-                </p>
-              )}
-              {phase === "complete" && (
-                <p className={`mb-0 fw-bold ${error ? "text-danger" : "text-success"}`}>
-                  {error 
-                    ? t("dementia.patternRecall.incorrect", "Incorrect sequence. Moving to next round...")
-                    : t("dementia.patternRecall.correct", "Correct! Well done!")}
-                </p>
-              )}
-            </div>
+              <div className="alert alert-info text-center mb-4">
+                {phase === "showing" && (
+                  <p className="mb-0 fw-bold">
+                    {t("dementia.patternRecall.watchSequence", "Watch the sequence carefully...")}
+                  </p>
+                )}
+                {phase === "input" && (
+                  <p className="mb-0 fw-bold">
+                    {t("dementia.patternRecall.repeatSequence", "Now repeat the sequence by clicking the colors in order!")}
+                  </p>
+                )}
+                {phase === "complete" && (
+                  <p className={`mb-0 fw-bold ${error ? "text-danger" : "text-success"}`}>
+                    {error 
+                      ? t("dementia.patternRecall.incorrect", "Incorrect sequence. Moving to next round...")
+                      : t("dementia.patternRecall.correct", "Correct! Well done!")}
+                  </p>
+                )}
+              </div>
 
-              {phase === "show" && sequence.length > 0 && (
+              {phase === "showing" && sequence.length > 0 && (
                 <div className="d-flex justify-content-center gap-3 flex-wrap mb-4">
                   {sequence.map((color, idx) => (
                     <div
@@ -476,8 +480,10 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
             accuracy: Math.round((totalScore / (maxRounds * sequence.length * 10)) * 100)
           }}
           onNext={() => handleNext(false)}
+          onRetry={() => handleNext(true)}
         />
       )}
     </div>
   );
 }
+
