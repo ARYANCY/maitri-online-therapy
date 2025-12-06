@@ -388,4 +388,11 @@ API.notifications = {
   delete: (id) => API.delete(`/api/notifications/${id}`),
 };
 
+API.chatbot = {
+  get: () => API.get("/api/chatbot"),
+  send: (message) => API.post("/api/chatbot", { message }, {
+    timeout: 60000,
+  }),
+};
+
 export default API;
