@@ -39,25 +39,31 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const isShowingSequenceRef = useRef(false);
   const currentIndexRef = useRef(0);
   const handleRoundCompleteRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const generateNewSequence = useCallback(() => {
     if (!difficulty) return;
-    const seq = generateSequence(difficulty);
-    if (!seq || seq.length === 0) {
-      console.error("Failed to generate sequence");
-      return;
+    try {
+      const seq = generateSequence(difficulty);
+      if (!seq || seq.length === 0) {
+        throw new Error("Failed to generate sequence");
+      }
+      if (isMountedRef.current) {
+        setSequence(seq);
+        sequenceRef.current = seq;
+        setUserSequence([]);
+        setPhase("show");
+        setActiveIndex(-1);
+        setError(false);
+        isShowingSequenceRef.current = false;
+        currentIndexRef.current = 0;
+        
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setTimePausedAt(Date.now());
+      }
+    } catch (error) {
+      console.error("Error generating sequence:", error);
     }
-    setSequence(seq);
-    sequenceRef.current = seq;
-    setUserSequence([]);
-    setPhase("show");
-    setActiveIndex(-1);
-    setError(false);
-    isShowingSequenceRef.current = false;
-    currentIndexRef.current = 0;
-    
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimePausedAt(Date.now());
   }, [difficulty]);
 
   const handleRoundComplete = useCallback((isCorrect) => {
@@ -125,14 +131,18 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
       const pauseStartTime = Date.now();
       
       const showNextColor = () => {
-        if (currentIndexRef.current >= sequence.length) {
+        if (!isMountedRef.current || currentIndexRef.current >= sequence.length) {
           isShowingSequenceRef.current = false;
           return;
         }
         
-        setActiveIndex(currentIndexRef.current);
+        if (isMountedRef.current) {
+          setActiveIndex(currentIndexRef.current);
+        }
         
         sequenceShowTimeoutRef.current = setTimeout(() => {
+          if (!isMountedRef.current) return;
+          
           setActiveIndex(-1);
           currentIndexRef.current++;
           
@@ -140,6 +150,8 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
             setTimeout(showNextColor, showDuration / 2);
           } else {
             setTimeout(() => {
+              if (!isMountedRef.current) return;
+              
               setPhase("input");
               setActiveIndex(-1);
               isShowingSequenceRef.current = false;
@@ -150,14 +162,18 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
               setTimePausedAt(Date.now());
               
               if (intervalRef.current) clearInterval(intervalRef.current);
-              intervalRef.current = setInterval(() => {
-                setTimer((t) => t + 1);
-              }, 1000);
+              if (isMountedRef.current) {
+                intervalRef.current = setInterval(() => {
+                  if (isMountedRef.current) {
+                    setTimer((t) => t + 1);
+                  }
+                }, 1000);
+              }
               
               if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
               const inputTimeout = DIFFICULTY[difficulty]?.inputTimeout || 15000;
               inputTimeoutRef.current = setTimeout(() => {
-                if (handleRoundCompleteRef.current) {
+                if (handleRoundCompleteRef.current && isMountedRef.current) {
                   handleRoundCompleteRef.current(false);
                 }
               }, inputTimeout);
@@ -167,7 +183,9 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
       };
       
       setTimeout(() => {
-        showNextColor();
+        if (isMountedRef.current) {
+          showNextColor();
+        }
       }, 100);
     }
     
@@ -242,7 +260,9 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
       if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);

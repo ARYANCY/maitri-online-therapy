@@ -32,26 +32,43 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   const initRound = useCallback((levelOverride = null) => {
     const currentDifficulty = levelOverride || difficulty;
     if (!currentDifficulty) return;
-    const newSequence = generateDigitSequence(currentDifficulty);
-    setSequence(newSequence);
-    setUserInput("");
-    setPhase("show");
-    setTimer(0);
     
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimePausedAt(Date.now());
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setPhase("input");
+    try {
+      const newSequence = generateDigitSequence(currentDifficulty);
+      if (!newSequence || newSequence.length === 0) {
+        throw new Error("Failed to generate sequence");
+      }
+      setSequence(newSequence);
+      setUserInput("");
+      setPhase("show");
       setTimer(0);
+      
       if (intervalRef.current) clearInterval(intervalRef.current);
-      const resumeTime = Date.now();
-      const pausedDuration = resumeTime - timePausedAt;
-      setAccumulatedTime(prev => prev + pausedDuration);
-      intervalRef.current = setInterval(() => setTimer((t) => t + 1), 1000);
-    }, 2000);
-  }, [difficulty, timePausedAt]);
+      const pauseStart = Date.now();
+      setTimePausedAt(pauseStart);
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+        setPhase("input");
+        setTimer(0);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        const resumeTime = Date.now();
+        const pausedDuration = resumeTime - pauseStart;
+        setAccumulatedTime(prev => prev + pausedDuration);
+        setTimePausedAt(Date.now());
+        if (isMountedRef.current) {
+          intervalRef.current = setInterval(() => {
+            if (isMountedRef.current) {
+              setTimer((t) => t + 1);
+            }
+          }, 1000);
+        }
+      }, 2000);
+    } catch (error) {
+      console.error("Error initializing round:", error);
+    }
+  }, [difficulty]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -115,15 +132,20 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
 
   const submit = useCallback(() => {
     try {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || phase !== "input") return;
       
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      
       const result = calculateScore(userInput, sequence);
-      setTotalScore((prev) => prev + result.score);
+      if (isMountedRef.current) {
+        setTotalScore((prev) => prev + result.score);
+      }
       
       const currentTime = Date.now();
-      const activeTime = currentTime - (timePausedAt || gameStartTime);
-      const finalAccumulated = accumulatedTime + activeTime;
+      const inputStartTime = timePausedAt || gameStartTime;
+      const activeInputTime = currentTime - inputStartTime;
+      const finalAccumulated = accumulatedTime + activeInputTime;
 
       if (round < maxRounds) {
         setAccumulatedTime(finalAccumulated);
@@ -142,7 +164,7 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
     } catch (error) {
       console.error("Error in submit:", error);
     }
-  }, [userInput, sequence, round, maxRounds, timePausedAt, gameStartTime, accumulatedTime, initRound]);
+  }, [userInput, sequence, round, maxRounds, phase, timePausedAt, gameStartTime, accumulatedTime, initRound]);
 
   const handleNext = (retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);

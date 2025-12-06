@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import ResultPopup from "./ResultPopup";
 import {
   DIFFICULTY,
-  FRUIT_SYMBOLS,
   generateGrid,
   checkMatch,
   getMatchScore,
@@ -25,27 +24,35 @@ export default function MemoryMatch({ onFinish, onExit, ageGroup = "20-30" }) {
 
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  const generateGrid = useCallback((pairs) => {
-    
-    const selectedFruits = FRUIT_SYMBOLS.slice(0, pairs);
-    
-    const double = shuffleArray([...selectedFruits, ...selectedFruits]);
-    return double;
-  }, []);
-
   const startGame = (level) => {
+    if (!DIFFICULTY[level]) {
+      console.error("Invalid difficulty level:", level);
+      return;
+    }
+    
     setDifficulty(level);
     setRound(1);
     setMaxRounds(DIFFICULTY[level].rounds);
-    const newGrid = generateGrid(DIFFICULTY[level].pairs);
-    setGrid(newGrid);
+    try {
+      const newGrid = generateGrid(DIFFICULTY[level].pairs);
+      if (!newGrid || newGrid.length === 0) {
+        throw new Error("Failed to generate grid");
+      }
+      setGrid(newGrid);
+    } catch (error) {
+      console.error("Error generating grid:", error);
+      return;
+    }
     setFlipped([]);
     setMatched([]);
     setTotalScore(0);
@@ -56,8 +63,10 @@ export default function MemoryMatch({ onFinish, onExit, ageGroup = "20-30" }) {
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setTimer((t) => t + 1);
-      setTotalTime((tt) => tt + 1);
+      if (isMountedRef.current) {
+        setTimer((t) => t + 1);
+        setTotalTime((tt) => tt + 1);
+      }
     }, 1000);
   };
 
@@ -96,36 +105,53 @@ export default function MemoryMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   }, [flipped.length, handleExit]);
 
   useEffect(() => {
-    if (matched.length === grid.length && grid.length > 0) {
+    if (matched.length === grid.length && grid.length > 0 && difficulty) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (round < maxRounds) {
-        setRound((prev) => prev + 1);
-        const newGrid = generateGrid(DIFFICULTY[difficulty].pairs);
-        setGrid(newGrid);
-        setMatched([]);
-        setFlipped([]);
-        setTimer(0);
-        intervalRef.current = setInterval(() => {
-          setTimer((t) => t + 1);
-          setTotalTime((tt) => tt + 1);
-        }, 1000);
+        try {
+          const newGrid = generateGrid(DIFFICULTY[difficulty].pairs);
+          if (!newGrid || newGrid.length === 0) {
+            throw new Error("Failed to generate grid");
+          }
+          setRound((prev) => prev + 1);
+          setGrid(newGrid);
+          setMatched([]);
+          setFlipped([]);
+          setTimer(0);
+          if (isMountedRef.current) {
+            intervalRef.current = setInterval(() => {
+              if (isMountedRef.current) {
+                setTimer((t) => t + 1);
+                setTotalTime((tt) => tt + 1);
+              }
+            }, 1000);
+          }
+        } catch (error) {
+          console.error("Error in round transition:", error);
+        }
       } else {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        setShowResult(true);
+        if (isMountedRef.current) {
+          setShowResult(true);
+        }
       }
     }
-  }, [matched, grid, difficulty, round, maxRounds, generateGrid]);
+  }, [matched.length, grid.length, difficulty, round, maxRounds]);
 
-  const handleNext = (retry = false) => {
+  const handleNext = useCallback((retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
     if (retry) {
       startGame(difficulty);
     } else {
-      const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length, ageGroup);
-      onFinish?.(result);
+      try {
+        const result = prepareMemoryMatchResult(totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length, ageGroup);
+        onFinish?.(result);
+      } catch (error) {
+        console.error("Error preparing result:", error);
+      }
     }
-  };
+  }, [totalScore, totalTime, difficulty, maxRounds, matched.length, flipped.length, ageGroup, onFinish]);
 
   if (!difficulty) {
     return (
