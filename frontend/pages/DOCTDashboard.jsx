@@ -358,23 +358,23 @@ export default function DOCTDashboard() {
                   <tbody>
                     {appointments.map((apt) => (
                       <tr key={apt._id || apt.id}>
-                        <td>
+                        <td data-label="Patient Name">
                           <strong>{apt.userId?.name || "N/A"}</strong>
                         </td>
-                        <td>{apt.userId?.email || "N/A"}</td>
-                        <td>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
-                        <td>
+                        <td data-label="Email">{apt.userId?.email || "N/A"}</td>
+                        <td data-label="Date">{new Date(apt.appointmentDate).toLocaleDateString()}</td>
+                        <td data-label="Time">
                           <span className="badge bg-primary">{apt.timeSlot}</span>
                         </td>
-                        <td>
+                        <td data-label="Status">
                           <span className={getStatusBadgeClass(apt.status)}>
                             {apt.status}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Patient Notes">
                           <small>{apt.patientNotes || "-"}</small>
                         </td>
-                        <td>
+                        <td data-label="Actions">
                           {apt.status === "pending" && (
                             <div className="btn-group btn-group-sm">
                               <button
