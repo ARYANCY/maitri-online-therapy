@@ -1537,4 +1537,307 @@ export default function DOC() {
                           <label className="btn btn-outline-primary btn-sm mt-2">
                             {uploadingPhoto ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-upload me-2"></i>}
                             {healthcareFormData.profilePhoto ? 'Change Photo' : 'Upload Photo'}
-                            <input type="file" accept="image
+                            <input type="file" accept="image/*" onChange={handleHcPhotoUpload} hidden />
+                          </label>
+                          <div className="mt-1">
+                            <small className="text-muted">JPG, PNG, WebP • Max 5MB</small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-md-8">
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <label className="doc-form-label">Full Name <span className="text-danger">*</span></label>
+                            <input type="text" className="form-control doc-form-input" name="fullName" value={healthcareFormData.fullName} onChange={handleHealthcareChange} required placeholder="Dr. John Smith" />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="doc-form-label">Preferred Name</label>
+                            <input type="text" className="form-control doc-form-input" name="preferredName" value={healthcareFormData.preferredName} onChange={handleHealthcareChange} placeholder="John" />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="doc-form-label">Email <span className="text-danger">*</span> <small className="text-muted">(from your account)</small></label>
+                            <input type="email" className="form-control doc-form-input" name="email" value={healthcareFormData.email} disabled readOnly style={{ backgroundColor: '#f0f7f4', cursor: 'not-allowed' }} />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="doc-form-label">Phone</label>
+                            <input type="tel" className="form-control doc-form-input" name="phone" value={healthcareFormData.phone} onChange={handleHealthcareChange} placeholder="+91 98765 43210" />
+                          </div>
+                          <div className="col-md-4">
+                            <label className="doc-form-label">City</label>
+                            <input type="text" className="form-control doc-form-input" name="city" value={healthcareFormData.city} onChange={handleHealthcareChange} placeholder="Mumbai" />
+                          </div>
+                          <div className="col-md-4">
+                            <label className="doc-form-label">State</label>
+                            <input type="text" className="form-control doc-form-input" name="state" value={healthcareFormData.state} onChange={handleHealthcareChange} placeholder="Maharashtra" />
+                          </div>
+                          <div className="col-md-4">
+                            <label className="doc-form-label">Country</label>
+                            <input type="text" className="form-control doc-form-input" name="country" value={healthcareFormData.country} onChange={handleHealthcareChange} placeholder="India" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hcCurrentStep === 2 && (
+                  <div className="doc-step-content animate-fade-in">
+                    <div className="doc-section-header">
+                      <h3><i className="bi bi-briefcase me-2"></i>Role & Specialization</h3>
+                      <p>Select your role categories and areas of expertise in dementia care.</p>
+                    </div>
+
+                    <div className="row g-4">
+                      <div className="col-12">
+                        <label className="doc-form-label">Role Categories <span className="text-danger">*</span></label>
+                        <div className="multi-select-grid">
+                          {HC_ROLE_CATEGORIES.map((role) => (
+                            <button key={role} type="button" className={`multi-select-btn ${healthcareFormData.roleCategories.includes(role) ? 'selected' : ''}`} onClick={() => handleHcMultiSelect('roleCategories', role)}>
+                              {role}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Dementia Types Experienced</label>
+                        <div className="multi-select-grid">
+                          {DEMENTIA_TYPES.map((type) => (
+                            <button key={type} type="button" className={`multi-select-btn ${healthcareFormData.dementiaTypesExperienced.includes(type) ? 'selected' : ''}`} onClick={() => handleHcMultiSelect('dementiaTypesExperienced', type)}>
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Dementia Stages Handled</label>
+                        <div className="multi-select-grid">
+                          {DEMENTIA_STAGES.map((stage) => (
+                            <button key={stage} type="button" className={`multi-select-btn ${healthcareFormData.dementiaStagesHandled.includes(stage) ? 'selected' : ''}`} onClick={() => handleHcMultiSelect('dementiaStagesHandled', stage)}>
+                              {stage}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hcCurrentStep === 3 && (
+                  <div className="doc-step-content animate-fade-in">
+                    <div className="doc-section-header">
+                      <h3><i className="bi bi-mortarboard me-2"></i>Credentials & Qualifications</h3>
+                      <p>Your professional qualifications and certifications in dementia care.</p>
+                    </div>
+
+                    <div className="row g-4">
+                      <div className="col-md-6">
+                        <label className="doc-form-label">Highest Qualification <span className="text-danger">*</span></label>
+                        <input type="text" className="form-control doc-form-input" name="highestQualification" value={healthcareFormData.highestQualification} onChange={handleHealthcareChange} placeholder="MD Geriatrics, MS Neurology" required />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="doc-form-label">Years in Dementia Care <span className="text-danger">*</span></label>
+                        <input type="number" className="form-control doc-form-input" name="yearsInDementiaCare" value={healthcareFormData.yearsInDementiaCare} onChange={handleHealthcareChange} min="0" max="70" required />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="doc-form-label">License Number</label>
+                        <input type="text" className="form-control doc-form-input" name="licenseNumber" value={healthcareFormData.licenseNumber} onChange={handleHealthcareChange} placeholder="MCI/XXXXX" />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Dementia Certifications</label>
+                        <div className="card doc-inner-card">
+                          <div className="card-body">
+                            <div className="row g-2 mb-3">
+                              <div className="col-md-4">
+                                <input type="text" className="form-control doc-form-input" placeholder="Certification Name" value={newHcCertification.name} onChange={(e) => setNewHcCertification({ ...newHcCertification, name: e.target.value })} />
+                              </div>
+                              <div className="col-md-3">
+                                <input type="text" className="form-control doc-form-input" placeholder="Issuing Body" value={newHcCertification.issuingBody} onChange={(e) => setNewHcCertification({ ...newHcCertification, issuingBody: e.target.value })} />
+                              </div>
+                              <div className="col-md-3">
+                                <input type="number" className="form-control doc-form-input" placeholder="Year" value={newHcCertification.year} onChange={(e) => setNewHcCertification({ ...newHcCertification, year: e.target.value })} />
+                              </div>
+                              <div className="col-md-2">
+                                <button type="button" className="btn btn-primary w-100" onClick={addHcCertification}>
+                                  <i className="bi bi-plus-lg"></i>
+                                </button>
+                              </div>
+                            </div>
+                            {healthcareFormData.dementiaCertifications.length > 0 && (
+                              <div className="cert-list">
+                                {healthcareFormData.dementiaCertifications.map((cert, idx) => (
+                                  <div key={idx} className="cert-item d-flex justify-content-between align-items-center">
+                                    <span><strong>{cert.name}</strong> {cert.issuingBody && `- ${cert.issuingBody}`} {cert.year && `(${cert.year})`}</span>
+                                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setHealthcareFormData(prev => ({ ...prev, dementiaCertifications: prev.dementiaCertifications.filter((_, i) => i !== idx) }))}>
+                                      <i className="bi bi-x"></i>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Upload License/Certificates (Max 5 files)</label>
+                        <div className="file-upload-area">
+                          <label className="file-upload-label">
+                            {uploadingCerts ? (
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                            ) : (
+                              <i className="bi bi-cloud-upload me-2"></i>
+                            )}
+                            Click to upload certificates (JPG, PNG only)
+                            <input type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple onChange={handleHcCertificatesUpload} hidden />
+                          </label>
+                          {healthcareFormData.licenseFiles.length > 0 && (
+                            <div className="uploaded-files mt-3">
+                              {healthcareFormData.licenseFiles.map((file, idx) => (
+                                <span key={idx} className="badge bg-success me-2 mb-2">
+                                  <i className="bi bi-file-earmark-check me-1"></i>
+                                  {file.fileName || `File ${idx + 1}`}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {hcCurrentStep === 4 && (
+                  <div className="doc-step-content animate-fade-in">
+                    <div className="doc-section-header">
+                      <h3><i className="bi bi-briefcase-fill me-2"></i>Experience & Additional Info</h3>
+                      <p>Share your professional experience and additional information.</p>
+                    </div>
+
+                    <div className="row g-4">
+                      <div className="col-12">
+                        <label className="doc-form-label">Short Bio</label>
+                        <textarea className="form-control doc-form-input" name="shortBio" value={healthcareFormData.shortBio} onChange={handleHealthcareChange} rows="4" placeholder="Share your experience in dementia care, your approach, and what drives you..." maxLength={1500}></textarea>
+                        <small className="text-muted">{healthcareFormData.shortBio.length}/1500 characters</small>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Special Skills</label>
+                        <div className="input-group mb-2">
+                          <input type="text" className="form-control doc-form-input" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="e.g., Cognitive assessment, Behavioral management" />
+                          <button type="button" className="btn btn-outline-primary" onClick={addHcSkill}>Add</button>
+                        </div>
+                        <div className="tag-list">
+                          {healthcareFormData.specialSkills.map((skill, idx) => (
+                            <span key={idx} className="tag tag-primary">{skill} <button type="button" className="tag-remove" onClick={() => setHealthcareFormData(prev => ({ ...prev, specialSkills: prev.specialSkills.filter((_, i) => i !== idx) }))}>&times;</button></span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Languages Spoken</label>
+                        <div className="input-group mb-2">
+                          <input type="text" className="form-control doc-form-input" value={newHcLanguage} onChange={(e) => setNewHcLanguage(e.target.value)} placeholder="Add a language" />
+                          <button type="button" className="btn btn-outline-primary" onClick={addHcLanguage}>Add</button>
+                        </div>
+                        <div className="tag-list">
+                          {healthcareFormData.languagesSpoken.map((lang, idx) => (
+                            <span key={idx} className="tag tag-primary">{lang} <button type="button" className="tag-remove" onClick={() => setHealthcareFormData(prev => ({ ...prev, languagesSpoken: prev.languagesSpoken.filter((_, i) => i !== idx) }))}>&times;</button></span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="doc-form-label">Preferred Communication Mode</label>
+                        <div className="d-flex flex-wrap gap-2">
+                          {HC_COMMUNICATION_MODES.map((mode) => (
+                            <button key={mode} type="button" className={`btn btn-sm ${healthcareFormData.preferredCommunicationMode.includes(mode) ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => handleHcMultiSelect('preferredCommunicationMode', mode)}>
+                              <i className={`bi bi-${mode === 'Video' ? 'camera-video' : mode === 'Audio' ? 'telephone' : mode === 'Chat' ? 'chat-dots' : mode === 'In-Person' ? 'person' : 'house'} me-1`}></i>
+                              {mode}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="doc-form-label">Session Duration</label>
+                        <select className="form-select doc-form-input" name="sessionDuration" value={healthcareFormData.sessionDuration} onChange={handleHealthcareChange}>
+                          <option value={30}>30 minutes</option>
+                          <option value={45}>45 minutes</option>
+                          <option value={60}>60 minutes</option>
+                          <option value={90}>90 minutes</option>
+                        </select>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="doc-form-label">Consultation Fees</label>
+                        <div className="row g-3">
+                          <div className="col-md-4">
+                            <div className="input-group">
+                              <span className="input-group-text">₹</span>
+                              <input type="number" className="form-control doc-form-input" name="consultationFee.initial" value={healthcareFormData.consultationFee.initial} onChange={handleHealthcareChange} placeholder="Initial" />
+                            </div>
+                            <small className="text-muted">Initial Consultation</small>
+                          </div>
+                          <div className="col-md-4">
+                            <div className="input-group">
+                              <span className="input-group-text">₹</span>
+                              <input type="number" className="form-control doc-form-input" name="consultationFee.followUp" value={healthcareFormData.consultationFee.followUp} onChange={handleHealthcareChange} placeholder="Follow-up" />
+                            </div>
+                            <small className="text-muted">Follow-up</small>
+                          </div>
+                          <div className="col-md-4">
+                            <div className="input-group">
+                              <span className="input-group-text">₹</span>
+                              <input type="number" className="form-control doc-form-input" name="consultationFee.homeVisit" value={healthcareFormData.consultationFee.homeVisit} onChange={handleHealthcareChange} placeholder="Home Visit" />
+                            </div>
+                            <small className="text-muted">Home Visit</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="doc-form-actions d-flex justify-content-between mt-4">
+                  {hcCurrentStep > 1 && (
+                    <button type="button" className="btn btn-outline-primary btn-lg" onClick={hcPrevStep}>
+                      <i className="bi bi-arrow-left me-2"></i>
+                      Previous
+                    </button>
+                  )}
+                  <div className="ms-auto">
+                    {hcCurrentStep < hcTotalSteps ? (
+                      <button type="button" className="btn btn-primary btn-lg" onClick={hcNextStep}>
+                        Next
+                        <i className="bi bi-arrow-right ms-2"></i>
+                      </button>
+                    ) : (
+                      <button type="submit" className="btn btn-success btn-lg doc-submit-btn" disabled={submitting}>
+                        {submitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-send-fill me-2"></i>
+                            Submit Application
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}
