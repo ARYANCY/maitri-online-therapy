@@ -27,6 +27,7 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
 
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const initRound = useCallback((levelOverride = null) => {
     const currentDifficulty = levelOverride || difficulty;
@@ -53,7 +54,9 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   }, [difficulty, timePausedAt]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -110,27 +113,36 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   }, [phase, userInput, handleExit]);
 
 
-  const submit = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    const result = calculateScore(userInput, sequence);
-    setTotalScore((prev) => prev + result.score);
-    
-    const currentTime = Date.now();
-    const activeTime = currentTime - (timePausedAt || gameStartTime);
-    const finalAccumulated = accumulatedTime + activeTime;
+  const submit = useCallback(() => {
+    try {
+      if (!isMountedRef.current) return;
+      
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      const result = calculateScore(userInput, sequence);
+      setTotalScore((prev) => prev + result.score);
+      
+      const currentTime = Date.now();
+      const activeTime = currentTime - (timePausedAt || gameStartTime);
+      const finalAccumulated = accumulatedTime + activeTime;
 
-    if (round < maxRounds) {
-      setAccumulatedTime(finalAccumulated);
-      setTimeout(() => {
-        setRound((prev) => prev + 1);
-        initRound();
-      }, 500);
-    } else {
-      const finalTime = Math.floor(finalAccumulated / 1000);
-      setTotalTime(finalTime);
-      setShowResult(true);
+      if (round < maxRounds) {
+        setAccumulatedTime(finalAccumulated);
+        setTimeout(() => {
+          if (!isMountedRef.current) return;
+          setRound((prev) => prev + 1);
+          initRound();
+        }, 500);
+      } else {
+        const finalTime = Math.floor(finalAccumulated / 1000);
+        if (isMountedRef.current) {
+          setTotalTime(finalTime);
+          setShowResult(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error in submit:", error);
     }
-  };
+  }, [userInput, sequence, round, maxRounds, timePausedAt, gameStartTime, accumulatedTime, initRound]);
 
   const handleNext = (retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
