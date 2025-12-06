@@ -24,9 +24,11 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
   const [shuffledColors, setShuffledColors] = useState([]);
   const [accumulatedTime, setAccumulatedTime] = useState(0);
   const [timePausedAt, setTimePausedAt] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
 
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   const generateNewSequence = useCallback(() => {
     if (!difficulty) return;
@@ -43,30 +45,38 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
     setTimePausedAt(Date.now());
   }, [difficulty, timePausedAt]);
 
-  const startGame = (level) => {
-    setDifficulty(level);
-    setRound(1);
-    setMaxRounds(DIFFICULTY[level].rounds);
-    setTotalScore(0);
-    setTimer(0);
-    setShowResult(false);
-    setAccumulatedTime(0);
-    setTimePausedAt(Date.now());
-    gameStartRef.current = Date.now();
-    
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    
-    setTimeout(() => {
-      const { sequence, shuffledColors } = generateSequence(level);
-      setSequence(sequence);
-      setUserSequence([]);
-      setPhase("show");
-      setShuffledColors(shuffledColors);
-    }, 100);
-  };
+  const startGame = useCallback((level) => {
+    try {
+      setDifficulty(level);
+      setRound(1);
+      setMaxRounds(DIFFICULTY[level].rounds);
+      setTotalScore(0);
+      setTimer(0);
+      setTotalTime(0);
+      setShowResult(false);
+      setAccumulatedTime(0);
+      setTimePausedAt(Date.now());
+      gameStartRef.current = Date.now();
+      
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      
+      setTimeout(() => {
+        if (!isMountedRef.current) return;
+        const { sequence, shuffledColors } = generateSequence(level);
+        setSequence(sequence);
+        setUserSequence([]);
+        setPhase("show");
+        setShuffledColors(shuffledColors);
+      }, 100);
+    } catch (error) {
+      console.error("Error in startGame:", error);
+    }
+  }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
@@ -98,24 +108,31 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
 
   useEffect(() => {
     if (phase === "input" && isSequenceComplete(userSequence, sequence)) {
-      const score = calculateRoundScore(userSequence, sequence);
-      setTotalScore((prev) => prev + score);
+      try {
+        const score = calculateRoundScore(userSequence, sequence);
+        setTotalScore((prev) => prev + score);
 
-      if (round < maxRounds) {
-        setTimeout(() => {
-          setRound((prev) => prev + 1);
-          generateNewSequence();
-        }, 500);
-      } else {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        const currentTime = Date.now();
-        const activeTime = currentTime - (timePausedAt || gameStartRef.current);
-        const finalAccumulated = accumulatedTime + activeTime;
-        setTotalTime(Math.floor(finalAccumulated / 1000));
-        setShowResult(true);
+        if (round < maxRounds) {
+          setTimeout(() => {
+            if (!isMountedRef.current) return;
+            setRound((prev) => prev + 1);
+            generateNewSequence();
+          }, 500);
+        } else {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          const currentTime = Date.now();
+          const activeTime = currentTime - (timePausedAt || gameStartRef.current);
+          const finalAccumulated = accumulatedTime + activeTime;
+          if (isMountedRef.current) {
+            setTotalTime(Math.floor(finalAccumulated / 1000));
+            setShowResult(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error in sequence completion:", error);
       }
     }
-  }, [userSequence, sequence, round, maxRounds, generateNewSequence, phase]);
+  }, [userSequence, sequence, round, maxRounds, generateNewSequence, phase, timePausedAt, accumulatedTime]);
 
   const handleUserClick = (color) => {
     if (phase !== "input" || userSequence.length >= sequence.length) return;
@@ -141,20 +158,28 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, userSequence.length, handleExit]);
 
-  const handleNext = (retry = false) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setShowResult(false);
-    if (retry) {
-      startGame(difficulty);
-    } else {
-      const currentTime = Date.now();
-      const activeTime = currentTime - (timePausedAt || gameStartRef.current);
-      const finalAccumulated = accumulatedTime + activeTime;
-      const totalTime = Math.floor(finalAccumulated / 1000);
-      const result = prepareColorSequenceResult(totalScore, totalTime, difficulty, maxRounds, ageGroup);
-      onFinish?.(result);
+  const handleNext = useCallback((retry = false) => {
+    try {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setShowResult(false);
+      if (retry) {
+        startGame(difficulty);
+      } else {
+        // Use the totalTime state that was set when game completed
+        // If for some reason it's 0, calculate it as fallback
+        const finalTime = totalTime > 0 ? totalTime : (() => {
+          const currentTime = Date.now();
+          const activeTime = currentTime - (timePausedAt || gameStartRef.current);
+          const finalAccumulated = accumulatedTime + activeTime;
+          return Math.floor(finalAccumulated / 1000);
+        })();
+        const result = prepareColorSequenceResult(totalScore, finalTime, difficulty, maxRounds, ageGroup);
+        onFinish?.(result);
+      }
+    } catch (error) {
+      console.error("Error in handleNext:", error);
     }
-  };
+  }, [totalTime, totalScore, difficulty, maxRounds, ageGroup, timePausedAt, accumulatedTime, startGame, onFinish]);
 
   if (!difficulty) {
     return (
@@ -330,7 +355,7 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
       {showResult && (
         <ResultPopup
           score={totalScore}
-          time={timer}
+          time={totalTime}
           detail={{
             rounds: maxRounds,
             difficulty,
