@@ -148,7 +148,7 @@ export default function Dashboard() {
       setLoading(prev => ({ ...prev, dashboard: false, todos: false }));
       isFetchingRef.current = false;
     }
-  }, [navigate, user]); // Removed 't' to prevent infinite re-renders
+  }, [navigate, user]); 
 
   
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function Dashboard() {
     } finally {
       setLoading(prev => ({ ...prev, todos: false }));
     }
-  }, []); // Stable callback - no dependencies needed
+  }, []); 
 
   const handleDownloadReport = useCallback(async (format = "pdf") => {
     if (!user) return;

@@ -53,8 +53,6 @@ export const isGameComplete = (currentRound, maxRounds) => {
 };
 
 export const prepareDigitSpanResult = (totalScore, totalTime, difficulty, maxRounds, ageGroup = "20-30") => {
-  // totalTime should be in seconds (not milliseconds)
-  // If it's passed in milliseconds, convert it
   const timeInSeconds = totalTime > 10000 ? Math.floor(totalTime / 1000) : totalTime;
   
   const config = DIFFICULTY[difficulty];
@@ -65,11 +63,11 @@ export const prepareDigitSpanResult = (totalScore, totalTime, difficulty, maxRou
   return {
     key: "digit_span",
     score: Math.round(ageAdjustedScore),
-    time: timeInSeconds, // Time in seconds
+    time: timeInSeconds,
     detail: {
       rounds: maxRounds,
       difficulty,
-      time: timeInSeconds, // Time in seconds
+      time: timeInSeconds, 
       averageScore: Math.round(ageAdjustedScore / maxRounds),
       correct: Math.round(ageAdjustedScore / 10),
       total: maxRounds * config.length,

@@ -125,8 +125,8 @@ export default function CookieTest() {
                   <li>Scroll to <strong>Cookies and Site Data</strong> → Click <strong>Manage Exceptions...</strong></li>
                   <li>Add these domains and click <strong>Allow</strong>:
                     <ul>
-                      <li><code>https://maitri-online-therapy-1.onrender.com</code></li>
-                      <li><code>https://maitri-online-therapy.onrender.com</code></li>
+                      <li><code>https:
+                      <li><code>https:
                     </ul>
                   </li>
                   <li>Click <strong>Save Changes</strong> and refresh the page</li>

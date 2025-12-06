@@ -165,8 +165,8 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
       if (retry) {
         startGame(difficulty);
       } else {
-        // Use the totalTime state that was set when game completed
-        // If for some reason it's 0, calculate it as fallback
+        
+        
         const finalTime = totalTime > 0 ? totalTime : (() => {
           const currentTime = Date.now();
           const activeTime = currentTime - (timePausedAt || gameStartRef.current);

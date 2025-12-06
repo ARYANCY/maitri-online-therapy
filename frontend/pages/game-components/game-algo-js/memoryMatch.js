@@ -9,21 +9,21 @@ export const DIFFICULTY = {
 };
 
 export const FRUIT_SYMBOLS = [
-  "🍎", // Apple
-  "🍌", // Banana
-  "🍇", // Grapes
-  "🍊", // Orange
-  "🍓", // Strawberry
-  "🥝", // Kiwi
-  "🍑", // Peach
-  "🍉", // Watermelon
-  "🍍", // Pineapple
-  "🥭", // Mango
-  "🍒", // Cherry
-  "🫐", // Blueberry
-  "🍋", // Lemon
-  "🥑", // Avocado
-  "🍐", // Pear
+  "🍎", 
+  "🍌", 
+  "🍇", 
+  "🍊", 
+  "🍓", 
+  "🥝", 
+  "🍑", 
+  "🍉", 
+  "🍍", 
+  "🥭", 
+  "🍒", 
+  "🫐", 
+  "🍋", 
+  "🥑", 
+  "🍐", 
 ];
 
 export const generateGrid = (pairs) => {

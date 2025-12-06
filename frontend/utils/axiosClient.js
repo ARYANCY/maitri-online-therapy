@@ -27,8 +27,6 @@ API.interceptors.request.use((config) => {
   const lang = localStorage.getItem("preferredLang") || "en";
   config.headers = config.headers || {};
   config.headers["Accept-Language"] = lang;
-  
-  
   return config;
 });
 
@@ -52,27 +50,23 @@ function createNextDate({ dayOfWeek, dayOfMonth, time }) {
 
 API.dementia = {
   submitGameResults: (payload) => API.post("/api/dementia/game-results", payload, {
-    timeout: 120000, // 2 minutes timeout for AI evaluation
+    timeout: 120000, 
   }),
 };
 
 API.interceptors.response.use(
   (res) => {
-    
     return res.data;
   },
   (err) => {
     const { response, config, code, message, request } = err;
-    
-    
+
     if (!response) {
-      
       if (!API_URL && config?.url) {
         console.error('[AxiosClient] API URL not configured. Request URL:', config.url);
         return Promise.reject(new Error("API configuration error. Please contact support."));
       }
-      
-      
+
       console.error('[AxiosClient] Network error:', {
         code,
         message,
@@ -82,17 +76,11 @@ API.interceptors.response.use(
         origin: window.location.origin,
         apiUrl: API_URL
       });
-      
-      
+
       if (code === "ECONNABORTED" || code === "ETIMEDOUT" || message?.includes("timeout")) {
         return Promise.reject(new Error("Request timeout. Please try again."));
       }
-      
-      
-      
-      
-      
-      
+
       const isLikelyCORS = (
         code === "ERR_CORS" || 
         message?.includes("CORS") || 
@@ -116,48 +104,39 @@ API.interceptors.response.use(
           "Please check backend CORS configuration."
         ));
       }
-      
-      
+
       if (code === "ERR_NETWORK" || 
           code === "ERR_INTERNET_DISCONNECTED" ||
           message?.includes("Network Error") ||
           message?.includes("Network request failed")) {
         return Promise.reject(new Error("Network error. Please check your internet connection."));
       }
-      
-      
+
       if (code === "ECONNREFUSED" || message?.includes("refused") || message?.includes("unreachable")) {
         return Promise.reject(new Error("Cannot connect to server. Please try again later."));
       }
-      
-      
+
       return Promise.reject(new Error(message || "Connection error. Please try again."));
     }
 
-    
-    
     if (config?.url?.includes("/auth/session-check")) {
       const body = response?.data ?? { success: false, user: null, message: "No active session" };
-      return body; 
+      return body;
     }
 
-    
     if (response.status === 401 && config?.url?.includes("/admin")) {
       clearAdminSession();
     }
 
-    
     if (response.status === 401) {
-      clearUserSession(true); 
+      clearUserSession(true);
     }
 
-    
     const errorMessage = response?.data?.error || 
                         response?.data?.message || 
                         message || 
                         `Server error (${response.status})`;
 
-    
     const enhancedError = new Error(errorMessage);
     enhancedError.status = response.status;
     enhancedError.statusText = response.statusText;
@@ -180,10 +159,8 @@ export async function ensureAdminSession() {
     const session = await API.get("/auth/session-check");
     if (!session?.user?.isAdmin) throw new Error("Not an admin");
 
-    
     storeUserSession(session.user, session.sessionInfo);
 
-    
     const adminSession = {
       user: {
         _id: session.user._id || "",
@@ -213,17 +190,15 @@ API.auth = {
     } catch (error) {
       console.error('[Auth] Logout request failed:', error);
     } finally {
-      
-      clearUserSession(true); 
+      clearUserSession(true);
     }
   },
   register: (data) => API.post("/auth/register", data),
   testCookie: () => API.get("/auth/cookie-test"),
   cookieDebug: () => API.get("/auth/cookie-debug"),
   checkSession: () => {
-    
     const requestKey = getRequestKey('GET', '/auth/session-check');
-    
+
     if (pendingRequests.has(requestKey)) {
       return pendingRequests.get(requestKey);
     }
@@ -245,10 +220,8 @@ API.auth = {
     const response = await API.post("/auth/admin-login", data);
     if (!response?.user?.isAdmin) throw new Error("Not an admin");
 
-    
     storeUserSession(response.user, response.sessionInfo);
 
-    
     const adminSession = {
       user: {
         _id: response.user._id || "",

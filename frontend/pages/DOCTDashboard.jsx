@@ -54,14 +54,14 @@ export default function DOCTDashboard() {
   const [success, setSuccess] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
   
-  // Message modal state
+  
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [selectedAction, setSelectedAction] = useState(null);
   const [actionMessage, setActionMessage] = useState("");
   const [selectedPresetMessage, setSelectedPresetMessage] = useState("");
 
-  // Pre-built messages
+  
   const presetMessages = {
     accepted: [
       "Looking forward to our session! Please be ready 5 minutes before the scheduled time.",
@@ -139,7 +139,7 @@ export default function DOCTDashboard() {
     })();
   }, [fetchUser, fetchDOCTProfile, fetchAppointments]);
 
-  // Open modal to add message before action
+  
   const openMessageModal = useCallback((appointment, action) => {
     setSelectedAppointment(appointment);
     setSelectedAction(action);
@@ -148,7 +148,7 @@ export default function DOCTDashboard() {
     setShowMessageModal(true);
   }, []);
 
-  // Handle the actual action with message
+  
   const handleAppointmentAction = useCallback(async () => {
     if (!selectedAppointment || !selectedAction) return;
     
