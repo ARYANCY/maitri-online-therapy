@@ -133,9 +133,10 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
           initRound();
         }, 500);
       } else {
+        // Convert accumulated time from milliseconds to seconds
         const finalTime = Math.floor(finalAccumulated / 1000);
         if (isMountedRef.current) {
-          setTotalTime(finalTime);
+          setTotalTime(finalTime); // totalTime is in seconds
           setShowResult(true);
         }
       }
