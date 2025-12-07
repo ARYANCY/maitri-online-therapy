@@ -136,7 +136,7 @@ export default function NBack({ onFinish, onExit, ageGroup = "20-30" }) {
       const currentTime = Date.now();
       const activeTime = currentTime - (timePausedAt || gameStartTime);
       const finalAccumulated = accumulatedTime + activeTime;
-      
+
       if (round < maxRounds) {
         setAccumulatedTime(finalAccumulated);
         setTimeout(() => {

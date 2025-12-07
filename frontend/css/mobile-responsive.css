@@ -843,6 +843,9 @@
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
     backdrop-filter: blur(40px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
@@ -852,7 +855,6 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
     z-index: 9999 !important;
     padding: 0 !important;
-    max-height: calc(100vh - 65px) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     transform: translateX(-100%) !important;
@@ -875,6 +877,9 @@
     visibility: visible !important;
     pointer-events: auto !important;
     display: block !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
     box-shadow: 
       0 -4px 30px rgba(0, 0, 0, 0.2),
       0 0 0 1px rgba(0, 0, 0, 0.08),
@@ -1580,12 +1585,13 @@
 
   .navbar-bottom {
     top: 60px !important;
-    max-height: calc(100vh - 60px) !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
     z-index: 9999 !important;
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 0 !important;
     display: block !important;
   }
   
@@ -1595,6 +1601,9 @@
     visibility: visible !important;
     pointer-events: auto !important;
     display: block !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
   }
   
   .navbar-bottom-content {
@@ -1710,12 +1719,13 @@
 
   .navbar-bottom {
     top: 56px !important;
-    max-height: calc(100vh - 56px) !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
     z-index: 9999 !important;
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 0 !important;
     display: block !important;
   }
   
@@ -1725,6 +1735,9 @@
     visibility: visible !important;
     pointer-events: auto !important;
     display: block !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
   }
   
   .navbar-overlay {
@@ -1890,12 +1903,13 @@
 
   .navbar-bottom {
     top: 52px !important;
-    max-height: calc(100vh - 52px) !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
     z-index: 9999 !important;
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 0 !important;
     display: block !important;
   }
   
@@ -1905,6 +1919,9 @@
     visibility: visible !important;
     pointer-events: auto !important;
     display: block !important;
+    height: 20rem !important;
+    min-height: 20rem !important;
+    max-height: 20rem !important;
   }
   
   .navbar-overlay {
@@ -5409,8 +5426,7 @@
   }
 
   .admin-container .table tbody tr:hover {
-    background: rgba(111, 174, 154, 0.05);
-    transform: scale(1.01);
+    background: #6fae9a0d;
   }
 
   .admin-container .table th:first-child,

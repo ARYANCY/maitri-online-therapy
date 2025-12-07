@@ -611,42 +611,42 @@ export default function Game({ onDataUpdate }) {
                     flexDirection: "column",
                     justifyContent: "center"
                   }}>
-                    <button
-                      type="button"
+                  <button
+                    type="button"
                       className="btn w-100 border-0"
-                      onClick={handleViewResults}
-                      disabled={loadingAssessment || isSubmittingRef.current}
-                      style={{
-                        background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                        color: "white",
+                    onClick={handleViewResults}
+                    disabled={loadingAssessment || isSubmittingRef.current}
+                    style={{
+                      background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                      color: "white",
                         borderRadius: "10px",
                         padding: "0.75rem 1.5rem",
-                        fontWeight: 600,
+                      fontWeight: 600,
                         fontSize: "0.95rem",
-                        transition: "all 0.3s ease"
-                      }}
-                      onMouseEnter={(e) => {
+                      transition: "all 0.3s ease"
+                    }}
+                    onMouseEnter={(e) => {
                         if (!e.target.disabled) {
-                          e.target.style.transform = "translateY(-2px)";
-                          e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.3)";
+                      e.target.style.transform = "translateY(-2px)";
+                      e.target.style.boxShadow = "0 8px 20px rgba(34, 197, 94, 0.3)";
                         }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "none";
-                      }}
-                    >
-                      {loadingAssessment ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                          {t("dementia.calculating", "Calculating...")}
-                        </>
-                      ) : (
-                        <>
-                          📈 {t("dementia.viewResults", "View Results")}
-                        </>
-                      )}
-                    </button>
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "translateY(0)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  >
+                    {loadingAssessment ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        {t("dementia.calculating", "Calculating...")}
+                      </>
+                    ) : (
+                      <>
+                        📈 {t("dementia.viewResults", "View Results")}
+                      </>
+                    )}
+                  </button>
                   </div>
                 ) : results.length > 0 && (
                   <div className="card border-0 shadow-sm" style={{ 
@@ -677,11 +677,11 @@ export default function Game({ onDataUpdate }) {
                   flexDirection: "column",
                   justifyContent: "center"
                 }}>
-                  <button
-                    type="button"
+                <button
+                  type="button"
                     className="btn w-100 border-0"
-                    onClick={resetProgress}
-                    style={{ 
+                  onClick={resetProgress}
+                  style={{ 
                       background: "linear-gradient(135deg, #ef4444, #dc2626)",
                       color: "white",
                       borderRadius: "10px",
@@ -697,10 +697,10 @@ export default function Game({ onDataUpdate }) {
                     onMouseLeave={(e) => {
                       e.target.style.transform = "translateY(0)";
                       e.target.style.boxShadow = "none";
-                    }}
-                  >
-                    🔄 {t("dementia.reset", "Reset")}
-                  </button>
+                  }}
+                >
+                  🔄 {t("dementia.reset", "Reset")}
+                </button>
                 </div>
               </div>
             </div>
@@ -948,9 +948,9 @@ export default function Game({ onDataUpdate }) {
                 padding: "1.5rem"
               }}>
                 <div className="d-flex align-items-center gap-3">
-                  <h2 className="h4 mb-0 fw-bold">
-                    {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
-                  </h2>
+                <h2 className="h4 mb-0 fw-bold">
+                  {currentConf ? getGameTitle(currentConf) : t("dementia.title", "Cognitive Games")}
+                </h2>
                   <span className="badge bg-light text-dark" style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem" }}>
                     {getAgeGroupLabel(ageGroup)}
                   </span>
