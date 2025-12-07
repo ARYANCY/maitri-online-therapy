@@ -517,13 +517,30 @@
      ======================================================================== */
   
   .navbar-magic {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 
+      0 4px 20px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      inset 0 -1px 0 rgba(111, 174, 154, 0.1);
     position: sticky;
     top: 0;
     z-index: 10000;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .navbar-magic::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(111, 174, 154, 0.2) 50%, 
+      transparent 100%);
   }
 
   .navbar-top {
@@ -532,26 +549,67 @@
     position: relative;
     z-index: 10001;
     background: transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(111, 174, 154, 0.03) 0%, 
+      transparent 50%, 
+      rgba(111, 174, 154, 0.03) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .navbar-top:hover::before {
+    opacity: 1;
   }
 
   .navbar-top-content {
     gap: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 
   .navbar-top-left {
     gap: 0.75rem;
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
   }
 
   .navbar-logo {
     height: 42px;
     max-width: 75px;
-    transition: transform 0.2s ease;
+    width: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(111, 174, 154, 0.2));
+    border-radius: 8px;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+    object-fit: contain;
   }
 
   .navbar-logo:hover {
-    transform: scale(1.05);
+    transform: scale(1.08) rotate(2deg);
+    filter: drop-shadow(0 4px 8px rgba(111, 174, 154, 0.3));
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .navbar-logo:active {
+    transform: scale(0.95);
   }
 
   .navbar-title {
@@ -559,11 +617,32 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-dark) 0%, rgba(111, 174, 154, 0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+    flex-shrink: 1;
+    min-width: 0;
+    margin: 0;
+    line-height: 1.2;
+  }
+  
+  .navbar-title:hover {
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.9) 0%, var(--text-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .navbar-top-right {
     gap: 0.5rem;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: fit-content;
   }
 
   .dropdown-toggle {
@@ -573,18 +652,56 @@
     font-size: 0.875rem;
     border-radius: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 
+      0 2px 6px rgba(0, 0, 0, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.05);
     position: relative;
     z-index: 10006;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    border: 1px solid rgba(111, 174, 154, 0.15);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  
+  .dropdown-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(111, 174, 154, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .dropdown-toggle:hover::before {
+    left: 100%;
   }
   
   .dropdown-toggle:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.12),
+      0 2px 4px rgba(111, 174, 154, 0.15);
+    border-color: rgba(111, 174, 154, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%);
   }
   
   .dropdown-toggle:active {
-    transform: scale(0.98);
+    transform: scale(0.96) translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dropdown-toggle.show {
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.15) 0%, rgba(111, 174, 154, 0.1) 100%);
+    border-color: rgba(111, 174, 154, 0.4);
+    box-shadow: 
+      0 4px 12px rgba(111, 174, 154, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
   }
 
   .navbar-toggle {
@@ -595,27 +712,66 @@
     height: 44px;
     min-width: 44px;
     min-height: 44px;
+    max-width: 44px;
+    max-height: 44px;
     padding: 0;
     border: none;
-    background: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.15) 0%, rgba(111, 174, 154, 0.1) 100%);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 10000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(111, 174, 154, 0.2);
+    border: 1px solid rgba(111, 174, 154, 0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+  
+  .navbar-toggle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+  }
+  
+  .navbar-toggle:hover::before {
+    width: 200%;
+    height: 200%;
   }
 
   .navbar-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: scale(1.05);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.25) 0%, rgba(111, 174, 154, 0.18) 100%);
+    box-shadow: 
+      0 4px 16px rgba(111, 174, 154, 0.3),
+      0 2px 6px rgba(0, 0, 0, 0.15);
+    transform: scale(1.08) rotate(5deg);
+    border-color: rgba(111, 174, 154, 0.4);
   }
 
   .navbar-toggle:active {
-    transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    transform: scale(0.92) rotate(-2deg);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.3) 0%, rgba(111, 174, 154, 0.2) 100%);
+    box-shadow: 
+      0 1px 4px rgba(0, 0, 0, 0.1),
+      inset 0 2px 4px rgba(111, 174, 154, 0.2);
+  }
+  
+  .navbar-toggle.active {
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.35) 0%, rgba(111, 174, 154, 0.25) 100%);
+    border-color: rgba(111, 174, 154, 0.5);
+    box-shadow: 
+      0 4px 20px rgba(111, 174, 154, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
   }
 
   .hamburger-icon {
@@ -625,29 +781,55 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    z-index: 1;
   }
 
   .hamburger-icon span {
     display: block;
     height: 2.5px;
     width: 100%;
-    background: var(--text-dark);
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    background: linear-gradient(90deg, var(--text-dark) 0%, rgba(111, 174, 154, 0.8) 100%);
+    border-radius: 3px;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     transform-origin: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+  
+  .hamburger-icon span::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(111, 174, 154, 0.9) 0%, var(--text-dark) 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+  
+  .hamburger-icon:hover span::after {
+    width: 100%;
+  }
+
+  .hamburger-icon.active span {
+    background: linear-gradient(90deg, rgba(111, 174, 154, 0.9) 0%, var(--text-dark) 100%);
+    box-shadow: 0 2px 4px rgba(111, 174, 154, 0.3);
   }
 
   .hamburger-icon.active span:nth-child(1) {
     transform: translateY(7.5px) rotate(45deg);
+    background: linear-gradient(90deg, rgba(111, 174, 154, 1) 0%, var(--text-dark) 100%);
   }
 
   .hamburger-icon.active span:nth-child(2) {
     opacity: 0;
-    transform: scaleX(0);
+    transform: scaleX(0) rotate(180deg);
   }
 
   .hamburger-icon.active span:nth-child(3) {
     transform: translateY(-7.5px) rotate(-45deg);
+    background: linear-gradient(90deg, rgba(111, 174, 154, 1) 0%, var(--text-dark) 100%);
   }
 
   .navbar-bottom {
@@ -787,10 +969,13 @@
     padding: var(--space-3);
     background: linear-gradient(135deg, rgba(111, 174, 154, 0.12) 0%, rgba(111, 174, 154, 0.08) 100%);
     border: 2px solid rgba(111, 174, 154, 0.25);
-    border-radius: 14px;
+    border-radius: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 64px;
-    box-shadow: 0 2px 8px rgba(111, 174, 154, 0.1);
+    box-shadow: 
+      0 2px 8px rgba(111, 174, 154, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -803,29 +988,56 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .navbar-user-trigger::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(111, 174, 154, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   
   .navbar-user-trigger:hover::before {
     left: 100%;
   }
-
-  .navbar-user-trigger:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(111, 174, 154, 0.2);
-    border-color: rgba(111, 174, 154, 0.35);
+  
+  .navbar-user-trigger:hover::after {
+    opacity: 1;
   }
 
-  .navbar-user-trigger:active {
-    transform: scale(0.98);
+  .navbar-user-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 6px 20px rgba(111, 174, 154, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border-color: rgba(111, 174, 154, 0.4);
     background: linear-gradient(135deg, rgba(111, 174, 154, 0.18) 0%, rgba(111, 174, 154, 0.12) 100%);
   }
 
+  .navbar-user-trigger:active {
+    transform: scale(0.97) translateY(0);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.22) 0%, rgba(111, 174, 154, 0.15) 100%);
+    box-shadow: 
+      0 2px 6px rgba(111, 174, 154, 0.2),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
   .navbar-user-trigger.active {
-    background: linear-gradient(135deg, rgba(111, 174, 154, 0.25) 0%, rgba(111, 174, 154, 0.15) 100%);
-    border-color: rgba(111, 174, 154, 0.5);
-    box-shadow: 0 4px 16px rgba(111, 174, 154, 0.25);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.3) 0%, rgba(111, 174, 154, 0.2) 100%);
+    border-color: rgba(111, 174, 154, 0.6);
+    box-shadow: 
+      0 6px 24px rgba(111, 174, 154, 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
   }
 
   .navbar-avatar {
@@ -943,24 +1155,47 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border-radius: 10px;
+    border-radius: 12px;
     color: var(--text-dark);
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 0.9375rem;
     min-height: 48px;
     font-weight: 500;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+  }
+  
+  .profile-dropdown-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(111, 174, 154, 0.6) 0%, rgba(111, 174, 154, 0.3) 100%);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 3px 3px 0;
   }
 
   .profile-dropdown-link:hover {
-    background: rgba(111, 174, 154, 0.08);
-    transform: translateX(4px);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.1) 0%, rgba(111, 174, 154, 0.05) 100%);
+    transform: translateX(6px);
+    box-shadow: 0 2px 8px rgba(111, 174, 154, 0.15);
+  }
+  
+  .profile-dropdown-link:hover::before {
+    transform: scaleY(1);
   }
 
   .profile-dropdown-link:active {
-    transform: scale(0.98) translateX(4px);
-    background: rgba(111, 174, 154, 0.15);
+    transform: scale(0.97) translateX(4px);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.18) 0%, rgba(111, 174, 154, 0.12) 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .profile-dropdown-link svg {
@@ -981,14 +1216,16 @@
     font-size: 1rem;
     font-weight: 500;
     min-height: 56px;
-    border-radius: 14px;
+    border-radius: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     border: 2px solid transparent;
-    background: rgba(255, 255, 255, 0.8);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
     color: var(--text-dark);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08), 
-                0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 
+      0 2px 10px rgba(0, 0, 0, 0.08), 
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
     position: relative;
     overflow: hidden;
     margin-bottom: var(--space-2);
@@ -1002,33 +1239,71 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+  }
+  
+  .navbar-link-btn::after,
+  .navbar-logout-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(111, 174, 154, 0.6) 0%, rgba(111, 174, 154, 0.3) 100%);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 3px 3px 0;
   }
   
   .navbar-link-btn:hover::before,
   .navbar-logout-btn:hover::before {
     left: 100%;
   }
+  
+  .navbar-link-btn:hover::after,
+  .navbar-logout-btn:hover::after {
+    transform: scaleY(1);
+  }
 
   .navbar-link-btn:hover,
   .navbar-logout-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(4px) translateY(-2px);
+    box-shadow: 
+      0 6px 20px rgba(0, 0, 0, 0.12),
+      0 2px 6px rgba(111, 174, 154, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border-color: rgba(111, 174, 154, 0.2);
   }
 
   .navbar-link-btn:active,
   .navbar-logout-btn:active {
-    transform: scale(0.98) translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(0.97) translateX(2px) translateY(0);
+    box-shadow: 
+      0 2px 6px rgba(0, 0, 0, 0.1),
+      inset 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
   .navbar-link-btn.active {
     background: linear-gradient(135deg, rgba(111, 174, 154, 0.25) 0%, rgba(111, 174, 154, 0.15) 100%);
-    border-color: rgba(111, 174, 154, 0.4);
+    border-color: rgba(111, 174, 154, 0.5);
     color: var(--text-dark);
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(111, 174, 154, 0.2);
+    box-shadow: 
+      0 6px 24px rgba(111, 174, 154, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateX(2px);
+  }
+  
+  .navbar-link-btn.active::after {
+    transform: scaleY(1);
+    background: linear-gradient(180deg, rgba(111, 174, 154, 0.8) 0%, rgba(111, 174, 154, 0.5) 100%);
+    width: 4px;
   }
 
   .navbar-link-btn .nav-icon,
@@ -1105,34 +1380,67 @@
 
   .dropdown-item {
     padding: var(--space-2) var(--space-3);
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 0.9375rem;
     min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     color: var(--text-dark);
     font-weight: 500;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+  }
+  
+  .dropdown-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(111, 174, 154, 0.6) 0%, rgba(111, 174, 154, 0.3) 100%);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 3px 3px 0;
   }
 
   .dropdown-item:hover {
-    background: rgba(111, 174, 154, 0.08);
-    transform: translateX(4px);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.12) 0%, rgba(111, 174, 154, 0.06) 100%);
+    transform: translateX(6px);
+    box-shadow: 0 2px 8px rgba(111, 174, 154, 0.15);
+  }
+  
+  .dropdown-item:hover::before {
+    transform: scaleY(1);
   }
 
   .dropdown-item:active {
-    transform: scale(0.98) translateX(4px);
-    background: rgba(111, 174, 154, 0.15);
+    transform: scale(0.97) translateX(4px);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.18) 0%, rgba(111, 174, 154, 0.12) 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .dropdown-item.active {
-    background: linear-gradient(135deg, rgba(111, 174, 154, 0.2) 0%, rgba(111, 174, 154, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(111, 174, 154, 0.25) 0%, rgba(111, 174, 154, 0.15) 100%);
     font-weight: 600;
     color: var(--text-dark);
-    border-left: 3px solid rgba(111, 174, 154, 0.5);
+    border-left: 4px solid rgba(111, 174, 154, 0.6);
+    box-shadow: 
+      0 2px 8px rgba(111, 174, 154, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateX(2px);
+  }
+  
+  .dropdown-item.active::before {
+    transform: scaleY(1);
+    width: 4px;
+    background: linear-gradient(180deg, rgba(111, 174, 154, 0.8) 0%, rgba(111, 174, 154, 0.5) 100%);
   }
 
   .dropdown-item .check-icon {
@@ -1152,13 +1460,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
     z-index: 9998 !important;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     /* Ensure overlay appears above content but below menu */
     pointer-events: none;
   }
@@ -1167,6 +1475,18 @@
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    animation: fadeInOverlay 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  @keyframes fadeInOverlay {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(8px) saturate(150%);
+    }
   }
   
   /* Ensure dropdowns appear above overlay and menu */
@@ -1187,14 +1507,59 @@
     padding: 0.75rem 1rem;
     min-height: 60px;
   }
+  
+  .navbar-top-content {
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .navbar-top-left {
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 120px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
 
   .navbar-logo {
     height: 40px;
     max-width: 70px;
+    flex-shrink: 0;
   }
 
   .navbar-title {
     font-size: clamp(1rem, 3.5vw, 1.25rem);
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  
+  .navbar-top-right {
+    gap: 0.375rem;
+    flex-shrink: 0;
+    min-width: fit-content;
+    display: flex;
+    align-items: center;
+  }
+  
+  .dropdown-toggle {
+    min-width: 44px;
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+  }
+  
+  .navbar-toggle {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    margin-left: 0.375rem;
+    flex-shrink: 0;
   }
 
   .navbar-bottom {
@@ -1249,33 +1614,61 @@
   }
 
   .navbar-top-content {
+    gap: 0.375rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .navbar-top-left {
     gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 100px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
   }
 
   .navbar-logo {
     height: 36px;
     max-width: 65px;
+    flex-shrink: 0;
   }
 
   .navbar-title {
     font-size: clamp(0.9375rem, 3.5vw, 1.125rem);
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  
+  .navbar-top-right {
+    gap: 0.25rem;
+    flex-shrink: 0;
+    min-width: fit-content;
+    display: flex;
+    align-items: center;
   }
 
   .dropdown-toggle {
-    min-width: 44px;
+    min-width: 40px;
     min-height: 40px;
-    padding: 0.5rem;
-    font-size: 0.8125rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
     position: relative;
     z-index: 10006;
+    flex-shrink: 0;
   }
 
   .navbar-toggle {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    max-width: 38px;
+    max-height: 38px;
     z-index: 10005;
+    margin-left: 0.25rem;
+    flex-shrink: 0;
   }
 
   .hamburger-icon {
@@ -1380,30 +1773,62 @@
     min-height: 52px;
     z-index: 10001;
   }
+  
+  .navbar-top-content {
+    gap: 0.25rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .navbar-top-left {
+    gap: 0.375rem;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 90px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
 
   .navbar-logo {
     height: 32px;
     max-width: 60px;
+    flex-shrink: 0;
   }
 
   .navbar-title {
     font-size: clamp(0.875rem, 3.5vw, 1rem);
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  
+  .navbar-top-right {
+    gap: 0.25rem;
+    flex-shrink: 0;
+    min-width: fit-content;
+    display: flex;
+    align-items: center;
   }
 
   .dropdown-toggle {
-    min-width: 40px;
-    min-height: 38px;
-    padding: 0.375rem;
-    font-size: 0.75rem;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0.25rem 0.375rem;
+    font-size: 0.6875rem;
     z-index: 10006;
+    flex-shrink: 0;
   }
 
   .navbar-toggle {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    min-height: 38px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
     z-index: 10005;
+    margin-left: 0.25rem;
+    flex-shrink: 0;
   }
 
   .hamburger-icon {
@@ -1927,31 +2352,37 @@
   }
 
   .chatbot-messages-wrapper::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
 
   .chatbot-messages-wrapper::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.03);
-    border-radius: 3px;
+    background: transparent;
+    border-radius: 2px;
   }
 
   .chatbot-messages-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(111, 174, 154, 0.3);
-    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
     transition: background 0.2s ease;
   }
 
   .chatbot-messages-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(111, 174, 154, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Smooth scroll to bottom */
+  .chatbot-messages-wrapper {
+    scroll-padding-bottom: var(--space-3);
   }
 
   .chatbot-messages {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.125rem !important;
+    gap: 0.25rem !important;
     width: 100%;
     min-height: min-content;
-    padding-bottom: var(--space-2);
+    padding-bottom: var(--space-3);
+    padding-top: var(--space-2);
   }
 
   .message-content {
@@ -1966,11 +2397,25 @@
     transition: none !important;
     position: relative;
     margin-bottom: 0.125rem !important;
+    display: inline-block;
+    clear: both;
   }
 
   .message-content:hover {
     transform: none !important;
     box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13) !important;
+  }
+  
+  /* Message grouping - consecutive messages from same sender */
+  .message-content + .message-content.message-user,
+  .message-content + .message-content.message-bot {
+    margin-top: 0.125rem !important;
+  }
+  
+  /* Spacing between different senders */
+  .message-user + .message-bot,
+  .message-bot + .message-user {
+    margin-top: 0.5rem !important;
   }
 
   /* User messages (sent) - WhatsApp green style */
@@ -1983,6 +2428,8 @@
     border-radius: 7.5px 0 7.5px 7.5px !important;
     /* WhatsApp tail effect */
     position: relative;
+    float: right;
+    clear: both;
   }
 
   .message-user::after {
@@ -1995,6 +2442,22 @@
     border-style: solid;
     border-width: 0 0 13px 8px;
     border-color: transparent transparent #dcf8c6 transparent;
+    z-index: -1;
+  }
+  
+  /* First message in group - show tail */
+  .message-user:not(.message-user + .message-user)::after {
+    display: block;
+  }
+  
+  /* Consecutive messages - hide tail */
+  .message-user + .message-user::after {
+    display: none;
+  }
+  
+  /* Consecutive messages - adjust border radius */
+  .message-user + .message-user {
+    border-radius: 7.5px !important;
   }
 
   /* Bot messages (received) - WhatsApp white style */
@@ -2007,6 +2470,8 @@
     border-radius: 0 7.5px 7.5px 7.5px !important;
     /* WhatsApp tail effect */
     position: relative;
+    float: left;
+    clear: both;
   }
 
   .message-bot::before {
@@ -2019,6 +2484,22 @@
     border-style: solid;
     border-width: 0 8px 13px 0;
     border-color: transparent #ffffff transparent transparent;
+    z-index: -1;
+  }
+  
+  /* First message in group - show tail */
+  .message-bot:not(.message-bot + .message-bot)::before {
+    display: block;
+  }
+  
+  /* Consecutive messages - hide tail */
+  .message-bot + .message-bot::before {
+    display: none;
+  }
+  
+  /* Consecutive messages - adjust border radius */
+  .message-bot + .message-bot {
+    border-radius: 7.5px !important;
   }
 
   .message-text {
@@ -2039,6 +2520,11 @@
     border: none !important;
     margin-right: 0.5rem;
     align-self: flex-end;
+    border-radius: 50%;
+    background: rgba(111, 174, 154, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .message-user .message-avatar {
@@ -2049,6 +2535,14 @@
     display: flex !important;
     margin-right: 0.5rem;
     margin-left: 0;
+    align-self: flex-end;
+  }
+  
+  /* Hide avatar for consecutive bot messages */
+  .message-bot + .message-bot .message-avatar {
+    visibility: hidden;
+    width: 0 !important;
+    margin-right: 0 !important;
   }
 
   .message-avatar svg {
@@ -2101,7 +2595,7 @@
   }
 
   .chatbot-input-section {
-    padding: var(--space-2) var(--space-2) !important;
+    padding: 0.5rem var(--space-2) !important;
     flex-shrink: 0 !important;
     flex-grow: 0 !important;
     border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -2114,6 +2608,7 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   }
 
   .chatbot-input-area {
@@ -2123,12 +2618,17 @@
   .chatbot-input-section .form-control-lg {
     font-size: 15px !important;
     min-height: 42px;
+    max-height: 120px;
     padding: 0.5rem 1rem !important;
+    padding-right: 3rem !important;
     border-radius: 21px !important;
     border: none !important;
     background: #ffffff !important;
     transition: all 0.2s ease;
     box-shadow: none !important;
+    resize: none;
+    overflow-y: auto;
+    line-height: 1.4;
   }
 
   .chatbot-input-section .form-control-lg:focus {
@@ -2141,6 +2641,12 @@
   .chatbot-input-section .form-control-lg::placeholder {
     color: #999999;
     font-size: 15px;
+    opacity: 0.7;
+  }
+  
+  /* Auto-expand textarea */
+  .chatbot-input-section .form-control-lg[rows="1"] {
+    min-height: 42px;
   }
 
   .chatbot-input-section .d-flex.d-md-none {
@@ -2190,7 +2696,7 @@
     font-size: 1.25rem !important;
     border-radius: 50% !important;
     font-weight: 400;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2199,28 +2705,43 @@
     border: none !important;
     color: #ffffff !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 
   .chatbot-input-section .btn-lg:hover:not(:disabled) {
     background: #20BA5A !important;
-    transform: scale(1.05);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25) !important;
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(37, 211, 102, 0.4) !important;
   }
 
   .chatbot-input-section .btn-lg:active:not(:disabled) {
-    transform: scale(0.95);
+    transform: scale(0.92);
     background: #1DA851 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
   }
   
   .chatbot-input-section .btn-lg:disabled {
     background: #cccccc !important;
-    opacity: 0.6;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   
   .chatbot-input-section .btn-lg i,
   .chatbot-input-section .btn-lg svg {
     font-size: 1.25rem;
     margin: 0;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  
+  /* Input wrapper for positioning send button */
+  .chatbot-input-section .d-flex.d-md-none {
+    position: relative;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .form-control-lg {
+    padding-right: 3.5rem !important;
   }
 
   .status-indicators {
