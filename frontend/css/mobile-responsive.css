@@ -516,6 +516,11 @@
      NAVBAR CONTAINER - ENHANCED MOBILE
      ======================================================================== */
   
+  /* Override base Navbar.css display: none */
+  .navbar-bottom {
+    display: block !important;
+  }
+  
   .navbar-magic {
     box-shadow: 
       0 4px 20px rgba(0, 0, 0, 0.08),
@@ -833,36 +838,43 @@
   }
 
   .navbar-bottom {
-    position: fixed;
-    top: 65px;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: fixed !important;
+    top: 65px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    backdrop-filter: blur(40px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
     box-shadow: 
       0 -4px 30px rgba(0, 0, 0, 0.15),
       0 0 0 1px rgba(0, 0, 0, 0.05),
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
     z-index: 9999 !important;
-    padding: 0;
-    max-height: calc(100vh - 65px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    transform: translateX(-100%);
-    opacity: 0;
+    padding: 0 !important;
+    max-height: calc(100vh - 65px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
                 opacity 0.3s ease,
-                box-shadow 0.3s ease;
+                visibility 0.3s ease,
+                box-shadow 0.3s ease !important;
     -webkit-overflow-scrolling: touch;
     /* Ensure menu appears above all content */
     will-change: transform;
+    display: block !important;
+    pointer-events: none !important;
   }
 
   .navbar-bottom.navbar-bottom-open {
-    transform: translateX(0);
-    opacity: 1;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: block !important;
     box-shadow: 
       0 -4px 30px rgba(0, 0, 0, 0.2),
       0 0 0 1px rgba(0, 0, 0, 0.08),
@@ -870,13 +882,15 @@
   }
 
   .navbar-bottom-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: var(--space-5) var(--space-4);
-    height: 100%;
-    max-width: 100%;
-    position: relative;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: var(--space-5) var(--space-4) !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    position: relative !important;
+    visibility: inherit !important;
+    opacity: inherit !important;
   }
   
   /* Enhanced scrollbar for dropdown */
@@ -902,12 +916,14 @@
   .navbar-bottom-left,
   .navbar-bottom-center,
   .navbar-bottom-right {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
-    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-3) !important;
+    margin-bottom: var(--space-4) !important;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards !important;
+    visibility: inherit !important;
+    opacity: inherit !important;
   }
   
   .navbar-bottom-left {
@@ -1563,13 +1579,29 @@
   }
 
   .navbar-bottom {
-    top: 60px;
-    max-height: calc(100vh - 60px);
+    top: 60px !important;
+    max-height: calc(100vh - 60px) !important;
     z-index: 9999 !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: block !important;
+  }
+  
+  .navbar-bottom.navbar-bottom-open {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: block !important;
   }
   
   .navbar-bottom-content {
     padding: var(--space-4) var(--space-3);
+    display: flex !important;
+    visibility: inherit !important;
+    opacity: inherit !important;
   }
   
   .navbar-bottom-left {
@@ -1677,13 +1709,26 @@
   }
 
   .navbar-bottom {
-    top: 56px;
-    max-height: calc(100vh - 56px);
+    top: 56px !important;
+    max-height: calc(100vh - 56px) !important;
     z-index: 9999 !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: block !important;
+  }
+  
+  .navbar-bottom.navbar-bottom-open {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: block !important;
   }
   
   .navbar-overlay {
-    top: 56px;
+    top: 56px !important;
     z-index: 9998 !important;
   }
   
@@ -1698,7 +1743,10 @@
   }
 
   .navbar-bottom-content {
-    padding: var(--space-4) var(--space-3);
+    padding: var(--space-4) var(--space-3) !important;
+    display: flex !important;
+    visibility: inherit !important;
+    opacity: inherit !important;
   }
   
   .navbar-bottom-left {
@@ -1841,13 +1889,26 @@
   }
 
   .navbar-bottom {
-    top: 52px;
-    max-height: calc(100vh - 52px);
+    top: 52px !important;
+    max-height: calc(100vh - 52px) !important;
     z-index: 9999 !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: block !important;
+  }
+  
+  .navbar-bottom.navbar-bottom-open {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: block !important;
   }
   
   .navbar-overlay {
-    top: 52px;
+    top: 52px !important;
     z-index: 9998 !important;
   }
   
@@ -1863,7 +1924,10 @@
   }
 
   .navbar-bottom-content {
-    padding: var(--space-3) var(--space-2);
+    padding: var(--space-3) var(--space-2) !important;
+    display: flex !important;
+    visibility: inherit !important;
+    opacity: inherit !important;
   }
   
   .navbar-bottom-left {
