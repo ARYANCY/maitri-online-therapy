@@ -1,4 +1,35 @@
+/**
+ * ============================================================================
+ * MAITRI MOBILE RESPONSIVE STYLESHEET
+ * ============================================================================
+ * 
+ * Professional mobile-first responsive design system for Maitri platform.
+ * 
+ * @description Comprehensive mobile optimization for all components and pages
+ * @version 2.0.0
+ * @author Maitri Development Team
+ * 
+ * Breakpoints:
+ * - 1200px: Large tablets and small desktops
+ * - 992px:  Tablets (landscape)
+ * - 768px:  Tablets (portrait) and large phones
+ * - 576px:  Small phones
+ * - 400px:  Extra small phones
+ * 
+ * Features:
+ * - Mobile-first approach with progressive enhancement
+ * - Touch-optimized interactions (44px minimum touch targets)
+ * - Fluid typography using clamp()
+ * - Optimized scrolling and performance
+ * - Accessibility-first design
+ * - Consistent spacing system
+ * 
+ * ============================================================================
+ */
 
+/* ============================================================================
+   CSS CUSTOM PROPERTIES - MOBILE OVERRIDES
+   ============================================================================ */
 
 @media (max-width: 1200px) {
   :root {
@@ -55,14 +86,23 @@
     --max-width: 100%;
   }
 
+  /* ========================================================================
+     GLOBAL MOBILE OPTIMIZATIONS
+     ======================================================================== */
+  
+  /* Remove tap highlight for better mobile UX */
   * {
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Base typography and layout */
   body {
     font-size: var(--font-size-base);
     line-height: 1.6;
     overflow-x: hidden;
+    /* Prevent horizontal scroll */
+    position: relative;
+    width: 100%;
   }
 
   .container {
@@ -464,9 +504,12 @@
   }
 }
 
-/* ===================================
-   NAVBAR MOBILE STYLING - ENHANCED
-   =================================== */
+/* ============================================================================
+   NAVIGATION COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Enhanced mobile navigation with slide-out menu, touch-optimized controls,
+   and smooth animations for optimal mobile UX.
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .navbar-magic {
@@ -1126,9 +1169,12 @@
   }
 }
 
-/* ===================================
-   DASHBOARD MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   DASHBOARD COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Responsive dashboard with horizontal scrolling tabs, optimized card layouts,
+   and touch-friendly interactions.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .dashboard-container {
@@ -1309,23 +1355,45 @@
   }
 }
 
-/* ===================================
-   CHATBOT MOBILE STYLING - PRODUCTION GRADE
-   The Most Beautiful Mobile Chatbot UI
-   =================================== */
+/* ============================================================================
+   CHATBOT COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Production-grade mobile chatbot interface with:
+   - Optimized message bubbles and scrolling
+   - Touch-friendly input controls
+   - Responsive header and stats
+   - Smooth animations and transitions
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .chatbot-container {
     margin: var(--space-2);
     border-radius: 16px;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 180px) !important;
     min-height: 500px;
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - 140px) !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden;
+    overflow: hidden !important;
     position: relative;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    /* Ensure container doesn't shrink below viewport */
+    min-height: 400px;
+    /* Force flex layout */
+    align-items: stretch;
+  }
+  
+  .chatbot-container > * {
+    flex-shrink: 0;
+  }
+  
+  .chatbot-container .chatbot-messages-wrapper {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+  
+  .chatbot-container .chatbot-input-section {
+    flex: 0 0 auto !important;
   }
 
   .chatbot-container .card.border-warning {
@@ -1477,10 +1545,10 @@
   }
 
   .chatbot-messages-wrapper {
-    flex: 1 !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    height: 100% !important;
+    height: auto !important;
     padding: var(--space-3) var(--space-2) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -1489,6 +1557,9 @@
     display: flex !important;
     flex-direction: column !important;
     background: linear-gradient(to bottom, rgba(111, 174, 154, 0.02) 0%, transparent 100%);
+    /* Ensure scrolling works */
+    position: relative;
+    z-index: 1;
   }
 
   .chatbot-messages-wrapper::-webkit-scrollbar {
@@ -1602,11 +1673,18 @@
 
   .chatbot-input-section {
     padding: var(--space-3) !important;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
     border-top: 2px solid rgba(111, 174, 154, 0.15);
     background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
     backdrop-filter: blur(10px);
     border-radius: 0 0 16px 16px;
+    position: relative;
+    z-index: 10;
+    /* Ensure input section is always visible */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .chatbot-input-area {
@@ -1633,6 +1711,9 @@
     display: flex !important;
     flex-direction: column;
     gap: var(--space-2);
+    width: 100%;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .chatbot-input-section .d-flex.d-md-none .d-flex.gap-2 {
@@ -1640,6 +1721,21 @@
     flex-direction: row;
     gap: var(--space-2);
     width: 100%;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none input {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .chatbot-input-section .btn-lg {
@@ -1745,10 +1841,13 @@
 @media (max-width: 768px) {
   .chatbot-container {
     margin: var(--space-2);
-    height: calc(100vh - 160px);
+    height: calc(100vh - 160px) !important;
     min-height: 450px;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 120px) !important;
     border-radius: 14px;
+    /* Ensure proper flex layout */
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .chatbot-container .card.border-warning {
@@ -1807,6 +1906,11 @@
 
   .chatbot-messages-wrapper {
     padding: var(--space-2) var(--space-2) !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .chatbot-messages {
@@ -1834,6 +1938,12 @@
   .chatbot-input-section {
     padding: var(--space-2) var(--space-3) !important;
     border-radius: 0 0 14px 14px;
+    flex-shrink: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
   }
 
   .chatbot-input-section .form-control-lg {
@@ -1866,10 +1976,12 @@
 @media (max-width: 576px) {
   .chatbot-container {
     margin: var(--space-2);
-    height: calc(100vh - 140px);
+    height: calc(100vh - 140px) !important;
     min-height: 400px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 100px) !important;
     border-radius: 12px;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .chatbot-container .card.border-warning {
@@ -1954,6 +2066,11 @@
 
   .chatbot-messages-wrapper {
     padding: var(--space-2) var(--space-1) !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .chatbot-messages {
@@ -1997,6 +2114,53 @@
   .chatbot-input-section {
     padding: var(--space-2) !important;
     border-radius: 0 0 12px 12px;
+    flex-shrink: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+    gap: var(--space-2);
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none input {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-height: 44px;
+    font-size: 16px !important;
+    padding: var(--space-2) var(--space-3);
+    border-radius: 12px;
+    border: 2px solid rgba(111, 174, 154, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .d-flex.gap-2 {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+    gap: var(--space-2);
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 1;
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-base);
+    border-radius: 12px;
+    font-weight: 600;
   }
 
   .chatbot-input-section .form-control-lg {
@@ -2004,14 +2168,6 @@
     padding: var(--space-2) var(--space-3);
     font-size: 16px !important;
     border-radius: 10px;
-  }
-
-  .chatbot-input-section .d-flex.d-md-none {
-    gap: var(--space-2);
-  }
-
-  .chatbot-input-section .d-flex.d-md-none .d-flex.gap-2 {
-    gap: var(--space-2);
   }
 
   .chatbot-input-section .btn-lg {
@@ -2064,10 +2220,12 @@
 @media (max-width: 400px) {
   .chatbot-container {
     margin: var(--space-1);
-    height: calc(100vh - 120px);
+    height: calc(100vh - 120px) !important;
     min-height: 350px;
-    max-height: calc(100vh - 80px);
+    max-height: calc(100vh - 80px) !important;
     border-radius: 12px;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .chatbot-container .card.border-warning {
@@ -2157,6 +2315,11 @@
 
   .chatbot-messages-wrapper {
     padding: var(--space-2) var(--space-1) !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .chatbot-messages {
@@ -2204,6 +2367,40 @@
   .chatbot-input-section {
     padding: var(--space-2) !important;
     border-radius: 0 0 12px 12px;
+    flex-shrink: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none input {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .d-flex.gap-2 {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+  }
+  
+  .chatbot-input-section .d-flex.d-md-none .btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 1;
   }
 
   .chatbot-input-section .form-control-lg {
@@ -2403,9 +2600,11 @@
   }
 }
 
-/* ===================================
-   CHART MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   CHART COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Responsive chart visualizations with optimized sizing and touch interactions.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .chart-container {
@@ -2465,9 +2664,11 @@
   }
 }
 
-/* ===================================
-   TODO COMPONENT MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   TODO COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Mobile-optimized todo list with card-based layout and touch interactions.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .todo-container {
@@ -2538,9 +2739,14 @@
   }
 }
 
-/* ===================================
-   GAME COMPONENTS MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   GAME COMPONENTS - MOBILE OPTIMIZATION
+   ============================================================================
+   Cognitive assessment games optimized for mobile with:
+   - Touch-friendly game controls
+   - Responsive game grids and cards
+   - Optimized result popups
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .game-container {
@@ -2623,9 +2829,15 @@
   }
 }
 
-/* ===================================
-   DOC FORM MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   DOC FORM (Healthcare Professional Application) - MOBILE OPTIMIZATION
+   ============================================================================
+   Multi-step form with:
+   - Responsive progress indicators
+   - Touch-optimized form inputs
+   - Mobile-friendly file uploads
+   - Optimized multi-select grids
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .doc-form-page {
@@ -3547,9 +3759,11 @@
   }
 }
 
-/* ===================================
-   TALK TO COUNSELOR MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   TALK TO COUNSELOR PAGE - MOBILE OPTIMIZATION
+   ============================================================================
+   Therapist/counselor search and booking interface optimized for mobile.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .talk-container {
@@ -3627,9 +3841,11 @@
   }
 }
 
-/* ===================================
-   HOME PAGE MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   HOME PAGE - MOBILE OPTIMIZATION
+   ============================================================================
+   Landing page with responsive hero section, feature cards, and CTAs.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .home-hero {
@@ -3688,10 +3904,15 @@
   }
 }
 
-/* ===================================
-   ADMIN PAGE MOBILE STYLING - ENHANCED
-   The Most Perfect Mobile Admin Dashboard
-   =================================== */
+/* ============================================================================
+   ADMIN DASHBOARD - MOBILE OPTIMIZATION
+   ============================================================================
+   Comprehensive admin interface with:
+   - Responsive data tables (table-to-card conversion)
+   - Touch-optimized controls and filters
+   - Mobile-friendly modals and forms
+   - Optimized search and filter inputs
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .admin-page {
@@ -5068,9 +5289,11 @@
 }
 
 
-/* ===================================
-   FOOTER MOBILE STYLING
-   =================================== */
+/* ============================================================================
+   FOOTER COMPONENT - MOBILE OPTIMIZATION
+   ============================================================================
+   Responsive footer with stacked layout and centered content.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .footer {
@@ -5116,9 +5339,11 @@
   }
 }
 
-/* ===================================
-   UTILITY CLASSES FOR MOBILE
-   =================================== */
+/* ============================================================================
+   UTILITY CLASSES - MOBILE HELPERS
+   ============================================================================
+   Reusable utility classes for common mobile layout patterns.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   .hide-mobile {
@@ -5168,9 +5393,12 @@
   .py-mobile-3 { padding-top: var(--space-3) !important; padding-bottom: var(--space-3) !important; }
 }
 
-/* ===================================
-   TOUCH OPTIMIZATIONS
-   =================================== */
+/* ============================================================================
+   TOUCH INTERACTION OPTIMIZATIONS
+   ============================================================================
+   Enhanced touch targets, tap highlights, and mobile-specific interactions
+   following WCAG 2.1 guidelines (minimum 44x44px touch targets).
+   ============================================================================ */
 
 @media (max-width: 768px) {
   button,
@@ -5207,9 +5435,11 @@
   }
 }
 
-/* ===================================
-   SCROLLBAR STYLING FOR MOBILE
-   =================================== */
+/* ============================================================================
+   CUSTOM SCROLLBAR STYLING - MOBILE
+   ============================================================================
+   Subtle, touch-friendly scrollbars optimized for mobile devices.
+   ============================================================================ */
 
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
@@ -5232,9 +5462,11 @@
   }
 }
 
-/* ===================================
-   PRINT STYLES (MOBILE-FIRST)
-   =================================== */
+/* ============================================================================
+   PRINT STYLES - MOBILE-FIRST APPROACH
+   ============================================================================
+   Optimized print styles for mobile-first design.
+   ============================================================================ */
 
 @media print {
   .navbar,
@@ -5263,10 +5495,14 @@
   }
 }
 
-/* ===================================
-   DOC DASHBOARD MOBILE STYLING
-   (DOCTDashboard & DOCHDashboard)
-   =================================== */
+/* ============================================================================
+   DOC DASHBOARDS (Therapist & Healthcare Professional) - MOBILE OPTIMIZATION
+   ============================================================================
+   Dashboard interfaces for healthcare professionals with:
+   - Responsive appointment tables (table-to-card conversion)
+   - Touch-optimized action buttons
+   - Mobile-friendly modals and forms
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .navbar-spacer {
@@ -5847,10 +6083,15 @@
   }
 }
 
-/* ===================================
-   COMPREHENSIVE SEARCH BUTTON STYLING
-   For all search input groups across the app
-   =================================== */
+/* ============================================================================
+   SEARCH INPUT GROUPS - COMPREHENSIVE MOBILE STYLING
+   ============================================================================
+   Unified styling for all search input groups across the application:
+   - Inline search buttons with proper alignment
+   - Touch-optimized sizing
+   - Consistent border-radius and spacing
+   - Browser compatibility with :has() selector fallback
+   ============================================================================ */
 
 @media (max-width: 992px) {
   .input-group:has(.bi-search),
