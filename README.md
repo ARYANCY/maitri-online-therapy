@@ -116,6 +116,226 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **express-session**: Session management
 - **connect-mongo**: MongoDB session store
 
+## 📁 Project Structure
+
+```
+maitri/
+├── backend/                          # Backend server (Node.js/Express)
+│   ├── config/                       # Configuration files
+│   │   ├── cloudinary.js            # Cloudinary image upload config
+│   │   ├── database.js              # MongoDB connection config
+│   │   ├── env.js                   # Environment variables loader
+│   │   └── passport.js             # Passport.js authentication config
+│   ├── constants/                   # Application constants
+│   │   └── index.js                 # Constant definitions
+│   ├── controllers/                 # Route controllers
+│   │   ├── authController.js        # Authentication logic
+│   │   ├── chatbotController.js    # AI chatbot logic
+│   │   ├── dashboardController.js  # Dashboard data logic
+│   │   ├── dementiaController.js   # Cognitive assessment logic
+│   │   ├── healthcareProfessionalController.js  # Healthcare professional management
+│   │   ├── reportController.js     # Report generation logic
+│   │   └── therapistController.js  # Therapist management logic
+│   ├── middleware/                  # Express middleware
+│   │   ├── authMiddleware.js        # Authentication middleware
+│   │   ├── cookieDebug.js          # Cookie debugging utility
+│   │   ├── errorHandler.js         # Global error handler
+│   │   ├── security.js             # Security middleware
+│   │   ├── upload.js               # File upload middleware
+│   │   └── validation.js           # Request validation
+│   ├── models/                      # MongoDB models (Mongoose)
+│   │   ├── DementiaAssessment.js   # Assessment data model
+│   │   ├── DOCH.js                 # Healthcare professional model
+│   │   ├── DOCT.js                 # Therapist model
+│   │   ├── metrics.js              # Application metrics model
+│   │   ├── Notification.js         # Notification model
+│   │   ├── Screening.js            # Screening data model
+│   │   ├── todo.js                 # Todo list model
+│   │   └── User.js                 # User model
+│   ├── routes/                      # API route definitions
+│   │   ├── authRoutes.js           # Authentication routes
+│   │   ├── chatbotRoutes.js        # Chatbot API routes
+│   │   ├── dashboardRoutes.js      # Dashboard API routes
+│   │   ├── dementiaRoutes.js       # Cognitive assessment routes
+│   │   ├── healthcareProfessionalAdminRoutes.js  # Admin healthcare routes
+│   │   ├── healthcareProfessionalRoutes.js      # Healthcare professional routes
+│   │   ├── healthRoutes.js         # Health check routes
+│   │   ├── languageRoutes.js       # Language preference routes
+│   │   ├── notificationRoutes.js   # Notification routes
+│   │   ├── reportRoutes.js         # Report generation routes
+│   │   ├── therapistAdminRoutes.js # Admin therapist routes
+│   │   ├── therapistRoutes.js      # Therapist routes
+│   │   └── uploadRoutes.js         # File upload routes
+│   ├── utils/                       # Utility functions
+│   │   ├── ageNormalization.js     # Age-based score normalization
+│   │   ├── cognitiveDomainMapper.js # Cognitive domain mapping
+│   │   ├── i18n.js                 # Internationalization utilities
+│   │   ├── logger.js               # Winston logger configuration
+│   │   ├── responseHelper.js       # API response helpers
+│   │   └── validation.js           # Validation utilities
+│   ├── index.js                     # Main server entry point
+│   ├── nginx.conf                   # Nginx configuration
+│   ├── package.json                 # Backend dependencies
+│   └── README.md                    # Backend documentation
+│
+├── frontend/                         # Frontend application (React/Vite)
+│   ├── components/                  # Reusable React components
+│   │   ├── Chart.jsx               # Chart visualization component
+│   │   ├── Chatbot.jsx             # AI chatbot component
+│   │   ├── Footer.jsx              # Footer component
+│   │   ├── GameInstructions.jsx   # Game instructions modal
+│   │   ├── GameKeyboardShortcuts.jsx  # Keyboard shortcuts helper
+│   │   ├── GoogleLogin.jsx        # Google OAuth login component
+│   │   ├── Navbar.jsx              # Navigation bar component
+│   │   ├── PrivateAdminRoute.jsx  # Admin route protection
+│   │   ├── Todo.jsx                # Todo list component
+│   │   └── ViewResult.jsx          # Result viewing component
+│   ├── css/                         # Stylesheets
+│   │   ├── components/             # Component-specific styles
+│   │   │   ├── Chart.css
+│   │   │   ├── Chat.css
+│   │   │   ├── Footer.css
+│   │   │   ├── Navbar.css
+│   │   │   └── Todo.css
+│   │   ├── pages/                   # Page-specific styles
+│   │   │   ├── AboutMaitri.css
+│   │   │   ├── Admin.css
+│   │   │   ├── AdminLogin.css
+│   │   │   ├── Dashboard.css
+│   │   │   ├── Home.css
+│   │   │   ├── Splash.css
+│   │   │   ├── TalkToCounselor.css
+│   │   │   └── TherapistForm.css
+│   │   ├── game/                    # Game-specific styles
+│   │   ├── bootstrap-theme.css     # Bootstrap theme customization
+│   │   ├── mobile-responsive.css    # Mobile responsive styles
+│   │   └── unified-design-system.css  # Design system variables
+│   ├── hooks/                       # Custom React hooks
+│   │   └── useVoskSpeechRecognition.js  # Speech recognition hook
+│   ├── pages/                       # Page components
+│   │   ├── game-components/        # Cognitive game components
+│   │   │   ├── ClockDrawing.jsx    # Clock Drawing game
+│   │   │   ├── ColorSequence.jsx    # Color Sequence game
+│   │   │   ├── DigitSpan.jsx        # Digit Span game
+│   │   │   ├── MatchingCards.jsx    # Matching Cards game
+│   │   │   ├── MemoryMatch.jsx      # Memory Match game
+│   │   │   ├── NBack.jsx            # N-Back game
+│   │   │   ├── PatternRecall.jsx   # Pattern Recall game
+│   │   │   ├── ReactionTimeTest.jsx # Reaction Time game
+│   │   │   ├── ResultPopup.jsx      # Game result popup
+│   │   │   ├── StroopTest.jsx       # Stroop Test game
+│   │   │   ├── SymbolMatch.jsx      # Symbol Match game
+│   │   │   ├── game-algo-js/        # Game algorithm implementations
+│   │   │   │   ├── ageNormalization.js
+│   │   │   │   ├── clockDrawing.js
+│   │   │   │   ├── colorSequence.js
+│   │   │   │   ├── digitSpan.js
+│   │   │   │   ├── matchingCards.js
+│   │   │   │   ├── memoryMatch.js
+│   │   │   │   ├── nBack.js
+│   │   │   │   ├── patternRecall.js
+│   │   │   │   ├── reactionTime.js
+│   │   │   │   ├── stroopTest.js
+│   │   │   │   ├── symbolMatch.js
+│   │   │   │   └── utils.js
+│   │   │   └── game-algo-readme/    # Game algorithm documentation
+│   │   │       ├── clock-drawing.md
+│   │   │       ├── color-sequence.md
+│   │   │       ├── digit-span.md
+│   │   │       ├── memory-match.md
+│   │   │       ├── n-back.md
+│   │   │       ├── pattern-recall.md
+│   │   │       ├── reaction-time.md
+│   │   │       ├── README.md
+│   │   │       ├── risk-assessment.md
+│   │   │       ├── stroop-test.md
+│   │   │       ├── symbol-match.md
+│   │   │       └── text-recall.md
+│   │   ├── AboutMaitri.jsx         # About page
+│   │   ├── Admin.jsx               # Admin dashboard
+│   │   ├── AdminLogin.jsx         # Admin login page
+│   │   ├── CookieTest.jsx         # Cookie testing utility
+│   │   ├── Dashboard.jsx          # User dashboard
+│   │   ├── DOC.css                 # Doctor form styles
+│   │   ├── DOC.jsx                 # Doctor/Healthcare professional form
+│   │   ├── DOCHDashboard.jsx      # Healthcare professional dashboard
+│   │   ├── DOCTDashboard.jsx      # Therapist dashboard
+│   │   ├── game.jsx                # Game selection page
+│   │   ├── Home.jsx                # Home page
+│   │   ├── LearnOurMission.jsx     # Mission page
+│   │   ├── MyAppointments.jsx      # Appointments page
+│   │   ├── Splash.jsx              # Splash screen
+│   │   ├── TalkToCounselor.jsx     # Counselor booking page
+│   │   └── WhatIsDementia.jsx      # Dementia information page
+│   ├── public/                      # Static public assets
+│   │   ├── videos/                 # Video files
+│   │   │   ├── splash.MP4
+│   │   │   └── splashd.MP4
+│   │   ├── _redirects              # Netlify redirects
+│   │   └── vite.svg                # Vite logo
+│   ├── src/                         # Source files
+│   │   ├── audio/                  # Audio files
+│   │   │   ├── empty.mp3
+│   │   │   ├── start.mp3
+│   │   │   └── tick.mp3
+│   │   ├── i18n/                   # Internationalization files
+│   │   │   ├── as.js               # Assamese translations
+│   │   │   ├── en.js               # English translations
+│   │   │   └── hi.js               # Hindi translations
+│   │   ├── images/                 # Image assets
+│   │   │   ├── bg.jpg
+│   │   │   ├── home.jpg
+│   │   │   ├── logo.png
+│   │   │   ├── pic1.png
+│   │   │   ├── pic2.png
+│   │   │   └── pic3.png
+│   │   ├── App.css                 # Main app styles
+│   │   ├── App.jsx                 # Root app component
+│   │   ├── i18n.js                 # i18n configuration
+│   │   ├── index.css               # Global styles
+│   │   └── main.jsx                # Application entry point
+│   ├── utils/                       # Frontend utilities
+│   │   ├── axiosClient.js          # Axios HTTP client config
+│   │   ├── downloadReport.js       # Report download utility
+│   │   └── session.js              # Session management
+│   ├── dist/                        # Production build output
+│   ├── copy-static.js              # Static file copy script
+│   ├── eslint.config.js            # ESLint configuration
+│   ├── index.html                  # HTML entry point
+│   ├── package.json                # Frontend dependencies
+│   ├── static.json                 # Static site configuration
+│   └── vite.config.js             # Vite configuration
+│
+├── package.json                     # Root package.json (workspace config)
+├── README.md                        # This file
+└── render.yaml                      # Render.com deployment configuration
+```
+
+### Key Directories Explained
+
+#### Backend Structure
+- **`config/`**: Configuration files for database, authentication, and external services
+- **`controllers/`**: Business logic handlers for API endpoints
+- **`middleware/`**: Express middleware for authentication, validation, error handling
+- **`models/`**: Mongoose schemas defining database structure
+- **`routes/`**: API route definitions mapping URLs to controllers
+- **`utils/`**: Helper functions for normalization, mapping, logging, etc.
+
+#### Frontend Structure
+- **`components/`**: Reusable React components used across pages
+- **`pages/`**: Main page components and game implementations
+- **`game-components/`**: Cognitive assessment game implementations
+- **`game-algo-js/`**: Core game algorithms and scoring logic
+- **`css/`**: Organized stylesheets by component and page
+- **`src/`**: Core application files, i18n translations, assets
+- **`utils/`**: Frontend utility functions for API calls, downloads, sessions
+
+#### Game Components
+Each cognitive game has:
+- **Component file** (`.jsx`): React component with UI and game flow
+- **Algorithm file** (`.js`): Core game logic, scoring, and validation
+- **Documentation** (`.md`): Algorithm explanation and methodology
+
 ## 📦 Installation
 
 ### Prerequisites
