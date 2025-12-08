@@ -120,36 +120,86 @@ const buildStats = (arr = []) => {
   };
 };
 
-// Optimized chart capture with timeout and better error handling
+// Wait for chart to be ready and visible
+const waitForChartReady = (maxWait = 3000, checkInterval = 100) => {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    const check = () => {
+      const canvas = document.querySelector(".chart-wrapper canvas");
+      const chartWrapper = document.querySelector(".chart-wrapper");
+      
+      if (canvas && chartWrapper) {
+        const rect = canvas.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0;
+        const hasContent = canvas.width > 0 && canvas.height > 0;
+        
+        if (isVisible && hasContent) {
+          // Wait a bit more for Chart.js animations to complete
+          setTimeout(() => resolve(canvas), 200);
+          return;
+        }
+      }
+      
+      if (Date.now() - startTime < maxWait) {
+        setTimeout(check, checkInterval);
+      } else {
+        resolve(null);
+      }
+    };
+    check();
+  });
+};
+
+// Optimized chart capture with Chart.js canvas support
 const captureChartImage = async () => {
-  const canvas = document.querySelector(".chart-wrapper canvas");
+  // Wait for chart to be ready
+  const canvas = await waitForChartReady();
+  
   if (!canvas) {
-    console.warn("Chart canvas not found");
+    console.warn("Chart canvas not found or not ready");
     return null;
   }
 
   try {
-    // Try direct canvas export first (fastest)
+    // Ensure canvas is properly sized
+    if (canvas.width === 0 || canvas.height === 0) {
+      console.warn("Chart canvas has zero dimensions");
+      return null;
+    }
+
+    // Try direct canvas export first (fastest and highest quality for Chart.js)
+    // Chart.js renders directly to canvas, so toDataURL should work perfectly
     const dataUrl = canvas.toDataURL("image/png", CHART_CAPTURE_CONFIG.quality);
-    if (dataUrl && dataUrl.length > 100) {
+    
+    if (dataUrl && dataUrl.length > 100 && !dataUrl.includes("data:,")) {
+      console.log("[Chart Capture] Successfully captured Chart.js canvas directly");
       return dataUrl;
     }
   } catch (err) {
     console.warn("Direct canvas capture failed, trying html2canvas", err);
   }
 
-  // Fallback to html2canvas with timeout
+  // Fallback to html2canvas with timeout (for edge cases)
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CHART_CAPTURE_CONFIG.timeout);
 
-    const h2c = await html2canvas(canvas, {
+    // Capture the entire chart wrapper to include any labels/legends outside canvas
+    const chartWrapper = document.querySelector(".chart-wrapper");
+    const targetElement = chartWrapper || canvas;
+
+    const h2c = await html2canvas(targetElement, {
       ...CHART_CAPTURE_CONFIG,
       signal: controller.signal,
+      logging: false,
+      useCORS: true,
+      allowTaint: false,
     });
 
     clearTimeout(timeoutId);
-    return h2c.toDataURL("image/png", CHART_CAPTURE_CONFIG.quality);
+    const result = h2c.toDataURL("image/png", CHART_CAPTURE_CONFIG.quality);
+    console.log("[Chart Capture] Used html2canvas fallback");
+    return result;
   } catch (e) {
     if (e.name === "AbortError") {
       console.error("Chart capture timeout");
@@ -317,37 +367,81 @@ const generatePDFReport = async (
 
   y = pdf.lastAutoTable.finalY + 12;
 
-  // Chart Image
+  // Chart Image from Chart.jsx canvas - dedicated page for better quality
   if (chartImageData) {
-    if (y + 80 > pageHeight - 20) {
-      pdf.addPage();
-      y = addPDFHeader(pdf, pageWidth, marginX);
-    }
+    // Add a new page specifically for the chart to ensure it's visible and properly sized
+    pdf.addPage();
+    y = addPDFHeader(pdf, pageWidth, marginX);
 
-    pdf.setFont("helvetica", "bold").setFontSize(11);
-    pdf.text("Visual Chart Snapshot", marginX, y);
-    y += 6;
+    pdf.setFont("helvetica", "bold").setFontSize(14);
+    pdf.text("Chart Visualization", pageWidth / 2, y, { align: "center" });
+    y += 8;
 
-    const imgWidth = pageWidth - 2 * marginX;
-    const imgHeight = Math.min((imgWidth * 9) / 16, 80);
-
+    // Calculate optimal image dimensions
+    // Try to maintain aspect ratio while fitting the page
+    const maxWidth = pageWidth - 2 * marginX;
+    const maxHeight = pageHeight - y - 30; // Leave space for footer
+    
+    // Parse image dimensions from data URL if possible, or use defaults
+    let imgWidth = maxWidth;
+    let imgHeight = Math.min((imgWidth * 9) / 16, maxHeight);
+    
+    // Try to get actual image dimensions and add to PDF
     try {
+      // Load image to get dimensions
+      const img = new Image();
+      const imgLoaded = new Promise((resolve, reject) => {
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = chartImageData;
+      });
+      
+      const loadedImg = await imgLoaded;
+      const aspectRatio = loadedImg.width / loadedImg.height;
+      
+      // Calculate dimensions maintaining aspect ratio
+      if (aspectRatio > 1) {
+        // Landscape
+        imgWidth = Math.min(maxWidth, maxHeight * aspectRatio);
+        imgHeight = imgWidth / aspectRatio;
+      } else {
+        // Portrait
+        imgHeight = Math.min(maxHeight, maxWidth / aspectRatio);
+        imgWidth = imgHeight * aspectRatio;
+      }
+      
+      // Center the image horizontally
+      const xOffset = Math.max(marginX, (pageWidth - imgWidth) / 2);
+      
+      // Add image to PDF with better quality
       pdf.addImage(
         chartImageData,
         "PNG",
-        marginX,
+        xOffset,
         y,
         imgWidth,
         imgHeight,
         undefined,
-        "FAST"
+        "MEDIUM" // Better quality for chart visualization
       );
+      
       y += imgHeight + 10;
+      
+      // Add caption
+      pdf.setFont("helvetica", "italic").setFontSize(8);
+      pdf.setTextColor(120);
+      pdf.text(
+        "Chart captured from Chart.jsx canvas visualization",
+        pageWidth / 2,
+        y,
+        { align: "center" }
+      );
+      pdf.setTextColor(0, 0, 0);
     } catch (err) {
-      console.error("Failed to add chart image:", err);
+      console.error("Failed to add chart image to PDF:", err);
       pdf.setFont("helvetica", "normal").setFontSize(9);
       pdf.setTextColor(150);
-      pdf.text("Chart image unavailable", marginX, y);
+      pdf.text("Chart image unavailable - chart may not be rendered yet", marginX, y);
       y += 8;
     }
   }
@@ -998,7 +1092,19 @@ export const downloadReport = async (format = "pdf", user, API, options = {}) =>
     notify("request", { format: normalizedFormat, stage: "fallback" });
 
     if (normalizedFormat === "pdf") {
-      const chartImageData = await captureChartImage().catch(() => null);
+      // Capture Chart.jsx canvas - wait for chart to be ready
+      notify("request", { format: normalizedFormat, stage: "capturing_chart" });
+      const chartImageData = await captureChartImage().catch((err) => {
+        console.warn("[Report] Chart capture failed:", err);
+        return null;
+      });
+      
+      if (chartImageData) {
+        notify("success", { format: normalizedFormat, stage: "chart_captured" });
+      } else {
+        notify("warning", { format: normalizedFormat, stage: "chart_not_available" });
+      }
+      
       await generatePDFReport(chartData, metricKeys, user, API, chartImageData, chartLabels);
       notify("success", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
       return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
