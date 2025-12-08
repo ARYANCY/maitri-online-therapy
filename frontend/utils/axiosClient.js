@@ -16,8 +16,14 @@ if (!API_URL) {
   console.error('[AxiosClient] Current origin:', window.location.origin);
 }
 
+// Normalize API_URL - remove trailing /api if present to avoid double /api in routes
+// Routes like /api/doch/apply will work correctly with baseURL as domain only
+const normalizedBaseURL = API_URL 
+  ? (API_URL.endsWith('/api') ? API_URL.slice(0, -4) : (API_URL.endsWith('/api/') ? API_URL.slice(0, -5) : API_URL))
+  : '';
+
 const API = axios.create({
-  baseURL: API_URL || '/api', 
+  baseURL: normalizedBaseURL || '/api', 
   withCredentials: true, 
   headers: { "Content-Type": "application/json" },
   timeout: 30000, 
