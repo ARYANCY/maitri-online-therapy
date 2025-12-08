@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { useTranslation } from "react-i18next";
+import { computeDementiaProbability } from "../utils/probability";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,17 +36,42 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [hasData, setHasData] = useState(false);
 
   const normalizeArray = (arr, length) => {
-    if (!arr) return Array(length).fill(0);
-    if (!Array.isArray(arr)) arr = [arr];
-    return Array.from({ length }, (_, i) => (arr[i] != null ? arr[i] : 0));
+    const targetLength = Number.isFinite(length) && length > 0 ? length : (Array.isArray(arr) ? arr.length : 0) || 0;
+    if (!arr) return Array(targetLength).fill(0);
+    const base = Array.isArray(arr) ? arr : [arr];
+    return Array.from({ length: targetLength }, (_, i) => {
+      const value = base[i];
+      const num = Number(value);
+      if (Number.isFinite(num)) return num;
+      return 0;
+    });
   };
 
-  
-  useEffect(() => {
-    const hasValidData = chartLabels && chartLabels.length > 0 && 
-                        chartData && Object.keys(chartData).length > 0;
-    setHasData(hasValidData);
+  // Derive an effective length based on labels or any available dataset so we don't drop values
+  const maxDataLength = useMemo(() => {
+    const lengths = [];
+    if (Array.isArray(chartLabels)) lengths.push(chartLabels.length);
+    if (chartData && typeof chartData === "object") {
+      Object.values(chartData).forEach(v => {
+        if (Array.isArray(v)) lengths.push(v.length);
+        else if (v != null) lengths.push(1);
+      });
+    }
+    return lengths.length ? Math.max(...lengths) : 0;
   }, [chartData, chartLabels]);
+
+  // Build labels that match the longest dataset to keep charts aligned
+  const effectiveLabels = useMemo(() => {
+    const len = maxDataLength;
+    if (len === 0) return [];
+    if (chartLabels && chartLabels.length >= len) return chartLabels;
+    return Array.from({ length: len }, (_, i) => chartLabels[i] || `${t("chart.entry", "Entry")} ${i + 1}`);
+  }, [chartLabels, maxDataLength, t]);
+
+  useEffect(() => {
+    const hasValidData = maxDataLength > 0 && chartData && Object.keys(chartData).length > 0;
+    setHasData(hasValidData);
+  }, [chartData, maxDataLength]);
 
   const handleRefresh = async () => {
     if (onRefresh && !isRefreshing) {
@@ -60,9 +86,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   };
 
   const data = useMemo(() => {
-    if (!chartLabels.length) return { labels: [], datasets: [] };
+    if (!effectiveLabels.length) return { labels: [], datasets: [] };
 
-    const len = chartLabels.length;
+    const len = effectiveLabels.length;
     let datasets = [];
 
     if (metricsType === "emotional") {
@@ -152,7 +178,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     }
 
     return {
-      labels: chartLabels,
+      labels: effectiveLabels,
       datasets: datasets.map((ds, index) => {
         const isDashed = ds.borderDash && ds.borderDash.length > 0;
         const baseColor = `rgba(${ds.color},1)`;
@@ -184,7 +210,44 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         };
       }),
     };
-  }, [chartData, chartLabels, metricsType, chartType, t]);
+  }, [chartData, effectiveLabels, metricsType, chartType, t]);
+
+  const dementiaSummary = useMemo(() => {
+    if (metricsType !== "dementia") return null;
+
+    const riskScores = Array.isArray(chartData?.dementia_risk_score) ? chartData.dementia_risk_score : [];
+
+    const metrics = {
+      reactionTime: chartData?.reactionTimeAverage,
+      accuracy: chartData?.accuracyPercentage,
+      workingMemory: chartData?.workingMemorySpan,
+      executiveFunction: chartData?.executiveFunction,
+      visuospatial: chartData?.visuospatialAccuracy,
+      attention: chartData?.attentionConsistency,
+      processingSpeed: chartData?.processingSpeed,
+      learningCurve: chartData?.learningCurve,
+      errorRate: chartData?.errorRate,
+    };
+
+    return computeDementiaProbability({ riskScores, metrics });
+  }, [chartData, metricsType]);
+
+  const lastDementiaValues = useMemo(() => {
+    if (metricsType !== "dementia") return [];
+    const getLast = (arr) => {
+      if (!arr) return null;
+      if (Array.isArray(arr) && arr.length > 0) return arr[arr.length - 1];
+      return Array.isArray(arr) ? null : arr;
+    };
+
+    return [
+      { label: t("chart.cognitiveRisk", "Cognitive Impairment Risk"), value: getLast(chartData?.dementia_risk_score), suffix: "%" },
+      { label: t("chart.reactionTime", "Reaction Time"), value: getLast(chartData?.reactionTimeAverage), suffix: "ms" },
+      { label: t("chart.accuracy", "Accuracy"), value: getLast(chartData?.accuracyPercentage), suffix: "%" },
+      { label: t("chart.processingSpeed", "Processing Speed"), value: getLast(chartData?.processingSpeed), suffix: "s" },
+      { label: t("chart.errorRate", "Error Rate"), value: getLast(chartData?.errorRate), suffix: "%" },
+    ].filter(item => item.value != null);
+  }, [chartData, metricsType, t]);
 
   const options = useMemo(() => ({
     responsive: true,
@@ -504,9 +567,89 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
         </div>
 
-        
-        
-        
+        {metricsType === "dementia" && dementiaSummary && (
+          <div className="card mb-4">
+            <div className="card-header d-flex align-items-center gap-2">
+              <div className="fs-3">🧠</div>
+              <div>
+                <h2 className="h5 mb-0">{t("chart.dementiaSummary", "Cognitive Risk Summary")}</h2>
+                <small className="text-muted">
+                  {t("chart.dementiaSummaryHint", "Latest data, trend, and probability of deterioration or improvement")}
+                </small>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-12 col-md-3">
+                  <div className="card bg-light h-100">
+                    <div className="card-body">
+                      <div className="text-muted small mb-1">{t("chart.probability", "Probability (deterioration)")}</div>
+                      <div className="h3 mb-1">{dementiaSummary.probabilityPercent.toFixed(1)}%</div>
+                      <span className="badge bg-secondary">{dementiaSummary.riskLabel}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6 col-md-3">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <div className="text-muted small mb-1">{t("chart.trend", "Trend")}</div>
+                      <div className="h5 mb-1 text-capitalize">{dementiaSummary.trend}</div>
+                      <small className="text-muted">
+                        {dementiaSummary.trend === "deteriorating"
+                          ? t("chart.trendWorse", "Higher risk over recent entries")
+                          : dementiaSummary.trend === "improving"
+                            ? t("chart.trendBetter", "Risk moving down")
+                            : t("chart.trendStable", "Risk stable")}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6 col-md-3">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <div className="text-muted small mb-1">{t("chart.latestRisk", "Latest risk score")}</div>
+                      <div className="h4 mb-1">{dementiaSummary.latestRisk != null ? Math.round(dementiaSummary.latestRisk * 10) / 10 : "—"}</div>
+                      <small className="text-muted">
+                        {t("chart.dataPoints", "Data Points")}: {dementiaSummary.dataPoints}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12 col-md-3">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <div className="text-muted small mb-1">{t("chart.confidence", "Confidence")}</div>
+                      <div className="h5 mb-1">{Math.round(dementiaSummary.confidence * 100)}%</div>
+                      <small className="text-muted">{t("chart.confidenceNote", "More data improves confidence")}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {lastDementiaValues.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-muted small mb-2">{t("chart.latestValues", "Latest data points")}</div>
+                  <div className="row g-2">
+                    {lastDementiaValues.map((item, idx) => (
+                      <div className="col-6 col-md-4 col-lg-3" key={idx}>
+                        <div className="card h-100">
+                          <div className="card-body py-3">
+                            <div className="text-muted small mb-1">{item.label}</div>
+                            <div className="h5 mb-0">
+                              {Number(item.value).toFixed(1)}
+                              {item.suffix ? ` ${item.suffix}` : ""}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="chart-info-section">
           
           <div className="card mb-4">
