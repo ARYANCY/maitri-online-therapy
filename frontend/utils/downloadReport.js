@@ -810,7 +810,30 @@ export const downloadReport = async (format = "pdf", user, API) => {
   }
 
   try {
-    // Parallel data fetching
+    // Try backend-rendered report first
+    try {
+      const resp = await API.report?.download?.(format);
+      if (resp?.data) {
+        const mime =
+          format === "pdf"
+            ? "application/pdf"
+            : format === "csv"
+              ? "text/csv"
+              : "application/json";
+        const blob = new Blob([resp.data], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `maitri-report.${format}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch (backendErr) {
+      console.warn("Backend report download failed; falling back to local generation:", backendErr);
+    }
+
+    // Local generation fallback
     const [data, chartImageData] = await Promise.all([
       API.dashboard.get(),
       captureChartImage().catch((err) => {
