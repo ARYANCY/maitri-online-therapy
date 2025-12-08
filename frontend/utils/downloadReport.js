@@ -830,7 +830,8 @@ export const downloadReport = async (format = "pdf", user, API) => {
     const metricKeys = Object.keys(normalizedChartData);
 
     if (metricKeys.length === 0) {
-      throw new Error("No metrics data available for report generation");
+      console.warn("No metrics data available for report generation");
+      return;
     }
 
     // Generate report based on format
@@ -855,8 +856,6 @@ export const downloadReport = async (format = "pdf", user, API) => {
     }
   } catch (error) {
     console.error("Report generation failed:", error);
-    throw new Error(
-      `Failed to generate report: ${error.message || "Unknown error"}`
-    );
+    // Fail gracefully without throwing to UI
   }
 };
