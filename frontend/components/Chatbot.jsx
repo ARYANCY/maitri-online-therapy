@@ -60,20 +60,6 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
     }
   }, [speechRecognitionError]);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   useEffect(() => {
     
     
@@ -139,16 +125,6 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
     };
   }, []);
 
-  
-  
-  
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-  useEffect(scrollToBottom, [messages, scrollToBottom]);
-
-  
-  
   
   const fetchChat = useCallback(async () => {
     setFetching(true);
@@ -243,44 +219,6 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
   
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
   const handleManualRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -299,6 +237,11 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
     
     if (isSendingRef.current || !input.trim() || loading) {
       return;
+    }
+
+    // Stop voice input if it's currently active
+    if (listening) {
+      stopVoskListening();
     }
 
     
@@ -420,7 +363,7 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
       setTyping(false);
       setTimeout(() => setSendProgress(0), 1000);
     }
-  }, [input, loading, onTodosUpdate, onDataUpdate, t]);
+  }, [input, loading, onTodosUpdate, onDataUpdate, t, listening, stopVoskListening]);
 
   
   
