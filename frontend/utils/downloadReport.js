@@ -810,7 +810,7 @@ export const downloadReport = async (format = "pdf", user, API) => {
   }
 
   try {
-    // Try backend-rendered report first
+    // Prefer backend-generated report (model/controller) for full data coverage
     try {
       const resp = await API.report?.download?.(format);
       if (resp?.data) {
@@ -834,51 +834,69 @@ export const downloadReport = async (format = "pdf", user, API) => {
     }
 
     // Local generation fallback
-    const [data, chartImageData] = await Promise.all([
-      API.dashboard.get(),
-      captureChartImage().catch((err) => {
-        console.warn("Chart capture failed, continuing without image:", err);
-        return null;
-      }),
-    ]);
-
-    // Normalize chart data efficiently
-    const normalizedChartData = {};
-    Object.keys(data.chartData || {}).forEach((key) => {
-      normalizedChartData[key] = Array.isArray(data.chartData[key])
-        ? data.chartData[key]
-        : [data.chartData[key]];
+    const data = await API.dashboard.get().catch((err) => {
+      console.error("Local dashboard data fetch failed:", err);
+      return { chartData: {} };
     });
-
-    const metricKeys = Object.keys(normalizedChartData);
-
-    if (metricKeys.length === 0) {
+    const chartData = data?.chartData || {};
+    const keys = Object.keys(chartData);
+    if (!keys.length) {
       console.warn("No metrics data available for report generation");
       return;
     }
 
-    // Generate report based on format
-    switch (format) {
-      case "pdf":
-        await generatePDFReport(
-          normalizedChartData,
-          metricKeys,
-          user,
-          API,
-          chartImageData
-        );
-        break;
-      case "csv":
-        generateCSVReport(normalizedChartData, metricKeys);
-        break;
-      case "json":
-        generateJSONReport(normalizedChartData, metricKeys, user);
-        break;
-      default:
-        throw new Error(`Unsupported format: ${format}`);
+    if (format === "json") {
+      const blob = new Blob([JSON.stringify(chartData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "maitri-report.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
     }
+
+    if (format === "csv") {
+      const lines = ["metric,latest,avg,min,max,count"];
+      keys.forEach((k) => {
+        const vals = chartData[k] || [];
+        const st = stat(vals);
+        lines.push([label(k), fmt(vals.at(-1)), st.avg, st.min, st.max, st.count].join(","));
+      });
+      const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "maitri-report.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // PDF (screening + cognitive pages with summary)
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    addHeader(pdf, "Maitri Mental Health Report");
+    renderTable(
+      pdf,
+      [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
+      screeningRows(chartData),
+      34
+    );
+    renderSummary(pdf, chartData, (pdf.lastAutoTable?.finalY || 80) + 10);
+
+    pdf.addPage();
+    addHeader(pdf, "Cognitive Assessment");
+    renderTable(
+      pdf,
+      [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
+      cognitiveRows(chartData),
+      34
+    );
+    renderSummary(pdf, chartData, (pdf.lastAutoTable?.finalY || 80) + 10);
+
+    pdf.save("maitri-report.pdf");
   } catch (error) {
     console.error("Report generation failed:", error);
-    // Fail gracefully without throwing to UI
   }
 };
