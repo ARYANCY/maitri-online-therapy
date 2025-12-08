@@ -916,7 +916,7 @@ export const downloadReport = async (format = "pdf", user, API) => {
     // PDF (screening + cognitive pages with summary)
     const pdf = new jsPDF("p", "mm", "a4");
 
-    addHeader(pdf, "Maitri Mental Health Report");
+    addPDFHeader(pdf, "Maitri Mental Health Report");
     renderTable(
       pdf,
       [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
