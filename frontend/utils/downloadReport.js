@@ -841,7 +841,29 @@ export const downloadReport = async (format = "pdf", user, API) => {
     const chartData = data?.chartData || {};
     const keys = Object.keys(chartData);
     if (!keys.length) {
-      console.warn("No metrics data available for report generation");
+      // If client-side data missing, try backend-generated report once more
+      try {
+        const resp = await API.report?.download?.(format);
+        if (resp?.data) {
+          const mime =
+            format === "pdf"
+              ? "application/pdf"
+              : format === "csv"
+                ? "text/csv"
+                : "application/json";
+          const blob = new Blob([resp.data], { type: mime });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `maitri-report.${format}`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } else {
+          console.warn("No metrics data available for report generation");
+        }
+      } catch (err) {
+        console.error("Backend report download failed:", err);
+      }
       return;
     }
 
