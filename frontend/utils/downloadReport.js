@@ -767,6 +767,7 @@ const generateJSONReport = (normalizedChartData, metricKeys, user) => {
         0
       ),
     },
+    table: buildTableData(normalizedChartData),
     metrics: metricKeys.map((key) => {
       const vals = normalizedChartData[key] || [];
       const stats = buildStats(vals);
@@ -817,6 +818,24 @@ const normalizeChartData = (chartData = {}) => {
     normalized[key] = Array.isArray(val) ? val : [val];
   });
   return normalized;
+};
+
+const buildTableData = (chartData = {}) => {
+  const keys = Object.keys(chartData || {});
+  if (!keys.length) return { columns: [], rows: [] };
+
+  const maxLen = keys.reduce((len, k) => Math.max(len, (chartData[k] || []).length), 0);
+  const columns = ["Entry", ...keys];
+  const rows = Array.from({ length: maxLen }, (_, idx) => {
+    const row = { Entry: idx + 1 };
+    keys.forEach((k) => {
+      const val = chartData[k]?.[idx];
+      row[k] = Number.isFinite(Number(val)) ? Number(val) : val ?? "";
+    });
+    return row;
+  });
+
+  return { columns, rows };
 };
 
 const saveBlobToDisk = (payload, filename, mimeType) => {
@@ -872,7 +891,18 @@ const fetchFallbackChartData = async (API) => {
 };
 
 // Main export function with improved error handling and backend-first approach
-export const downloadReport = async (format = "pdf", user, API) => {
+// options: { onStatus?: (evt) => void }
+export const downloadReport = async (format = "pdf", user, API, options = {}) => {
+  const notify = (type, payload = {}) => {
+    if (typeof options.onStatus === "function") {
+      try {
+        options.onStatus({ type, ...payload });
+      } catch (e) {
+        console.warn("[Report] onStatus handler failed:", e);
+      }
+    }
+  };
+
   if (!user) {
     throw new Error("User data is required to generate report");
   }
@@ -890,32 +920,38 @@ export const downloadReport = async (format = "pdf", user, API) => {
   const mimeType = MIME_BY_FORMAT[normalizedFormat];
 
   try {
+    notify("request", { format: normalizedFormat, stage: "backend" });
     const backendResp = await API.report.download(normalizedFormat);
     const payload = backendResp?.data ?? backendResp;
 
     if (normalizedFormat === "json") {
       if (!payload) throw new Error("Empty response from server");
       saveBlobToDisk(JSON.stringify(payload, null, 2), filename, mimeType);
+      notify("success", { source: "backend", format: normalizedFormat });
       return { source: "backend", format: normalizedFormat };
     }
 
     if (payload instanceof Blob) {
       saveBlobToDisk(payload, filename, mimeType);
+      notify("success", { source: "backend", format: normalizedFormat });
       return { source: "backend", format: normalizedFormat };
     }
 
     if (payload instanceof ArrayBuffer) {
       saveBlobToDisk(payload, filename, mimeType);
+      notify("success", { source: "backend", format: normalizedFormat });
       return { source: "backend", format: normalizedFormat };
     }
 
     throw new Error("Server returned an unexpected response while generating the report");
   } catch (error) {
     const friendlyMessage = getFriendlyError(error);
+    notify("warning", { source: "backend", format: normalizedFormat, message: friendlyMessage });
     console.warn("[Report] Backend download failed; attempting local fallback:", friendlyMessage, error);
 
     // If unauthorized, don't attempt client-side fallbacks
     if (error?.status === 401 || error?.status === 403) {
+      notify("error", { source: "backend", format: normalizedFormat, message: friendlyMessage });
       throw new Error(friendlyMessage);
     }
 
@@ -924,21 +960,27 @@ export const downloadReport = async (format = "pdf", user, API) => {
     const metricKeys = Object.keys(chartData);
 
     if (!metricKeys.length) {
+      notify("error", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
       throw new Error(friendlyMessage);
     }
+
+    notify("request", { format: normalizedFormat, stage: "fallback" });
 
     if (normalizedFormat === "pdf") {
       const chartImageData = await captureChartImage().catch(() => null);
       await generatePDFReport(chartData, metricKeys, user, API, chartImageData);
+      notify("success", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
       return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
     }
 
     if (normalizedFormat === "csv") {
       generateCSVReport(chartData, metricKeys);
+      notify("success", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
       return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
     }
 
     generateJSONReport(chartData, metricKeys, user);
+    notify("success", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
     return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
   }
 };
