@@ -289,10 +289,16 @@ const generatePDFReport = async (
   );
   y += 10;
 
-  // Executive Summary
-  pdf.setFont("helvetica", "bold").setFontSize(12);
+  // Executive Summary Section
+  pdf.setFont("helvetica", "bold").setFontSize(13);
+  pdf.setTextColor(44, 62, 80);
   pdf.text("Executive Summary", marginX, y);
-  y += 7;
+  y += 2;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.5);
+  pdf.line(marginX, y, pageWidth - marginX, y);
+  y += 6;
+  pdf.setTextColor(0, 0, 0);
 
   const summaryStats = metricKeys.reduce(
     (acc, key) => {
@@ -314,19 +320,34 @@ const generatePDFReport = async (
   );
   y += 8;
 
-  // Metrics Table
-  const tableRows = metricKeys.map((key) => {
+  // Metrics Overview Table Section
+  pdf.setFont("helvetica", "bold").setFontSize(11);
+  pdf.setTextColor(44, 62, 80);
+  pdf.text("Metrics Overview", marginX, y);
+  y += 6;
+
+  // Metrics Table - Enhanced with better styling
+  const tableRows = metricKeys.map((key, idx) => {
     const vals = normalizedChartData[key] || [];
     const stats = buildStats(vals);
-    return [
-      getMetricLabel(key),
-      stats.latest,
-      stats.avg,
-      stats.min,
-      stats.max,
-      stats.count,
-      interpretValue(vals[0]),
-    ];
+    const status = interpretValue(vals[0]);
+    
+    // Determine status color
+    let statusColor = [76, 175, 80]; // Green for Healthy
+    if (status === "Severe") statusColor = [244, 67, 54]; // Red
+    else if (status === "Moderate") statusColor = [255, 152, 0]; // Orange
+    
+    return {
+      metric: getMetricLabel(key),
+      latest: stats.latest !== "-" ? parseFloat(stats.latest).toFixed(1) : "-",
+      avg: stats.avg !== "-" ? parseFloat(stats.avg).toFixed(1) : "-",
+      min: stats.min !== "-" ? parseFloat(stats.min).toFixed(1) : "-",
+      max: stats.max !== "-" ? parseFloat(stats.max).toFixed(1) : "-",
+      count: stats.count,
+      status: status,
+      statusColor: statusColor,
+      rowIndex: idx,
+    };
   });
 
   autoTable(pdf, {
@@ -342,27 +363,59 @@ const generatePDFReport = async (
         "Status",
       ],
     ],
-    body: tableRows,
-    theme: "grid",
+    body: tableRows.map(row => [
+      row.metric,
+      row.latest,
+      row.avg,
+      row.min,
+      row.max,
+      row.count.toString(),
+      row.status,
+    ]),
+    theme: "striped",
     headStyles: {
       fillColor: [44, 62, 80],
       textColor: 255,
       halign: "center",
       valign: "middle",
       fontStyle: "bold",
+      fontSize: 10,
+      cellPadding: 3,
     },
-    styles: { fontSize: 9, cellPadding: 2.5, overflow: "linebreak" },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
+    bodyStyles: { 
+      fontSize: 9, 
+      cellPadding: 3, 
+      overflow: "linebreak",
+      textColor: [33, 33, 33],
+    },
+    alternateRowStyles: { 
+      fillColor: [250, 250, 250],
+    },
     columnStyles: {
-      0: { cellWidth: 45, fontStyle: "bold" },
-      1: { cellWidth: 20, halign: "center" },
-      2: { cellWidth: 20, halign: "center" },
-      3: { cellWidth: 18, halign: "center" },
-      4: { cellWidth: 18, halign: "center" },
-      5: { cellWidth: 18, halign: "center" },
-      6: { cellWidth: 25, halign: "center" },
+      0: { cellWidth: 48, fontStyle: "bold", textColor: [44, 62, 80] },
+      1: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+      2: { cellWidth: 22, halign: "center" },
+      3: { cellWidth: 20, halign: "center" },
+      4: { cellWidth: 20, halign: "center" },
+      5: { cellWidth: 20, halign: "center" },
+      6: { 
+        cellWidth: 28, 
+        halign: "center",
+        fontStyle: "bold",
+      },
     },
     margin: { left: marginX, right: marginX },
+    didParseCell: function(data) {
+      // Color code status column
+      if (data.column.index === 6 && data.row.index < tableRows.length) {
+        const row = tableRows[data.row.index];
+        data.cell.styles.textColor = row.statusColor;
+      }
+      // Highlight latest value column
+      if (data.column.index === 1) {
+        data.cell.styles.textColor = [25, 118, 210]; // Blue
+      }
+    },
   });
 
   y = pdf.lastAutoTable.finalY + 12;
@@ -452,47 +505,85 @@ const generatePDFReport = async (
     y = addPDFHeader(pdf, pageWidth, marginX);
   }
 
-  pdf.setFont("helvetica", "bold").setFontSize(12);
+  pdf.setFont("helvetica", "bold").setFontSize(13);
+  pdf.setTextColor(44, 62, 80);
   pdf.text("Detailed Statistics", marginX, y);
-  y += 7;
+  y += 2;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.5);
+  pdf.line(marginX, y, pageWidth - marginX, y);
+  y += 6;
+  pdf.setTextColor(0, 0, 0);
 
-  const detailedRows = metricKeys.map((key) => {
+  // Detailed Statistics Table - Enhanced
+  const detailedRows = metricKeys.map((key, idx) => {
     const vals = normalizedChartData[key] || [];
     const stats = buildStats(vals);
-    return [
-      getMetricLabel(key),
-      stats.avg,
-      stats.min,
-      stats.max,
-      stats.stdDev,
-      stats.trend,
-      getMetricIdeal(key),
-    ];
+    const trendSymbol = stats.trend;
+    let trendColor = [100, 100, 100]; // Gray for stable
+    if (trendSymbol === "↑") trendColor = [76, 175, 80]; // Green for improving
+    else if (trendSymbol === "↓") trendColor = [244, 67, 54]; // Red for declining
+    
+    return {
+      metric: getMetricLabel(key),
+      avg: stats.avg !== "-" ? parseFloat(stats.avg).toFixed(2) : "-",
+      min: stats.min !== "-" ? parseFloat(stats.min).toFixed(1) : "-",
+      max: stats.max !== "-" ? parseFloat(stats.max).toFixed(1) : "-",
+      stdDev: stats.stdDev !== "-" ? parseFloat(stats.stdDev).toFixed(2) : "-",
+      trend: trendSymbol,
+      trendColor: trendColor,
+      ideal: getMetricIdeal(key),
+      rowIndex: idx,
+    };
   });
 
   autoTable(pdf, {
     startY: y,
-    head: [["Metric", "Avg", "Min", "Max", "Std Dev", "Trend", "Ideal"]],
-    body: detailedRows,
-    theme: "grid",
+    head: [["Metric", "Average", "Min", "Max", "Std Dev", "Trend", "Ideal Range"]],
+    body: detailedRows.map(row => [
+      row.metric,
+      row.avg,
+      row.min,
+      row.max,
+      row.stdDev,
+      row.trend,
+      row.ideal,
+    ]),
+    theme: "striped",
     headStyles: {
       fillColor: [44, 62, 80],
       textColor: 255,
       halign: "center",
       valign: "middle",
+      fontStyle: "bold",
+      fontSize: 10,
+      cellPadding: 3,
     },
-    styles: { fontSize: 9, cellPadding: 2.5 },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
+    bodyStyles: { 
+      fontSize: 9, 
+      cellPadding: 3,
+      textColor: [33, 33, 33],
+    },
+    alternateRowStyles: { 
+      fillColor: [250, 250, 250],
+    },
     columnStyles: {
-      0: { cellWidth: 40 },
-      1: { cellWidth: 18, halign: "center" },
+      0: { cellWidth: 42, fontStyle: "bold", textColor: [44, 62, 80] },
+      1: { cellWidth: 20, halign: "center" },
       2: { cellWidth: 18, halign: "center" },
       3: { cellWidth: 18, halign: "center" },
       4: { cellWidth: 20, halign: "center" },
-      5: { cellWidth: 15, halign: "center" },
-      6: { cellWidth: 30 },
+      5: { cellWidth: 18, halign: "center", fontStyle: "bold", fontSize: 11 },
+      6: { cellWidth: 32, fontSize: 8 },
     },
     margin: { left: marginX, right: marginX },
+    didParseCell: function(data) {
+      // Color code trend column
+      if (data.column.index === 5 && data.row.index < detailedRows.length) {
+        const row = detailedRows[data.row.index];
+        data.cell.styles.textColor = row.trendColor;
+      }
+    },
   });
 
   y = pdf.lastAutoTable.finalY + 12;
@@ -611,31 +702,89 @@ const generatePDFReport = async (
         ]);
       }
 
-      let riskColor = [40, 167, 69];
-      if (riskLevel === "high") riskColor = [220, 53, 69];
-      else if (riskLevel === "moderate") riskColor = [255, 193, 7];
+      // Enhanced risk assessment table with better styling
+      const enhancedRiskRows = riskScoreRows.map((row, idx) => {
+        let statusColor = [100, 100, 100]; // Default gray
+        const metricName = row[0];
+        const value = row[1];
+        const status = row[2];
+        
+        // Color coding based on metric and value
+        if (metricName.includes("Risk Score") || metricName.includes("Risk Level")) {
+          if (riskLevel === "high") statusColor = [220, 53, 69]; // Red
+          else if (riskLevel === "moderate") statusColor = [255, 193, 7]; // Orange/Yellow
+          else statusColor = [40, 167, 69]; // Green
+        } else if (metricName.includes("Probability")) {
+          const probValue = parseFloat(value);
+          if (probValue > 60) statusColor = [220, 53, 69]; // Red
+          else if (probValue > 40) statusColor = [255, 193, 7]; // Orange
+          else statusColor = [40, 167, 69]; // Green
+        } else if (metricName.includes("Confidence")) {
+          const confValue = parseFloat(value);
+          if (confValue > 70) statusColor = [40, 167, 69]; // Green
+          else if (confValue > 40) statusColor = [255, 193, 7]; // Orange
+          else statusColor = [158, 158, 158]; // Gray
+        } else if (status.includes("Increasing") || status.includes("⚠️")) {
+          statusColor = [220, 53, 69]; // Red
+        } else if (status.includes("Improving") || status.includes("✅")) {
+          statusColor = [40, 167, 69]; // Green
+        } else if (status.includes("Stable") || status.includes("➡️")) {
+          statusColor = [100, 100, 100]; // Gray
+        }
+        
+        return {
+          metric: metricName,
+          value: value,
+          status: status,
+          statusColor: statusColor,
+          rowIndex: idx,
+        };
+      });
 
       autoTable(pdf, {
         startY: y,
-        head: [["Metric", "Value", "Status"]],
-        body: riskScoreRows,
-        theme: "grid",
+        head: [["Assessment Metric", "Value", "Status"]],
+        body: enhancedRiskRows.map(row => [row.metric, row.value, row.status]),
+        theme: "striped",
         headStyles: {
           fillColor: [44, 62, 80],
           textColor: 255,
           halign: "center",
           valign: "middle",
           fontStyle: "bold",
+          fontSize: 10,
+          cellPadding: 4,
         },
-        bodyStyles: { fontSize: 9, cellPadding: 3, halign: "left" },
+        bodyStyles: { 
+          fontSize: 9, 
+          cellPadding: 3.5,
+          textColor: [33, 33, 33],
+        },
+        alternateRowStyles: { 
+          fillColor: [250, 250, 250],
+        },
         columnStyles: {
-          0: { cellWidth: 55, fontStyle: "bold" },
-          1: { cellWidth: 40, halign: "center" },
-          2: { cellWidth: 45, halign: "center", textColor: riskColor },
+          0: { cellWidth: 58, fontStyle: "bold", textColor: [44, 62, 80] },
+          1: { cellWidth: 38, halign: "center", fontStyle: "bold", fontSize: 10 },
+          2: { cellWidth: 44, halign: "center", fontStyle: "bold" },
         },
-        alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: marginX, right: marginX },
         styles: { overflow: "linebreak" },
+        didParseCell: function(data) {
+          // Color code status column based on value
+          if (data.column.index === 2 && data.row.index < enhancedRiskRows.length) {
+            const row = enhancedRiskRows[data.row.index];
+            data.cell.styles.textColor = row.statusColor;
+          }
+          // Highlight value column for risk score
+          if (data.column.index === 1 && data.row.index < enhancedRiskRows.length) {
+            const row = enhancedRiskRows[data.row.index];
+            if (row.metric.includes("Risk Score") || row.metric.includes("Probability")) {
+              data.cell.styles.textColor = row.statusColor;
+              data.cell.styles.fontSize = 11;
+            }
+          }
+        },
       });
 
       y = pdf.lastAutoTable.finalY + 12;
@@ -725,31 +874,52 @@ const generatePDFReport = async (
 
         const suggestionsRows = dSum.suggestions
           .slice(0, 5)
-          .map((suggestion, idx) => [(idx + 1).toString(), suggestion]);
+          .map((suggestion, idx) => ({
+            number: (idx + 1).toString(),
+            text: suggestion,
+            index: idx,
+          }));
 
         autoTable(pdf, {
           startY: y,
           head: [["#", "Recommendation"]],
-          body: suggestionsRows,
-          theme: "grid",
+          body: suggestionsRows.map(row => [row.number, row.text]),
+          theme: "striped",
           headStyles: {
             fillColor: [44, 62, 80],
             textColor: 255,
             halign: "center",
             valign: "middle",
             fontStyle: "bold",
+            fontSize: 10,
+            cellPadding: 4,
           },
-          bodyStyles: { fontSize: 9, cellPadding: 3, halign: "left" },
+          bodyStyles: { 
+            fontSize: 9, 
+            cellPadding: 3.5,
+            halign: "left",
+            valign: "top",
+            textColor: [33, 33, 33],
+          },
           columnStyles: {
             0: {
-              cellWidth: 12,
+              cellWidth: 14,
               halign: "center",
+              valign: "middle",
               fontStyle: "bold",
+              fontSize: 10,
               fillColor: [240, 240, 240],
+              textColor: [44, 62, 80],
             },
-            1: { cellWidth: "auto", halign: "left" },
+            1: { 
+              cellWidth: "auto",
+              halign: "left",
+              valign: "top",
+            },
           },
-          alternateRowStyles: { fillColor: [250, 250, 250] },
+          alternateRowStyles: { 
+            fillColor: [250, 250, 250],
+          },
           margin: { left: marginX, right: marginX },
           styles: { overflow: "linebreak" },
         });
@@ -771,29 +941,118 @@ const generatePDFReport = async (
     console.error("Failed to fetch dementia data for report:", err);
   }
 
-  // Raw data table (chart values)
+  // Raw data table (chart values) - Enhanced
   const tableData = buildTableData(normalizedChartData, chartLabels);
   if (tableData.columns.length && tableData.rows.length) {
     pdf.addPage();
     y = addPDFHeader(pdf, pageWidth, marginX);
-    pdf.setFont("helvetica", "bold").setFontSize(12);
-    pdf.text("All Metrics (Table View)", marginX, y);
+    pdf.setFont("helvetica", "bold").setFontSize(13);
+    pdf.setTextColor(44, 62, 80);
+    pdf.text("Complete Data Table", marginX, y);
+    y += 2;
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(0.5);
+    pdf.line(marginX, y, pageWidth - marginX, y);
+    y += 6;
+    pdf.setFont("helvetica", "normal").setFontSize(9);
+    pdf.setTextColor(100);
+    pdf.text(
+      "This table shows all recorded values for each metric across all assessment entries.",
+      marginX,
+      y
+    );
+    pdf.setTextColor(0, 0, 0);
     y += 8;
 
-    const head = [tableData.columns];
-    const body = tableData.rows.map((row) =>
-      tableData.columns.map((col) => row[col] ?? "")
+    // Format column headers
+    const formattedColumns = tableData.columns.map(col => {
+      if (col === "Entry") return col;
+      return getMetricLabel(col);
+    });
+
+    const head = [formattedColumns];
+    
+    // Format body data with proper number formatting
+    const body = tableData.rows.map((row, rowIdx) =>
+      tableData.columns.map((col, colIdx) => {
+        const value = row[col];
+        if (colIdx === 0) return value; // Entry column
+        if (value === "" || value === null || value === undefined) return "-";
+        const numValue = Number(value);
+        if (Number.isFinite(numValue)) {
+          // Format numbers based on metric type
+          if (col.includes("score") || col.includes("percentage") || col.includes("Accuracy")) {
+            return numValue.toFixed(1);
+          }
+          return numValue.toFixed(2);
+        }
+        return String(value);
+      })
     );
+
+    // Calculate column widths dynamically
+    const numCols = tableData.columns.length;
+    const availableWidth = pageWidth - 2 * marginX;
+    const entryColWidth = 28;
+    const dataColWidth = (availableWidth - entryColWidth) / (numCols - 1);
+    
+    const columnStyles = { 0: { cellWidth: entryColWidth, fontStyle: "bold", textColor: [44, 62, 80] } };
+    for (let i = 1; i < numCols; i++) {
+      columnStyles[i] = { 
+        cellWidth: Math.min(dataColWidth, 35),
+        halign: "center",
+        fontSize: 8,
+      };
+    }
 
     autoTable(pdf, {
       startY: y,
       head,
       body,
       theme: "striped",
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [44, 62, 80], textColor: 255, halign: "center" },
-      columnStyles: { 0: { cellWidth: 26 } },
+      headStyles: { 
+        fillColor: [44, 62, 80], 
+        textColor: 255, 
+        halign: "center",
+        valign: "middle",
+        fontStyle: "bold",
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      bodyStyles: { 
+        fontSize: 8, 
+        cellPadding: 2.5,
+        textColor: [33, 33, 33],
+      },
+      columnStyles,
+      alternateRowStyles: { 
+        fillColor: [250, 250, 250],
+      },
       margin: { left: marginX, right: marginX },
+      styles: { overflow: "linebreak" },
+      didParseCell: function(data) {
+        // Highlight entry column
+        if (data.column.index === 0) {
+          data.cell.styles.fillColor = [245, 245, 245];
+        }
+        // Format numeric values
+        if (data.column.index > 0 && typeof data.cell.text === "string") {
+          const numVal = parseFloat(data.cell.text);
+          if (Number.isFinite(numVal)) {
+            // Color code based on value ranges for certain metrics
+            const colName = tableData.columns[data.column.index];
+            if (colName.includes("stress") || colName.includes("anxiety")) {
+              if (numVal > 30) data.cell.styles.textColor = [220, 53, 69];
+              else if (numVal > 20) data.cell.styles.textColor = [255, 152, 0];
+              else data.cell.styles.textColor = [76, 175, 80];
+            } else if (colName.includes("happiness") || colName.includes("mood")) {
+              if (numVal < 20) data.cell.styles.textColor = [220, 53, 69];
+              else if (numVal < 30) data.cell.styles.textColor = [255, 152, 0];
+              else data.cell.styles.textColor = [76, 175, 80];
+            }
+          }
+        }
+      },
     });
   }
 
