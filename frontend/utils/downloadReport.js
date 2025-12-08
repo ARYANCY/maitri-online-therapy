@@ -103,7 +103,7 @@ const buildStats = (arr = []) => {
   const nums = (Array.isArray(arr) ? arr : [arr])
     .map(Number)
     .filter((n) => Number.isFinite(n));
-  if (!nums.length) return { avg: "-", min: "-", max: "-", count: 0, stdDev: "-" };
+  if (!nums.length) return { avg: "-", min: "-", max: "-", count: 0, stdDev: "-", trend: "-", latest: "-" };
   const sum = nums.reduce((a, b) => a + b, 0);
   const avg = sum / nums.length;
   const variance =
@@ -116,6 +116,7 @@ const buildStats = (arr = []) => {
     count: nums.length,
     stdDev: stdDev.toFixed(2),
     trend: nums.length >= 2 ? (nums[nums.length - 1] > nums[0] ? "↑" : "↓") : "-",
+    latest: nums[nums.length - 1].toFixed(1),
   };
 };
 
@@ -268,7 +269,7 @@ const generatePDFReport = async (
     const stats = buildStats(vals);
     return [
       getMetricLabel(key),
-      vals.length > 0 ? vals[vals.length - 1].toFixed(1) : "-",
+      stats.latest,
       stats.avg,
       stats.min,
       stats.max,
@@ -838,31 +839,50 @@ export const downloadReport = async (format = "pdf", user, API) => {
       console.error("Local dashboard data fetch failed:", err);
       return { chartData: {} };
     });
-    const chartData = data?.chartData || {};
-    const keys = Object.keys(chartData);
+    let chartData = data?.chartData || {};
+    let keys = Object.keys(chartData);
     if (!keys.length) {
-      // If client-side data missing, try backend-generated report once more
+      // If client-side data missing, try backend JSON to populate chartData
       try {
-        const resp = await API.report?.download?.(format);
-        if (resp?.data) {
-          const mime =
-            format === "pdf"
-              ? "application/pdf"
-              : format === "csv"
-                ? "text/csv"
-                : "application/json";
-          const blob = new Blob([resp.data], { type: mime });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `maitri-report.${format}`;
-          a.click();
-          URL.revokeObjectURL(url);
+        const reportJson = await API.report?.fetch?.("json");
+        if (reportJson?.chartData && Object.keys(reportJson.chartData).length) {
+          chartData = reportJson.chartData;
+          keys = Object.keys(chartData);
         }
       } catch (err) {
-        console.error("Backend report download failed:", err);
+        console.warn("Backend JSON report fetch failed:", err);
       }
-      return; // Still no data; exit quietly
+
+      // If still empty, attempt backend download once (file)
+      if (!keys.length) {
+        try {
+          const resp = await API.report?.download?.(format);
+          if (resp?.data) {
+            const mime =
+              format === "pdf"
+                ? "application/pdf"
+                : format === "csv"
+                  ? "text/csv"
+                  : "application/json";
+            const blob = new Blob([resp.data], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `maitri-report.${format}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            return;
+          }
+        } catch (err) {
+          console.error("Backend report download failed:", err);
+        }
+      }
+
+      // Last resort: placeholder so PDF/CSV/JSON still generate
+      if (!keys.length) {
+        chartData = { placeholder: [0] };
+        keys = ["placeholder"];
+      }
     }
 
     if (format === "json") {
