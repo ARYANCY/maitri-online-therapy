@@ -325,21 +325,49 @@ API.doch = {
         throw new Error("Missing required fields: fullName, email, and highestQualification are required");
       }
       
-      // Log request for debugging
-      console.log('[DOCH Apply] Making API request to /api/doch/apply');
+      // Log request details for debugging
+      const API_URL = import.meta.env.VITE_API_URL;
+      const requestUrl = `${API_URL || ''}/api/doch/apply`;
+      console.log('[DOCH Apply] Making API request:', {
+        url: requestUrl,
+        baseURL: API?.defaults?.baseURL,
+        hasFullName: !!data.fullName,
+        hasEmail: !!data.email,
+        hasHighestQualification: !!data.highestQualification,
+        yearsInDementiaCare: data.yearsInDementiaCare,
+        availabilityCount: data.availability?.length || 0
+      });
       
       const response = await API.post("/api/doch/apply", data);
+      
+      console.log('[DOCH Apply] API request successful:', {
+        success: response?.success,
+        message: response?.message
+      });
+      
       return response;
     } catch (error) {
-      // Enhanced error logging
-      console.error('[DOCH Apply] API request failed:', {
-        error: error.message,
+      // Enhanced error logging with full context
+      const errorDetails = {
+        message: error.message,
         status: error.status,
         statusText: error.statusText,
-        url: error.url,
-        data: error.data,
-        code: error.code
-      });
+        url: error.url || '/api/doch/apply',
+        code: error.code,
+        response: error.response?.data || error.data,
+        config: {
+          url: error.config?.url,
+          baseURL: error.config?.baseURL,
+          method: error.config?.method
+        }
+      };
+      
+      console.error('[DOCH Apply] API request failed:', errorDetails);
+      
+      // If we have validation errors from the backend, include them
+      if (error.response?.data?.errors) {
+        console.error('[DOCH Apply] Validation errors:', error.response.data.errors);
+      }
       
       // Re-throw with enhanced context
       throw error;

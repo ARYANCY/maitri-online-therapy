@@ -100,7 +100,11 @@ const applyDOCHSchema = Joi.object({
   preferredName: Joi.string().trim().max(50).allow("").optional(),
   gender: Joi.string().valid("Male", "Female", "Non-binary", "Prefer not to say", "Other").default("Prefer not to say"),
   pronouns: Joi.string().valid("He/Him", "She/Her", "They/Them", "Other").default("They/Them"),
-  profilePhoto: Joi.string().uri().allow("").optional(),
+  profilePhoto: Joi.alternatives().try(
+    Joi.string().uri(),
+    Joi.string().allow(""),
+    Joi.string().valid(null)
+  ).optional().default(""),
   email: Joi.string().email().trim().lowercase().required(),
   phone: Joi.string().trim().max(20).allow("").optional(),
   city: Joi.string().trim().max(100).allow("").optional(),

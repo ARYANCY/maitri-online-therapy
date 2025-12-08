@@ -770,15 +770,25 @@ export default function DOC() {
       // Try to ping the API endpoint
       const API_URL = import.meta.env.VITE_API_URL;
       if (!API_URL) {
+        console.error('[Connectivity Check] VITE_API_URL is not configured');
         return { online: false, error: "API configuration error. Please contact support." };
       }
+
+      console.log('[Connectivity Check] Testing connection to:', API_URL);
 
       // Quick connectivity test - try to reach the API base URL
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for connectivity check
         
-        const response = await fetch(`${API_URL}/api/auth/session-check`, {
+        // Normalize API URL - remove trailing /api if present
+        const normalizedURL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : 
+                             API_URL.endsWith('/api/') ? API_URL.slice(0, -5) : API_URL;
+        const testUrl = `${normalizedURL}/api/auth/session-check`;
+        
+        console.log('[Connectivity Check] Testing URL:', testUrl);
+        
+        const response = await fetch(testUrl, {
           method: 'GET',
           credentials: 'include',
           signal: controller.signal,
@@ -786,11 +796,15 @@ export default function DOC() {
         });
         
         clearTimeout(timeoutId);
+        console.log('[Connectivity Check] Connection successful, status:', response.status);
         return { online: true };
       } catch (fetchErr) {
+        clearTimeout(timeoutId);
         if (fetchErr.name === 'AbortError') {
+          console.error('[Connectivity Check] Connection timeout');
           return { online: false, error: "Connection timeout. Please check your internet connection and try again." };
         }
+        console.warn('[Connectivity Check] Fetch error (may still work via axios):', fetchErr.message);
         // If it's a CORS or network error, we still might be able to connect via axios
         // So we'll return online: true and let the actual request handle it
         return { online: true };
@@ -884,9 +898,22 @@ export default function DOC() {
           : []
       };
 
-      // Remove empty profilePhoto if it's not a valid URL
+      // Handle profilePhoto - only include if it's a valid URL, otherwise omit it
       if (submitData.profilePhoto && !submitData.profilePhoto.startsWith('http')) {
-        submitData.profilePhoto = "";
+        delete submitData.profilePhoto;
+      } else if (!submitData.profilePhoto || submitData.profilePhoto.trim() === '') {
+        delete submitData.profilePhoto;
+      }
+
+      // Ensure consultationFee doesn't have undefined values
+      if (submitData.consultationFee) {
+        if (submitData.consultationFee.initial === undefined) delete submitData.consultationFee.initial;
+        if (submitData.consultationFee.followUp === undefined) delete submitData.consultationFee.followUp;
+        if (submitData.consultationFee.homeVisit === undefined) delete submitData.consultationFee.homeVisit;
+        // If all are undefined, set to empty object
+        if (Object.keys(submitData.consultationFee).length === 0) {
+          submitData.consultationFee = {};
+        }
       }
 
       // Log the data being sent for debugging
@@ -896,7 +923,15 @@ export default function DOC() {
         highestQualification: submitData.highestQualification,
         yearsInDementiaCare: submitData.yearsInDementiaCare,
         availabilityCount: submitData.availability.length,
-        hasProfilePhoto: !!submitData.profilePhoto
+        hasProfilePhoto: !!submitData.profilePhoto,
+        roleCategoriesCount: submitData.roleCategories?.length || 0
+      });
+
+      // Log full payload for debugging (without sensitive data)
+      console.log('[DOCH Apply] Full payload structure:', {
+        keys: Object.keys(submitData),
+        availability: submitData.availability,
+        consultationFee: submitData.consultationFee
       });
 
       const response = await API.doch.apply(submitData);
