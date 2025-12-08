@@ -759,6 +759,48 @@ export default function DOC() {
     }
   };
 
+  // Connectivity check utility
+  const checkConnectivity = async () => {
+    try {
+      // Check if we're online
+      if (!navigator.onLine) {
+        return { online: false, error: "No internet connection. Please check your network." };
+      }
+
+      // Try to ping the API endpoint
+      const API_URL = import.meta.env.VITE_API_URL;
+      if (!API_URL) {
+        return { online: false, error: "API configuration error. Please contact support." };
+      }
+
+      // Quick connectivity test - try to reach the API base URL
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for connectivity check
+        
+        const response = await fetch(`${API_URL}/api/auth/session-check`, {
+          method: 'GET',
+          credentials: 'include',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        return { online: true };
+      } catch (fetchErr) {
+        if (fetchErr.name === 'AbortError') {
+          return { online: false, error: "Connection timeout. Please check your internet connection and try again." };
+        }
+        // If it's a CORS or network error, we still might be able to connect via axios
+        // So we'll return online: true and let the actual request handle it
+        return { online: true };
+      }
+    } catch (err) {
+      console.warn('[Connectivity Check] Error:', err);
+      return { online: true }; // Assume online and let the actual request handle errors
+    }
+  };
+
   const handleHealthcareSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -767,6 +809,14 @@ export default function DOC() {
 
     if (!healthcareFormData.fullName || !healthcareFormData.email || !healthcareFormData.highestQualification || !healthcareFormData.yearsInDementiaCare) {
       setError("Please fill in all required fields");
+      setSubmitting(false);
+      return;
+    }
+
+    // Check connectivity before submitting
+    const connectivity = await checkConnectivity();
+    if (!connectivity.online) {
+      setError(connectivity.error || "Connection error. Please check your internet connection and try again.");
       setSubmitting(false);
       return;
     }
@@ -890,12 +940,65 @@ export default function DOC() {
       setHealthcareAvailabilityDate("");
       setHealthcareAvailabilityTimeSlots([""]);
     } catch (err) {
-      const errorMsg = err.data?.message || err.message || "";
-      if (errorMsg.toLowerCase().includes("email already exists") || err.status === 409) {
-        setError(t("doc.form.emailExists", "This email is already registered. Please use a different email."));
-      } else {
-        setError(errorMsg || t("doc.form.error", "Error submitting form. Please try again."));
+      console.error('[DOCH Apply] Submission error:', err);
+      
+      // Enhanced error handling
+      let errorMsg = "";
+      
+      // Check for network/connectivity errors
+      if (err.message) {
+        const msg = err.message.toLowerCase();
+        if (msg.includes("network error") || msg.includes("network request failed") || msg.includes("failed to fetch")) {
+          errorMsg = "Network error. Please check your internet connection and try again.";
+        } else if (msg.includes("timeout") || msg.includes("timed out")) {
+          errorMsg = "Request timeout. The server is taking too long to respond. Please try again.";
+        } else if (msg.includes("cors") || msg.includes("cross-origin")) {
+          errorMsg = "Connection error. Please contact support if this issue persists.";
+        } else if (msg.includes("cannot connect") || msg.includes("connection refused") || msg.includes("unreachable")) {
+          errorMsg = "Cannot connect to server. Please check your internet connection and try again later.";
+        } else if (msg.includes("api configuration") || msg.includes("api url")) {
+          errorMsg = "API configuration error. Please contact support.";
+        }
       }
+      
+      // Check for HTTP status errors
+      if (!errorMsg && err.status) {
+        if (err.status === 400) {
+          // Validation errors
+          if (err.data?.errors) {
+            const validationErrors = Array.isArray(err.data.errors) 
+              ? err.data.errors.join(", ") 
+              : err.data.errors;
+            errorMsg = `Validation error: ${validationErrors}`;
+          } else {
+            errorMsg = err.data?.message || "Invalid data. Please check your form and try again.";
+          }
+        } else if (err.status === 401) {
+          errorMsg = "Session expired. Please refresh the page and try again.";
+        } else if (err.status === 403) {
+          errorMsg = "Access denied. Please contact support.";
+        } else if (err.status === 409) {
+          errorMsg = t("doc.form.emailExists", "This email is already registered. Please use a different email.");
+        } else if (err.status === 500) {
+          errorMsg = "Server error. Please try again later or contact support.";
+        } else if (err.status >= 500) {
+          errorMsg = "Server error. Please try again later.";
+        } else if (err.status >= 400) {
+          errorMsg = err.data?.message || `Request failed (${err.status}). Please try again.`;
+        }
+      }
+      
+      // Fallback to error message from response or default
+      if (!errorMsg) {
+        errorMsg = err.data?.message || err.message || t("doc.form.error", "Error submitting form. Please try again.");
+      }
+      
+      // Check for email already exists (case-insensitive)
+      if (errorMsg.toLowerCase().includes("email already exists") || err.status === 409) {
+        errorMsg = t("doc.form.emailExists", "This email is already registered. Please use a different email.");
+      }
+      
+      setError(errorMsg);
     } finally {
       setSubmitting(false);
     }

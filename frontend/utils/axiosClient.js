@@ -313,7 +313,38 @@ API.adminDOCT = {
 
 API.doch = {
   getAll: () => API.get("/api/doch"),
-  apply: (data) => API.post("/api/doch/apply", data),
+  apply: async (data) => {
+    try {
+      // Validate data before sending
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid data: Application data must be an object");
+      }
+      
+      // Check required fields
+      if (!data.fullName || !data.email || !data.highestQualification) {
+        throw new Error("Missing required fields: fullName, email, and highestQualification are required");
+      }
+      
+      // Log request for debugging
+      console.log('[DOCH Apply] Making API request to /api/doch/apply');
+      
+      const response = await API.post("/api/doch/apply", data);
+      return response;
+    } catch (error) {
+      // Enhanced error logging
+      console.error('[DOCH Apply] API request failed:', {
+        error: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        url: error.url,
+        data: error.data,
+        code: error.code
+      });
+      
+      // Re-throw with enhanced context
+      throw error;
+    }
+  },
   getMyProfile: () => API.get("/api/doch/my-profile"),
   createAppointment: (data) => API.post("/api/doch/appointments", data),
   getAppointments: () => API.get("/api/doch/appointments"),
