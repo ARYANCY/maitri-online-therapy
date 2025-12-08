@@ -259,6 +259,64 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     ].filter(item => item.value != null);
   }, [chartData, metricsType, t]);
 
+  const buildStatRow = React.useCallback((key, label, values) => {
+    const arr = Array.isArray(values) ? values : values != null ? [values] : [];
+    const nums = arr.map(Number).filter((n) => Number.isFinite(n));
+    if (!nums.length) return null;
+    const latest = nums[nums.length - 1];
+    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const trendDir = latest - nums[0];
+    const trend =
+      Math.abs(trendDir) < 0.001
+        ? t("chart.trendStableShort", "Stable")
+        : trendDir > 0
+          ? t("chart.trendUp", "Up")
+          : t("chart.trendDown", "Down");
+    return {
+      key,
+      label,
+      latest: latest.toFixed(1),
+      avg: avg.toFixed(1),
+      min: min.toFixed(1),
+      max: max.toFixed(1),
+      count: nums.length,
+      trend,
+    };
+  }, [t]);
+
+  const screeningRows = useMemo(() => {
+    if (metricsType !== "screening") return [];
+    const mapping = [
+      { key: "phq9_score", label: t("chart.phq9", "PHQ-9") },
+      { key: "gad7_score", label: t("chart.gad7", "GAD-7") },
+      { key: "ghq_score", label: t("chart.ghq", "GHQ") },
+    ];
+    return mapping
+      .map(({ key, label }) => buildStatRow(key, label, chartData?.[key]))
+      .filter(Boolean);
+  }, [buildStatRow, chartData, metricsType, t]);
+
+  const dementiaRows = useMemo(() => {
+    if (metricsType !== "dementia") return [];
+    const mapping = [
+      { key: "dementia_risk_score", label: t("chart.cognitiveRisk", "Cognitive Risk (%)") },
+      { key: "reactionTimeAverage", label: t("chart.reactionTime", "Reaction Time") },
+      { key: "accuracyPercentage", label: t("chart.accuracy", "Accuracy (%)") },
+      { key: "workingMemorySpan", label: t("chart.workingMemorySpan", "Working Memory") },
+      { key: "executiveFunction", label: t("chart.executiveFunction", "Executive Function") },
+      { key: "visuospatialAccuracy", label: t("chart.visuospatialAccuracy", "Visuospatial (%)") },
+      { key: "attentionConsistency", label: t("chart.attentionConsistency", "Attention (%)") },
+      { key: "processingSpeed", label: t("chart.processingSpeed", "Processing Speed") },
+      { key: "learningCurve", label: t("chart.learningCurve", "Learning Curve") },
+      { key: "errorRate", label: t("chart.errorRate", "Error Rate (%)") },
+    ];
+    return mapping
+      .map(({ key, label }) => buildStatRow(key, label, chartData?.[key]))
+      .filter(Boolean);
+  }, [buildStatRow, chartData, metricsType, t]);
+
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
@@ -715,6 +773,99 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {metricsType === "screening" && screeningRows.length > 0 && (
+          <div className="card mb-4">
+            <div className="card-header d-flex align-items-center gap-2">
+              <div className="fs-4">🧾</div>
+              <h2 className="h5 mb-0">{t("chart.screeningTable", "Screening Scores")}</h2>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-sm mb-0 align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th scope="col">{t("chart.metric", "Metric")}</th>
+                    <th scope="col" className="text-end">{t("chart.latest", "Latest")}</th>
+                    <th scope="col" className="text-end">{t("chart.avg", "Avg")}</th>
+                    <th scope="col" className="text-end">{t("chart.min", "Min")}</th>
+                    <th scope="col" className="text-end">{t("chart.max", "Max")}</th>
+                    <th scope="col" className="text-end">{t("chart.count", "Count")}</th>
+                    <th scope="col" className="text-end">{t("chart.trendShort", "Trend")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {screeningRows.map((row) => (
+                    <tr key={row.key}>
+                      <th scope="row">{row.label}</th>
+                      <td className="text-end">{row.latest}</td>
+                      <td className="text-end">{row.avg}</td>
+                      <td className="text-end">{row.min}</td>
+                      <td className="text-end">{row.max}</td>
+                      <td className="text-end">{row.count}</td>
+                      <td className="text-end">
+                        <span className="badge bg-light text-dark border">{row.trend}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {metricsType === "dementia" && (dementiaRows.length > 0 || dementiaSummary) && (
+          <div className="card mb-4">
+            <div className="card-header d-flex align-items-center gap-2">
+              <div className="fs-4">🧠</div>
+              <h2 className="h5 mb-0">{t("chart.dementiaTable", "Cognitive & Probability Summary")}</h2>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-sm mb-0 align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th scope="col">{t("chart.metric", "Metric")}</th>
+                    <th scope="col" className="text-end">{t("chart.latest", "Latest")}</th>
+                    <th scope="col" className="text-end">{t("chart.avg", "Avg")}</th>
+                    <th scope="col" className="text-end">{t("chart.min", "Min")}</th>
+                    <th scope="col" className="text-end">{t("chart.max", "Max")}</th>
+                    <th scope="col" className="text-end">{t("chart.count", "Count")}</th>
+                    <th scope="col" className="text-end">{t("chart.trendShort", "Trend")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dementiaRows.map((row) => (
+                    <tr key={row.key}>
+                      <th scope="row">{row.label}</th>
+                      <td className="text-end">{row.latest}</td>
+                      <td className="text-end">{row.avg}</td>
+                      <td className="text-end">{row.min}</td>
+                      <td className="text-end">{row.max}</td>
+                      <td className="text-end">{row.count}</td>
+                      <td className="text-end">
+                        <span className="badge bg-light text-dark border">{row.trend}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {dementiaSummary && (
+                    <tr>
+                      <th scope="row">{t("chart.deteriorationProbability", "Deterioration Probability")}</th>
+                      <td className="text-end">{dementiaSummary.probabilityPercent.toFixed(1)}%</td>
+                      <td className="text-end">—</td>
+                      <td className="text-end">—</td>
+                      <td className="text-end">—</td>
+                      <td className="text-end">{dementiaSummary.dataPoints}</td>
+                      <td className="text-end">
+                        <span className={`badge ${trendInfo?.className || "bg-secondary text-white"}`}>
+                          {trendInfo?.label || dementiaSummary.trend}
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
