@@ -7,6 +7,8 @@ const logger = require("../utils/logger");
 const { asyncHandler } = require("../middleware/errorHandler");
 const PDFDocument = require("pdfkit");
 
+const SUPPORTED_FORMATS = ["json", "csv", "pdf"];
+
 async function generateReportData(userId, language = "en", req) {
   try {
     const user = await User.findById(userId).lean();
@@ -304,7 +306,9 @@ function convertToCSV(reportData) {
   return rows.join("\n");
 }
 
-function sendPDF(reportData, res) {
+function sendPDF(reportData, res, req) {
+  const t = req?.t || ((_, fallback) => fallback);
+
   try {
     const doc = new PDFDocument({
       margin: 40,
@@ -314,6 +318,15 @@ function sendPDF(reportData, res) {
         Author: "Maitri System",
         Subject: "User Mental Health Summary Report",
       },
+    });
+
+    doc.on("error", (error) => {
+      logger.error("PDF generation stream error", { error: error.message });
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ success: false, error: t("report.pdfGenerationFailed", "Failed to generate PDF report") });
+      }
     });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -398,19 +411,30 @@ function sendPDF(reportData, res) {
 
     doc.end();
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, error: req.t("report.pdfGenerationFailed") });
+    logger.error("Failed to build PDF report", { error: err.message, stack: err.stack });
+    if (!res.headersSent) {
+      res
+        .status(500)
+        .json({ success: false, error: t("report.pdfGenerationFailed", "Failed to generate PDF report") });
+    }
   }
 }
 
 const downloadReport = asyncHandler(async (req, res) => {
+  const t = req.t || ((_, fallback) => fallback);
   const userId = req.user?._id || req.session?.userId;
-    if (!userId)
-    return res.status(401).json({ success: false, error: req.t("auth.unauthorized") });
+  if (!userId) {
+    return res.status(401).json({ success: false, error: t("auth.unauthorized", "Unauthorized") });
+  }
 
   const userLanguage = req.getLanguage ? req.getLanguage() : "en";
-  const { format = "json" } = req.query;
+  const format = String(req.query?.format || "json").toLowerCase();
+
+  if (!SUPPORTED_FORMATS.includes(format)) {
+    return res
+      .status(400)
+      .json({ success: false, error: t("report.invalidFormat", "Invalid report format") });
+  }
 
   logger.info("Report download requested", {
     userId,
@@ -424,21 +448,21 @@ const downloadReport = asyncHandler(async (req, res) => {
 
     if (format === "json") {
       res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename="maitri-report-${Date.now()}.json"`);
       res.json(reportData);
     } else if (format === "csv") {
       const csvData = convertToCSV(reportData);
+      if (!csvData) {
+        return res.status(204).send();
+      }
       res.setHeader("Content-Type", "text/csv");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="maitri-report-${Date.now()}.csv"`
       );
       res.send(csvData);
-    } else if (format === "pdf") {
-      sendPDF(reportData, res);
     } else {
-      return res
-        .status(400)
-        .json({ success: false, error: req.t("report.invalidFormat") });
+      sendPDF(reportData, res, req);
     }
 
     logger.info("Report successfully generated", {
@@ -452,7 +476,7 @@ const downloadReport = asyncHandler(async (req, res) => {
       error: err.message,
       stack: err.stack
     });
-    res.status(500).json({ success: false, error: req.t("report.reportGenerationFailed") });
+    res.status(500).json({ success: false, error: t("report.reportGenerationFailed", "Failed to generate report") });
   }
 });
 

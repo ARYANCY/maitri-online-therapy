@@ -804,139 +804,141 @@ const generateJSONReport = (normalizedChartData, metricKeys, user) => {
   }, 100);
 };
 
-// Main export function with improved error handling
+const SUPPORTED_FORMATS = ["pdf", "csv", "json"];
+const MIME_BY_FORMAT = {
+  pdf: "application/pdf",
+  csv: "text/csv",
+  json: "application/json",
+};
+
+const normalizeChartData = (chartData = {}) => {
+  const normalized = {};
+  Object.entries(chartData || {}).forEach(([key, val]) => {
+    normalized[key] = Array.isArray(val) ? val : [val];
+  });
+  return normalized;
+};
+
+const saveBlobToDisk = (payload, filename, mimeType) => {
+  const blob =
+    payload instanceof Blob
+      ? payload
+      : new Blob([payload], { type: mimeType || "application/octet-stream" });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const getFriendlyError = (error) => {
+  if (!error) return "Unable to download report. Please try again.";
+
+  if (error.status === 401 || error.status === 403) {
+    return "Your session has expired. Please login again to download the report.";
+  }
+
+  if (error.status === 400) {
+    return "The requested report format is not supported.";
+  }
+
+  if (error.message?.toLowerCase().includes("timeout")) {
+    return "The report took too long to generate. Please retry in a moment.";
+  }
+
+  if (error.message?.toLowerCase().includes("network")) {
+    return "Network error while downloading the report. Check your connection and try again.";
+  }
+
+  return error.message || "Failed to download report from the server.";
+};
+
+const fetchFallbackChartData = async (API) => {
+  const dashboardData = await API.dashboard
+    .get()
+    .catch((err) => {
+      console.error("Local dashboard data fetch failed:", err);
+      return null;
+    });
+
+  const chartData =
+    dashboardData?.chartData ||
+    dashboardData?.data?.chartData ||
+    {};
+
+  return normalizeChartData(chartData);
+};
+
+// Main export function with improved error handling and backend-first approach
 export const downloadReport = async (format = "pdf", user, API) => {
   if (!user) {
     throw new Error("User data is required to generate report");
   }
 
+  const normalizedFormat = String(format || "pdf").toLowerCase();
+  if (!SUPPORTED_FORMATS.includes(normalizedFormat)) {
+    throw new Error(`Unsupported report format: ${format}`);
+  }
+
+  if (!API?.report?.download) {
+    throw new Error("Report API client is not available");
+  }
+
+  const filename = `maitri-report-${new Date().toISOString().slice(0, 10)}.${normalizedFormat}`;
+  const mimeType = MIME_BY_FORMAT[normalizedFormat];
+
   try {
-    // Prefer backend-generated report (model/controller) for full data coverage
-    try {
-      const resp = await API.report?.download?.(format);
-      if (resp?.data) {
-        const mime =
-          format === "pdf"
-            ? "application/pdf"
-            : format === "csv"
-              ? "text/csv"
-              : "application/json";
-        const blob = new Blob([resp.data], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `maitri-report.${format}`;
-        a.click();
-        URL.revokeObjectURL(url);
-        return;
-      }
-    } catch (backendErr) {
-      console.warn("Backend report download failed; falling back to local generation:", backendErr);
+    const backendResp = await API.report.download(normalizedFormat);
+    const payload = backendResp?.data ?? backendResp;
+
+    if (normalizedFormat === "json") {
+      if (!payload) throw new Error("Empty response from server");
+      saveBlobToDisk(JSON.stringify(payload, null, 2), filename, mimeType);
+      return { source: "backend", format: normalizedFormat };
     }
 
-    // Local generation fallback
-    const data = await API.dashboard.get().catch((err) => {
-      console.error("Local dashboard data fetch failed:", err);
-      return { chartData: {} };
-    });
-    let chartData = data?.chartData || {};
-    let keys = Object.keys(chartData);
-    if (!keys.length) {
-      // If client-side data missing, try backend JSON to populate chartData
-      try {
-        const reportJson = await API.report?.fetch?.("json");
-        if (reportJson?.chartData && Object.keys(reportJson.chartData).length) {
-          chartData = reportJson.chartData;
-          keys = Object.keys(chartData);
-        }
-      } catch (err) {
-        console.warn("Backend JSON report fetch failed:", err);
-      }
-
-      // If still empty, attempt backend download once (file)
-      if (!keys.length) {
-        try {
-          const resp = await API.report?.download?.(format);
-          if (resp?.data) {
-            const mime =
-              format === "pdf"
-                ? "application/pdf"
-                : format === "csv"
-                  ? "text/csv"
-                  : "application/json";
-            const blob = new Blob([resp.data], { type: mime });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `maitri-report.${format}`;
-            a.click();
-            URL.revokeObjectURL(url);
-            return;
-          }
-        } catch (err) {
-          console.error("Backend report download failed:", err);
-        }
-      }
-
-      // Last resort: placeholder so PDF/CSV/JSON still generate
-      if (!keys.length) {
-        chartData = { placeholder: [0] };
-        keys = ["placeholder"];
-      }
+    if (payload instanceof Blob) {
+      saveBlobToDisk(payload, filename, mimeType);
+      return { source: "backend", format: normalizedFormat };
     }
 
-    if (format === "json") {
-      const blob = new Blob([JSON.stringify(chartData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "maitri-report.json";
-      a.click();
-      URL.revokeObjectURL(url);
-      return;
+    if (payload instanceof ArrayBuffer) {
+      saveBlobToDisk(payload, filename, mimeType);
+      return { source: "backend", format: normalizedFormat };
     }
 
-    if (format === "csv") {
-      const lines = ["metric,latest,avg,min,max,count"];
-      keys.forEach((k) => {
-        const vals = chartData[k] || [];
-        const st = stat(vals);
-        lines.push([label(k), fmt(vals.at(-1)), st.avg, st.min, st.max, st.count].join(","));
-      });
-      const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "maitri-report.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
-
-    // PDF (screening + cognitive pages with summary)
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    addPDFHeader(pdf, "Maitri Mental Health Report");
-    renderTable(
-      pdf,
-      [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
-      screeningRows(chartData),
-      34
-    );
-    renderSummary(pdf, chartData, (pdf.lastAutoTable?.finalY || 80) + 10);
-
-    pdf.addPage();
-    addPDFHeader(pdf, "Cognitive Assessment");
-    renderTable(
-      pdf,
-      [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
-      cognitiveRows(chartData),
-      34
-    );
-    renderSummary(pdf, chartData, (pdf.lastAutoTable?.finalY || 80) + 10);
-
-    pdf.save("maitri-report.pdf");
+    throw new Error("Server returned an unexpected response while generating the report");
   } catch (error) {
-    console.error("Report generation failed:", error);
+    const friendlyMessage = getFriendlyError(error);
+    console.warn("[Report] Backend download failed; attempting local fallback:", friendlyMessage, error);
+
+    // If unauthorized, don't attempt client-side fallbacks
+    if (error?.status === 401 || error?.status === 403) {
+      throw new Error(friendlyMessage);
+    }
+
+    // Fallback using client-side data so the user still gets something
+    const chartData = await fetchFallbackChartData(API);
+    const metricKeys = Object.keys(chartData);
+
+    if (!metricKeys.length) {
+      throw new Error(friendlyMessage);
+    }
+
+    if (normalizedFormat === "pdf") {
+      const chartImageData = await captureChartImage().catch(() => null);
+      await generatePDFReport(chartData, metricKeys, user, API, chartImageData);
+      return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
+    }
+
+    if (normalizedFormat === "csv") {
+      generateCSVReport(chartData, metricKeys);
+      return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
+    }
+
+    generateJSONReport(chartData, metricKeys, user);
+    return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
   }
 };
