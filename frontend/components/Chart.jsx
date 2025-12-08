@@ -242,45 +242,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     return map[dementiaSummary.trend] || map.stable;
   }, [dementiaSummary, t]);
 
-  const summaryItems = useMemo(() => {
-    if (!hasData || !data || !data.datasets || !data.datasets.length) return [];
-
-    if (metricsType === "dementia" && dementiaSummary) {
-      return [
-        {
-          title: t("chart.summaryRisk", "Risk probability"),
-          value: `${dementiaSummary.probabilityPercent.toFixed(1)}%`,
-          note: dementiaSummary.riskLabel,
-        },
-        {
-          title: t("chart.summaryTrend", "Trend"),
-          value: trendInfo?.label || dementiaSummary.trend,
-          note: dementiaSummary.trend === "deteriorating"
-            ? t("chart.summaryTrendWorse", "Recent data shows increasing risk")
-            : dementiaSummary.trend === "improving"
-              ? t("chart.summaryTrendBetter", "Recent data shows improvement")
-              : t("chart.summaryTrendStable", "Recent data is stable"),
-        },
-        {
-          title: t("chart.summaryLatest", "Latest score"),
-          value: dementiaSummary.latestRisk != null ? `${Math.round(dementiaSummary.latestRisk * 10) / 10}` : "—",
-          note: t("chart.summaryPoints", "Data points") + `: ${dementiaSummary.dataPoints}`,
-        },
-      ];
-    }
-
-    if (statistics) {
-      return [
-        { title: t("chart.summaryAverage", "Average"), value: statistics.avg, note: t("chart.summaryAllSeries", "Across all visible data") },
-        { title: t("chart.summaryMax", "Maximum"), value: statistics.max, note: t("chart.summaryBest", "Highest recorded value") },
-        { title: t("chart.summaryMin", "Minimum"), value: statistics.min, note: t("chart.summaryLowest", "Lowest recorded value") },
-        { title: t("chart.summaryCount", "Data points"), value: statistics.count, note: t("chart.summarySamples", "Samples in this view") },
-      ];
-    }
-
-    return [];
-  }, [hasData, data, dementiaSummary, statistics, trendInfo, metricsType, t]);
-
   const lastDementiaValues = useMemo(() => {
     if (metricsType !== "dementia") return [];
     const getLast = (arr) => {
@@ -454,6 +415,45 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
 
     return { avg: avg.toFixed(1), max: max.toFixed(1), min: min.toFixed(1), count: allValues.length };
   }, [data]);
+
+  const summaryItems = useMemo(() => {
+    if (!hasData || !data || !data.datasets || !data.datasets.length) return [];
+
+    if (metricsType === "dementia" && dementiaSummary) {
+      return [
+        {
+          title: t("chart.summaryRisk", "Risk probability"),
+          value: `${dementiaSummary.probabilityPercent.toFixed(1)}%`,
+          note: dementiaSummary.riskLabel,
+        },
+        {
+          title: t("chart.summaryTrend", "Trend"),
+          value: trendInfo?.label || dementiaSummary.trend,
+          note: dementiaSummary.trend === "deteriorating"
+            ? t("chart.summaryTrendWorse", "Recent data shows increasing risk")
+            : dementiaSummary.trend === "improving"
+              ? t("chart.summaryTrendBetter", "Recent data shows improvement")
+              : t("chart.summaryTrendStable", "Recent data is stable"),
+        },
+        {
+          title: t("chart.summaryLatest", "Latest score"),
+          value: dementiaSummary.latestRisk != null ? `${Math.round(dementiaSummary.latestRisk * 10) / 10}` : "—",
+          note: t("chart.summaryPoints", "Data points") + `: ${dementiaSummary.dataPoints}`,
+        },
+      ];
+    }
+
+    if (statistics) {
+      return [
+        { title: t("chart.summaryAverage", "Average"), value: statistics.avg, note: t("chart.summaryAllSeries", "Across all visible data") },
+        { title: t("chart.summaryMax", "Maximum"), value: statistics.max, note: t("chart.summaryBest", "Highest recorded value") },
+        { title: t("chart.summaryMin", "Minimum"), value: statistics.min, note: t("chart.summaryLowest", "Lowest recorded value") },
+        { title: t("chart.summaryCount", "Data points"), value: statistics.count, note: t("chart.summarySamples", "Samples in this view") },
+      ];
+    }
+
+    return [];
+  }, [hasData, data, dementiaSummary, statistics, trendInfo, metricsType, t]);
 
   if (!data || !data.datasets || !data.datasets.length || !hasData) {
     return (
