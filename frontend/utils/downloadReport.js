@@ -906,7 +906,7 @@ export const downloadReport = async (format = "pdf", user, API) => {
     renderSummary(pdf, chartData, (pdf.lastAutoTable?.finalY || 80) + 10);
 
     pdf.addPage();
-    addHeader(pdf, "Cognitive Assessment");
+    addPDFHeader(pdf, "Cognitive Assessment");
     renderTable(
       pdf,
       [["Metric", "Latest", "Avg", "Min", "Max", "Points"]],
