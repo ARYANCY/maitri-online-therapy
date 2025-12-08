@@ -17,9 +17,26 @@ async function generateReportData(userId, language = "en", req) {
     const todos = await Todo.find({ user: userId }).sort({ createdAt: 1 }).lean();
     const dementiaSessions = await DementiaAssessment.find({ userId }).sort({ createdAt: 1 }).lean();
 
+    const hasAnyData =
+      (metricsData && metricsData.length) ||
+      (screeningData && screeningData.length) ||
+      (dementiaSessions && dementiaSessions.length);
+
     const stats = calculateStatistics(metricsData, screeningData);
     const recommendations = generateRecommendations(stats, language, req);
-    const chartData = generateChartData(metricsData, screeningData);
+    const chartData = hasAnyData
+      ? generateChartData(metricsData, screeningData)
+      : {
+          stress_level: [0],
+          happiness_level: [0],
+          anxiety_level: [0],
+          overall_mood_level: [0],
+          phq9_score: [0],
+          gad7_score: [0],
+          ghq_score: [0],
+          dementia_risk_score: [0],
+          labels: [new Date().toISOString().split("T")[0]],
+        };
 
     const latestDementia = dementiaSessions.length ? dementiaSessions[dementiaSessions.length - 1] : null;
     const dementiaSummary = latestDementia ? {
