@@ -197,7 +197,8 @@ const generatePDFReport = async (
   metricKeys,
   user,
   API,
-  chartImageData
+  chartImageData,
+  chartLabels = []
 ) => {
   const pdf = new jsPDF(PDF_CONFIG.orientation, PDF_CONFIG.unit, PDF_CONFIG.format);
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -676,6 +677,32 @@ const generatePDFReport = async (
     console.error("Failed to fetch dementia data for report:", err);
   }
 
+  // Raw data table (chart values)
+  const tableData = buildTableData(normalizedChartData, chartLabels);
+  if (tableData.columns.length && tableData.rows.length) {
+    pdf.addPage();
+    y = addPDFHeader(pdf, pageWidth, marginX);
+    pdf.setFont("helvetica", "bold").setFontSize(12);
+    pdf.text("All Metrics (Table View)", marginX, y);
+    y += 8;
+
+    const head = [tableData.columns];
+    const body = tableData.rows.map((row) =>
+      tableData.columns.map((col) => row[col] ?? "")
+    );
+
+    autoTable(pdf, {
+      startY: y,
+      head,
+      body,
+      theme: "striped",
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [44, 62, 80], textColor: 255, halign: "center" },
+      columnStyles: { 0: { cellWidth: 26 } },
+      margin: { left: marginX, right: marginX },
+    });
+  }
+
   // Save PDF
   const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   pdf.save(`maitri-report-${timestamp}.pdf`);
@@ -820,14 +847,14 @@ const normalizeChartData = (chartData = {}) => {
   return normalized;
 };
 
-const buildTableData = (chartData = {}) => {
+const buildTableData = (chartData = {}, chartLabels = []) => {
   const keys = Object.keys(chartData || {});
   if (!keys.length) return { columns: [], rows: [] };
 
   const maxLen = keys.reduce((len, k) => Math.max(len, (chartData[k] || []).length), 0);
   const columns = ["Entry", ...keys];
   const rows = Array.from({ length: maxLen }, (_, idx) => {
-    const row = { Entry: idx + 1 };
+    const row = { Entry: chartLabels[idx] || idx + 1 };
     keys.forEach((k) => {
       const val = chartData[k]?.[idx];
       row[k] = Number.isFinite(Number(val)) ? Number(val) : val ?? "";
@@ -886,8 +913,12 @@ const fetchFallbackChartData = async (API) => {
     dashboardData?.chartData ||
     dashboardData?.data?.chartData ||
     {};
+  const chartLabels =
+    dashboardData?.chartLabels ||
+    dashboardData?.data?.chartLabels ||
+    [];
 
-  return normalizeChartData(chartData);
+  return { chartData: normalizeChartData(chartData), chartLabels: Array.isArray(chartLabels) ? chartLabels : [] };
 };
 
 // Main export function with improved error handling and backend-first approach
@@ -956,7 +987,7 @@ export const downloadReport = async (format = "pdf", user, API, options = {}) =>
     }
 
     // Fallback using client-side data so the user still gets something
-    const chartData = await fetchFallbackChartData(API);
+    const { chartData, chartLabels } = await fetchFallbackChartData(API);
     const metricKeys = Object.keys(chartData);
 
     if (!metricKeys.length) {
@@ -968,7 +999,7 @@ export const downloadReport = async (format = "pdf", user, API, options = {}) =>
 
     if (normalizedFormat === "pdf") {
       const chartImageData = await captureChartImage().catch(() => null);
-      await generatePDFReport(chartData, metricKeys, user, API, chartImageData);
+      await generatePDFReport(chartData, metricKeys, user, API, chartImageData, chartLabels);
       notify("success", { source: "fallback", format: normalizedFormat, message: friendlyMessage });
       return { source: "fallback", format: normalizedFormat, message: friendlyMessage };
     }
