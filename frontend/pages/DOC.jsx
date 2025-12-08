@@ -772,15 +772,83 @@ export default function DOC() {
     }
 
     try {
+      // Clean and format the data according to backend schema
       const submitData = {
-        ...healthcareFormData,
-        yearsInDementiaCare: Number(healthcareFormData.yearsInDementiaCare),
+        fullName: healthcareFormData.fullName?.trim() || "",
+        preferredName: healthcareFormData.preferredName?.trim() || "",
+        gender: healthcareFormData.gender || "Prefer not to say",
+        pronouns: healthcareFormData.pronouns || "They/Them",
+        profilePhoto: healthcareFormData.profilePhoto?.trim() || "",
+        email: healthcareFormData.email?.trim().toLowerCase() || "",
+        phone: healthcareFormData.phone?.trim() || "",
+        city: healthcareFormData.city?.trim() || "",
+        state: healthcareFormData.state?.trim() || "",
+        country: healthcareFormData.country?.trim() || "",
+        emergencyContact: healthcareFormData.emergencyContact || {},
+        roleCategories: Array.isArray(healthcareFormData.roleCategories) ? healthcareFormData.roleCategories : [],
+        highestQualification: healthcareFormData.highestQualification?.trim() || "",
+        dementiaCertifications: Array.isArray(healthcareFormData.dementiaCertifications) ? healthcareFormData.dementiaCertifications : [],
+        licenseNumber: healthcareFormData.licenseNumber?.trim() || "",
+        licenseFiles: Array.isArray(healthcareFormData.licenseFiles) ? healthcareFormData.licenseFiles : [],
+        yearsInDementiaCare: Number(healthcareFormData.yearsInDementiaCare) || 0,
+        previousInstitutions: Array.isArray(healthcareFormData.previousInstitutions) ? healthcareFormData.previousInstitutions : [],
+        dementiaTypesExperienced: Array.isArray(healthcareFormData.dementiaTypesExperienced) ? healthcareFormData.dementiaTypesExperienced : [],
+        dementiaStagesHandled: Array.isArray(healthcareFormData.dementiaStagesHandled) ? healthcareFormData.dementiaStagesHandled : [],
+        shortBio: healthcareFormData.shortBio?.trim() || "",
+        specialSkills: Array.isArray(healthcareFormData.specialSkills) ? healthcareFormData.specialSkills : [],
+        languagesSpoken: Array.isArray(healthcareFormData.languagesSpoken) && healthcareFormData.languagesSpoken.length > 0 
+          ? healthcareFormData.languagesSpoken 
+          : ["English"],
+        sessionDuration: Number(healthcareFormData.sessionDuration) || 60,
+        preferredCommunicationMode: Array.isArray(healthcareFormData.preferredCommunicationMode) && healthcareFormData.preferredCommunicationMode.length > 0
+          ? healthcareFormData.preferredCommunicationMode
+          : ["Video"],
         consultationFee: {
-          initial: Number(healthcareFormData.consultationFee.initial) || 0,
-          followUp: Number(healthcareFormData.consultationFee.followUp) || 0,
-          homeVisit: Number(healthcareFormData.consultationFee.homeVisit) || 0
-        }
+          initial: healthcareFormData.consultationFee?.initial ? Number(healthcareFormData.consultationFee.initial) : undefined,
+          followUp: healthcareFormData.consultationFee?.followUp ? Number(healthcareFormData.consultationFee.followUp) : undefined,
+          homeVisit: healthcareFormData.consultationFee?.homeVisit ? Number(healthcareFormData.consultationFee.homeVisit) : undefined
+        },
+        acceptsInsurance: Boolean(healthcareFormData.acceptsInsurance),
+        insuranceProviders: Array.isArray(healthcareFormData.insuranceProviders) ? healthcareFormData.insuranceProviders : [],
+        availability: Array.isArray(healthcareFormData.availability) 
+          ? healthcareFormData.availability.map(avail => {
+              // Ensure date is properly formatted - Joi accepts ISO strings or Date objects
+              let dateValue = avail.date;
+              if (dateValue instanceof Date) {
+                dateValue = dateValue.toISOString();
+              } else if (typeof dateValue === 'string') {
+                // If it's already a string, validate it's a valid date
+                const dateObj = new Date(dateValue);
+                if (isNaN(dateObj.getTime())) {
+                  console.warn('[DOCH Apply] Invalid date in availability:', dateValue);
+                  dateValue = new Date().toISOString(); // Fallback to today
+                } else {
+                  dateValue = dateObj.toISOString();
+                }
+              }
+              return {
+                date: dateValue,
+                time_slots: Array.isArray(avail.time_slots) ? avail.time_slots.filter(ts => ts && ts.trim()) : []
+              };
+            })
+          : []
       };
+
+      // Remove empty profilePhoto if it's not a valid URL
+      if (submitData.profilePhoto && !submitData.profilePhoto.startsWith('http')) {
+        submitData.profilePhoto = "";
+      }
+
+      // Log the data being sent for debugging
+      console.log('[DOCH Apply] Submitting data:', {
+        fullName: submitData.fullName,
+        email: submitData.email,
+        highestQualification: submitData.highestQualification,
+        yearsInDementiaCare: submitData.yearsInDementiaCare,
+        availabilityCount: submitData.availability.length,
+        hasProfilePhoto: !!submitData.profilePhoto
+      });
+
       const response = await API.doch.apply(submitData);
       if (!response?.success) {
         throw new Error(response?.message || "Failed to submit application");
