@@ -232,6 +232,16 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     return computeDementiaProbability({ riskScores, metrics });
   }, [chartData, metricsType]);
 
+  const trendInfo = useMemo(() => {
+    if (!dementiaSummary) return null;
+    const map = {
+      deteriorating: { label: t("chart.trendWorseShort", "Deteriorating"), icon: "⬆️", className: "bg-danger text-white" },
+      improving: { label: t("chart.trendBetterShort", "Improving"), icon: "⬇️", className: "bg-success text-white" },
+      stable: { label: t("chart.trendStableShort", "Stable"), icon: "⏸️", className: "bg-secondary text-white" },
+    };
+    return map[dementiaSummary.trend] || map.stable;
+  }, [dementiaSummary, t]);
+
   const lastDementiaValues = useMemo(() => {
     if (metricsType !== "dementia") return [];
     const getLast = (arr) => {
@@ -586,6 +596,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                       <div className="text-muted small mb-1">{t("chart.probability", "Probability (deterioration)")}</div>
                       <div className="h3 mb-1">{dementiaSummary.probabilityPercent.toFixed(1)}%</div>
                       <span className="badge bg-secondary">{dementiaSummary.riskLabel}</span>
+                      <div className="small text-muted mt-1">
+                        {t("chart.summaryNoteProb", "Higher % suggests greater deterioration risk")}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -593,7 +606,11 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   <div className="card h-100">
                     <div className="card-body">
                       <div className="text-muted small mb-1">{t("chart.trend", "Trend")}</div>
-                      <div className="h5 mb-1 text-capitalize">{dementiaSummary.trend}</div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className={`badge ${trendInfo?.className || "bg-secondary text-white"}`}>
+                          {trendInfo?.icon} {trendInfo?.label || dementiaSummary.trend}
+                        </span>
+                      </div>
                       <small className="text-muted">
                         {dementiaSummary.trend === "deteriorating"
                           ? t("chart.trendWorse", "Higher risk over recent entries")
@@ -612,6 +629,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                       <small className="text-muted">
                         {t("chart.dataPoints", "Data Points")}: {dementiaSummary.dataPoints}
                       </small>
+                      <div className="small text-muted mt-1">
+                        {t("chart.summaryNoteLatest", "Most recent score in the series")}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -621,6 +641,16 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                       <div className="text-muted small mb-1">{t("chart.confidence", "Confidence")}</div>
                       <div className="h5 mb-1">{Math.round(dementiaSummary.confidence * 100)}%</div>
                       <small className="text-muted">{t("chart.confidenceNote", "More data improves confidence")}</small>
+                      <div className="progress mt-2" style={{height: "6px"}}>
+                        <div
+                          className="progress-bar bg-primary"
+                          role="progressbar"
+                          style={{ width: `${Math.round(dementiaSummary.confidence * 100)}%` }}
+                          aria-valuenow={Math.round(dementiaSummary.confidence * 100)}
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
