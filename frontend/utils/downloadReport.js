@@ -858,13 +858,11 @@ export const downloadReport = async (format = "pdf", user, API) => {
           a.download = `maitri-report.${format}`;
           a.click();
           URL.revokeObjectURL(url);
-        } else {
-          console.warn("No metrics data available for report generation");
         }
       } catch (err) {
         console.error("Backend report download failed:", err);
       }
-      return;
+      return; // Still no data; exit quietly
     }
 
     if (format === "json") {
