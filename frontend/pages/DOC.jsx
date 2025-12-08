@@ -739,7 +739,16 @@ export default function DOC() {
         availability: []
       });
     } catch (err) {
-      const errorMsg = err.data?.message || err.message || "";
+      let errorMsg = err.data?.message || err.message || "";
+      
+      // Handle validation errors (400 status)
+      if (err.status === 400 && err.data?.errors) {
+        const validationErrors = Array.isArray(err.data.errors) 
+          ? err.data.errors.join(", ") 
+          : err.data.errors;
+        errorMsg = `Validation error: ${validationErrors}`;
+      }
+      
       if (errorMsg.toLowerCase().includes("email already exists") || err.status === 409) {
         setError(t("doc.form.emailExists", "This email is already registered. Please use a different email."));
       } else {
@@ -856,7 +865,16 @@ export default function DOC() {
           <div className="profile-photo-upload">
             {therapistFormData.profilePhoto ? (
               <div className="position-relative d-inline-block">
-                <img src={therapistFormData.profilePhoto} alt="Profile" className="profile-preview" />
+                <img 
+                  src={therapistFormData.profilePhoto} 
+                  alt="Profile" 
+                  className="profile-preview" 
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    console.warn('Image failed to load:', therapistFormData.profilePhoto);
+                  }}
+                />
                 <button 
                   type="button" 
                   className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle" 
@@ -1515,7 +1533,16 @@ export default function DOC() {
                         <div className="profile-photo-upload">
                           {healthcareFormData.profilePhoto ? (
                             <div className="position-relative d-inline-block">
-                              <img src={healthcareFormData.profilePhoto} alt="Profile" className="profile-preview" />
+                              <img 
+                                src={healthcareFormData.profilePhoto} 
+                                alt="Profile" 
+                                className="profile-preview" 
+                                crossOrigin="anonymous"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  console.warn('Image failed to load:', healthcareFormData.profilePhoto);
+                                }}
+                              />
                               <button 
                                 type="button" 
                                 className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle" 

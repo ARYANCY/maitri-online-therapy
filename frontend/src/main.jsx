@@ -8,6 +8,19 @@ import "../css/mobile-responsive.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
+// Suppress tracking prevention warnings (browser privacy feature)
+if (typeof window !== 'undefined') {
+  const originalError = console.error;
+  console.error = (...args) => {
+    const message = args[0]?.toString() || '';
+    // Filter out tracking prevention warnings
+    if (message.includes('Tracking Prevention blocked access to storage')) {
+      return; // Suppress these warnings
+    }
+    originalError.apply(console, args);
+  };
+}
+
 
 function waitForStylesheets() {
   return new Promise((resolve) => {

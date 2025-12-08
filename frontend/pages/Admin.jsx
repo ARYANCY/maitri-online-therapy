@@ -776,7 +776,16 @@ export default function Admin() {
                             <td><input type="checkbox" id={`admin-doct-checkbox-${t._id}`} name={`admin-doct-checkbox-${t._id}`} checked={selectedIds.includes(t._id)} onChange={() => toggleSelect(t._id)} /></td>
                             <td>
                               {t.profilePhoto ? (
-                                <img src={t.profilePhoto} alt={t.name} className="rounded-circle" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+                                <img 
+                                  src={t.profilePhoto} 
+                                  alt={t.name} 
+                                  className="rounded-circle" 
+                                  style={{ width: '40px', height: '40px', objectFit: 'cover' }} 
+                                  crossOrigin="anonymous"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
                               ) : (
                                 <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                                   <i className="bi bi-person text-white"></i>
@@ -874,7 +883,16 @@ export default function Admin() {
                           <tr key={p._id}>
                             <td>
                               {p.profilePhoto ? (
-                                <img src={p.profilePhoto} alt={p.name} className="rounded-circle" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+                                <img 
+                                  src={p.profilePhoto} 
+                                  alt={p.name} 
+                                  className="rounded-circle" 
+                                  style={{ width: '40px', height: '40px', objectFit: 'cover' }} 
+                                  crossOrigin="anonymous"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
                               ) : (
                                 <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
                                   <i className="bi bi-person text-white"></i>
@@ -1066,7 +1084,16 @@ export default function Admin() {
                   <div className="row mb-4">
                     <div className="col-md-4 text-center">
                       {selectedTherapist.profilePhoto ? (
-                        <img src={selectedTherapist.profilePhoto} alt="Profile" className="rounded-circle mb-3" style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid #abd1c6' }} />
+                        <img 
+                          src={selectedTherapist.profilePhoto} 
+                          alt="Profile" 
+                          className="rounded-circle mb-3" 
+                          style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid #abd1c6' }} 
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
                       ) : (
                         <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '120px', height: '120px' }}>
                           <i className="bi bi-person-fill text-white" style={{ fontSize: '3rem' }}></i>
@@ -1451,7 +1478,16 @@ export default function Admin() {
                   <div className="row mb-4">
                     <div className="col-md-4 text-center">
                       {selectedHc.profilePhoto ? (
-                        <img src={selectedHc.profilePhoto} alt="Profile" className="rounded-circle mb-3" style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid #abd1c6' }} />
+                        <img 
+                          src={selectedHc.profilePhoto} 
+                          alt="Profile" 
+                          className="rounded-circle mb-3" 
+                          style={{ width: '120px', height: '120px', objectFit: 'cover', border: '4px solid #abd1c6' }} 
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
                       ) : (
                         <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '120px', height: '120px' }}>
                           <i className="bi bi-person-fill text-white" style={{ fontSize: '3rem' }}></i>
