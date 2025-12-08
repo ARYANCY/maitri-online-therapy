@@ -271,7 +271,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
 
     if (statistics) {
       return [
-        { title: t("chart.summaryAverage", "Average"), value: statistics.avg, note: t("chart.summaryAllSeries", "Across all visible data")) },
+        { title: t("chart.summaryAverage", "Average"), value: statistics.avg, note: t("chart.summaryAllSeries", "Across all visible data") },
         { title: t("chart.summaryMax", "Maximum"), value: statistics.max, note: t("chart.summaryBest", "Highest recorded value") },
         { title: t("chart.summaryMin", "Minimum"), value: statistics.min, note: t("chart.summaryLowest", "Lowest recorded value") },
         { title: t("chart.summaryCount", "Data points"), value: statistics.count, note: t("chart.summarySamples", "Samples in this view") },
