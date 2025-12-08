@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import GuLogo from "@/images/logo.png";
 
 
@@ -51,7 +52,37 @@ const getMetricIdeal = (key) => {
 };
 
 
-const generatePDFReport = async (normalizedChartData, metricKeys, user, API) => {
+const buildStats = (arr = []) => {
+  const nums = (Array.isArray(arr) ? arr : [arr]).map(Number).filter(n => Number.isFinite(n));
+  if (!nums.length) return { avg: "-", min: "-", max: "-", count: 0 };
+  const sum = nums.reduce((a, b) => a + b, 0);
+  return {
+    avg: (sum / nums.length).toFixed(1),
+    min: Math.min(...nums).toFixed(1),
+    max: Math.max(...nums).toFixed(1),
+    count: nums.length,
+  };
+};
+
+const captureChartImage = async () => {
+  const canvas = document.querySelector(".chart-wrapper canvas");
+  if (!canvas) return null;
+  try {
+    const dataUrl = canvas.toDataURL("image/png", 0.95);
+    return dataUrl;
+  } catch (err) {
+    console.warn("Canvas capture failed via toDataURL, falling back to html2canvas", err);
+    try {
+      const h2c = await html2canvas(canvas, { backgroundColor: "#ffffff", scale: 2 });
+      return h2c.toDataURL("image/png", 0.95);
+    } catch (e) {
+      console.error("html2canvas capture failed", e);
+      return null;
+    }
+  }
+};
+
+const generatePDFReport = async (normalizedChartData, metricKeys, user, API, chartImageData) => {
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -90,12 +121,13 @@ const generatePDFReport = async (normalizedChartData, metricKeys, user, API) => 
 
   
   const tableRows = metricKeys.map(key => {
-    const vals = normalizedChartData[key];
+    const vals = normalizedChartData[key] || [];
+    const stats = buildStats(vals);
     return [
       getMetricLabel(key),
       vals.join(", "),
       interpretValue(vals[0]),
-      getMetricDescription(key),
+      `${getMetricDescription(key)}\nAvg: ${stats.avg} • Min: ${stats.min} • Max: ${stats.max}`,
       getMetricIdeal(key)
     ];
   });
@@ -112,7 +144,48 @@ const generatePDFReport = async (normalizedChartData, metricKeys, user, API) => 
     margin: { left: marginX, right: marginX }
   });
 
-  y = pdf.lastAutoTable.finalY + 20;
+  y = pdf.lastAutoTable.finalY + 12;
+
+  if (chartImageData) {
+    const imgWidth = pageWidth - 2 * marginX;
+    const imgHeight = (imgWidth * 9) / 16; // keep reasonable ratio
+    pdf.setFont("helvetica", "bold").setFontSize(12);
+    pdf.text("Visual Snapshot", marginX, y);
+    y += 6;
+    pdf.addImage(chartImageData, "PNG", marginX, y, imgWidth, imgHeight, undefined, "FAST");
+    y += imgHeight + 10;
+  }
+
+  // Summary section
+  pdf.setFont("helvetica", "bold").setFontSize(12);
+  pdf.text("Summary", marginX, y);
+  y += 6;
+
+  const summaryRows = metricKeys.map(key => {
+    const vals = normalizedChartData[key] || [];
+    const stats = buildStats(vals);
+    return [
+      getMetricLabel(key),
+      stats.avg,
+      stats.min,
+      stats.max,
+      stats.count
+    ];
+  });
+
+  autoTable(pdf, {
+    startY: y,
+    head: [["Metric", "Avg", "Min", "Max", "Points"]],
+    body: summaryRows,
+    theme: "grid",
+    headStyles: { fillColor:[44,62,80], textColor:255, halign:"center", valign:"middle" },
+    styles: { fontSize:10, cellPadding:3, overflow:"linebreak" },
+    alternateRowStyles: { fillColor:[250,250,250] },
+    columnStyles: { 0:{cellWidth:40}, 1:{cellWidth:20}, 2:{cellWidth:20}, 3:{cellWidth:20}, 4:{cellWidth:20, halign:"center"} },
+    margin: { left: marginX, right: marginX }
+  });
+
+  y = pdf.lastAutoTable.finalY + 14;
   pdf.setFont("times", "italic").setFontSize(10);
   pdf.setTextColor(120);
   pdf.text(`© Maitri ${new Date().getFullYear()}`, pageWidth/2, pageHeight - 10, { align: "center" });
@@ -380,6 +453,7 @@ export const downloadReport = async (format = "pdf", user, API) => {
 
   try {
     const data = await API.dashboard.get();
+    const chartImageData = await captureChartImage();
 
     const normalizedChartData = {};
     Object.keys(data.chartData || {}).forEach(key => {
@@ -392,7 +466,7 @@ export const downloadReport = async (format = "pdf", user, API) => {
 
     switch (format) {
       case "pdf":
-        await generatePDFReport(normalizedChartData, metricKeys, user, API);
+        await generatePDFReport(normalizedChartData, metricKeys, user, API, chartImageData);
         break;
       case "csv":
         generateCSVReport(normalizedChartData, metricKeys);
