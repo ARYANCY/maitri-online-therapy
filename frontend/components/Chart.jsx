@@ -46,8 +46,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
   const [selectedDataPoint, setSelectedDataPoint] = useState(null); // kept for compatibility, no popup rendered
   const [showTrends, setShowTrends] = useState(false);
-  const [trendDatasetFilter, setTrendDatasetFilter] = useState(null);
-  const lastClickRef = useRef({ time: 0, label: null });
   const chartRef = useRef(null);
 
   const normalizeArray = (arr, length) => {
@@ -425,7 +423,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     const trendDatasets = [];
     if (showTrends && trendAnalysis && typeof trendAnalysis === 'object') {
       filteredDatasets.forEach((ds, index) => {
-        if (trendDatasetFilter && trendDatasetFilter !== ds.label) return;
         const trendData = trendAnalysis[ds.label];
         if (trendData && trendData.trend && trendData.trend.isValid && chartType === "line") {
           const trendLineValues = trendData.trendLineData?.trendLine || [];
@@ -684,23 +681,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       mode: 'index',
     },
     onHover: () => {},
-    onClick: (event, elements, chart) => {
-      if (!chart || !elements || elements.length === 0) return;
-      const datasetIndex = elements[0].datasetIndex;
-      const ds = chart.data.datasets?.[datasetIndex];
-      const label = ds?.label;
-      if (!label) return;
-
-      const now = Date.now();
-      const { time: lastTime, label: lastLabel } = lastClickRef.current;
-      const isDouble = label === lastLabel && now - lastTime < 350;
-      lastClickRef.current = { time: now, label };
-
-      if (isDouble) {
-        setShowTrends(true);
-        setTrendDatasetFilter((prev) => (prev === label ? null : label));
-      }
-    },
+    onClick: () => {},
     animation: {
       duration: 800,
       easing: 'easeInOutQuart',
@@ -1044,6 +1025,20 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               </div>
             </div>
 
+            <div className="d-flex flex-column gap-2">
+              <label className="form-label d-flex align-items-center gap-2 mb-0">
+                <span>🧭</span>
+                {t("chart.trendToggle", "Show Trend Lines")}
+              </label>
+              <button
+                type="button"
+                className={`btn btn-sm ${showTrends ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => setShowTrends((prev) => !prev)}
+              >
+                {showTrends ? t("chart.hideTrends", "Hide Trends") : t("chart.showTrends", "Show Trends")}
+              </button>
+            </div>
+
           <div className="d-flex flex-column gap-2">
             <label htmlFor="chart-metric-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
               <span>📈</span>
@@ -1211,12 +1206,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           </div>
         )}
 
-        <div
-          className="chart-wrapper mb-4 position-relative"
-          onDoubleClick={() => setShowTrends((prev) => !prev)}
-          title={t("chart.toggleTrends", "Double-click to toggle trend lines")}
-          role="presentation"
-        >
+        <div className="chart-wrapper mb-4 position-relative">
           <div className="chart-container-responsive" style={{ minHeight: "400px", width: "100%" }}>
             {data && data.labels && data.labels.length > 0 && data.datasets && data.datasets.length > 0 ? (
               <>
