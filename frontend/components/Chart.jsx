@@ -524,104 +524,201 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const dementiaSummary = useMemo(() => {
     if (metricsType !== "dementia") return null;
 
-    const riskScores = Array.isArray(chartData?.dementia_risk_score) ? chartData.dementia_risk_score : [];
+    try {
+      const riskScores = Array.isArray(chartData?.dementia_risk_score) 
+        ? chartData.dementia_risk_score 
+        : (chartData?.dementia_risk_score != null ? [chartData.dementia_risk_score] : []);
 
-    const metrics = {
-      reactionTime: chartData?.reactionTimeAverage,
-      accuracy: chartData?.accuracyPercentage,
-      workingMemory: chartData?.workingMemorySpan,
-      executiveFunction: chartData?.executiveFunction,
-      visuospatial: chartData?.visuospatialAccuracy,
-      attention: chartData?.attentionConsistency,
-      processingSpeed: chartData?.processingSpeed,
-      learningCurve: chartData?.learningCurve,
-      errorRate: chartData?.errorRate,
-    };
-
-    const baseSummary = computeDementiaProbability({ riskScores, metrics });
-    
-    // Add trend analysis for risk score
-    if (riskScores.length >= 2) {
-      const normalizedScores = riskScores.map(s => s <= 1 ? s * 100 : s);
-      const trend = calculateLinearTrend(normalizedScores);
-      const trendLineData = calculateTrendLine(normalizedScores, trend, 5);
-      const thresholds = { low: 30, moderate: 50, high: 70 };
-      const thresholdAnalysis = detectThresholdCrossing(normalizedScores, thresholds, true);
-      const daysPerPoint = 7;
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - (normalizedScores.length * daysPerPoint));
-      const futurePrediction = predictFutureDate(normalizedScores, thresholds.moderate, true, startDate, daysPerPoint);
-      const earlyRisk = calculateEarlyRisk(normalizedScores, {
-        thresholds,
-        higherIsWorse: true,
-        startDate,
-        daysPerPoint
-      });
-
-      // Predict dementia timeline in years
-      const timelinePrediction = predictDementiaTimeline(normalizedScores, {
-        startDate,
-        daysPerPoint,
-        criticalThreshold: 70,
-        moderateThreshold: 50,
-        highRiskThreshold: 80
-      });
-
-      // Normalize dates so rendering is consistent even if serialized
-      const normalizeDate = (val) => {
-        if (!val) return null;
-        const d = val instanceof Date ? val : new Date(val);
-        return Number.isNaN(d.getTime()) ? null : d;
+      const metrics = {
+        reactionTime: chartData?.reactionTimeAverage,
+        accuracy: chartData?.accuracyPercentage,
+        workingMemory: chartData?.workingMemorySpan,
+        executiveFunction: chartData?.executiveFunction,
+        visuospatial: chartData?.visuospatialAccuracy,
+        attention: chartData?.attentionConsistency,
+        processingSpeed: chartData?.processingSpeed,
+        learningCurve: chartData?.learningCurve,
+        errorRate: chartData?.errorRate,
       };
 
-      const normalizedFuturePrediction = {
-        ...futurePrediction,
-        predictedDate: normalizeDate(futurePrediction.predictedDate)
+      // Ensure baseSummary always has required properties with defaults
+      const baseSummary = computeDementiaProbability({ riskScores, metrics });
+      
+      // Ensure all required properties exist with fallbacks
+      const safeBaseSummary = {
+        probability: baseSummary?.probability ?? 0,
+        probabilityPercent: baseSummary?.probabilityPercent ?? 0,
+        riskLabel: baseSummary?.riskLabel ?? "Low",
+        trend: baseSummary?.trend ?? "stable",
+        slope: baseSummary?.slope ?? 0,
+        confidence: baseSummary?.confidence ?? 0,
+        latestRisk: baseSummary?.latestRisk ?? null,
+        dataPoints: baseSummary?.dataPoints ?? riskScores.length,
+        latestMetrics: baseSummary?.latestMetrics ?? {},
       };
+      
+      // Add trend analysis for risk score
+      if (riskScores.length >= 2) {
+        try {
+          const normalizedScores = riskScores.map(s => {
+            const num = Number(s);
+            return Number.isFinite(num) ? (num <= 1 ? num * 100 : num) : 0;
+          }).filter(s => s >= 0 && s <= 100);
+          
+          if (normalizedScores.length >= 2) {
+            const trend = calculateLinearTrend(normalizedScores);
+            const trendLineData = calculateTrendLine(normalizedScores, trend, 5);
+            const thresholds = { low: 30, moderate: 50, high: 70 };
+            const thresholdAnalysis = detectThresholdCrossing(normalizedScores, thresholds, true);
+            const daysPerPoint = 7;
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - (normalizedScores.length * daysPerPoint));
+            const futurePrediction = predictFutureDate(normalizedScores, thresholds.moderate, true, startDate, daysPerPoint);
+            const earlyRisk = calculateEarlyRisk(normalizedScores, {
+              thresholds,
+              higherIsWorse: true,
+              startDate,
+              daysPerPoint
+            });
 
-      const normalizedTimeline = timelinePrediction
-        ? {
-            ...timelinePrediction,
-            predictedDateModerate: normalizeDate(timelinePrediction.predictedDateModerate),
-            predictedDateCritical: normalizeDate(timelinePrediction.predictedDateCritical),
-            predictedDateHighRisk: normalizeDate(timelinePrediction.predictedDateHighRisk)
+            // Predict dementia timeline in years
+            const timelinePrediction = predictDementiaTimeline(normalizedScores, {
+              startDate,
+              daysPerPoint,
+              criticalThreshold: 70,
+              moderateThreshold: 50,
+              highRiskThreshold: 80
+            });
+
+            // Normalize dates so rendering is consistent even if serialized
+            const normalizeDate = (val) => {
+              if (!val) return null;
+              try {
+                const d = val instanceof Date ? val : new Date(val);
+                return Number.isNaN(d.getTime()) ? null : d;
+              } catch {
+                return null;
+              }
+            };
+
+            const normalizedFuturePrediction = futurePrediction ? {
+              ...futurePrediction,
+              predictedDate: normalizeDate(futurePrediction.predictedDate),
+              isValid: futurePrediction.isValid ?? false,
+              daysFromNow: futurePrediction.daysFromNow ?? null,
+              reason: futurePrediction.reason ?? null,
+            } : {
+              isValid: false,
+              predictedDate: null,
+              daysFromNow: null,
+              reason: "Insufficient data for prediction"
+            };
+
+            const normalizedTimeline = timelinePrediction
+              ? {
+                  ...timelinePrediction,
+                  predictedDateModerate: normalizeDate(timelinePrediction.predictedDateModerate),
+                  predictedDateCritical: normalizeDate(timelinePrediction.predictedDateCritical),
+                  predictedDateHighRisk: normalizeDate(timelinePrediction.predictedDateHighRisk),
+                  isValid: timelinePrediction.isValid ?? false,
+                  isLowRisk: timelinePrediction.isLowRisk ?? false,
+                  currentRisk: timelinePrediction.currentRisk ?? "low",
+                  message: timelinePrediction.message ?? t("chart.timelineStable", "Risk trend is stable or improving"),
+                  confidence: timelinePrediction.confidence ?? 0,
+                  yearsToModerate: timelinePrediction.yearsToModerate ?? null,
+                  yearsToCritical: timelinePrediction.yearsToCritical ?? null,
+                  yearsToHighRisk: timelinePrediction.yearsToHighRisk ?? null,
+                  monthsToModerate: timelinePrediction.monthsToModerate ?? null,
+                  monthsToCritical: timelinePrediction.monthsToCritical ?? null,
+                  monthsToHighRisk: timelinePrediction.monthsToHighRisk ?? null,
+                }
+              : {
+                  isValid: false,
+                  isLowRisk: true,
+                  currentRisk: "low",
+                  message: t("chart.timelineUnavailable", "Timeline prediction unavailable"),
+                  confidence: 0,
+                  yearsToModerate: null,
+                  yearsToCritical: null,
+                  yearsToHighRisk: null,
+                  monthsToModerate: null,
+                  monthsToCritical: null,
+                  monthsToHighRisk: null,
+                  predictedDateModerate: null,
+                  predictedDateCritical: null,
+                  predictedDateHighRisk: null,
+                };
+
+            return {
+              ...safeBaseSummary,
+              trendAnalysis: {
+                trend: trend || { equation: "N/A", slope: 0, rSquared: 0, isValid: false },
+                trendLineData: trendLineData || [],
+                thresholdAnalysis: thresholdAnalysis || { hasCrossed: false, crossedAt: null, riskLevel: "low" },
+                futurePrediction: normalizedFuturePrediction,
+                earlyRisk: earlyRisk || { riskLevel: "low", earlyWarning: false, projectedRisk: null }
+              },
+              timelinePrediction: normalizedTimeline
+            };
           }
-        : null;
+        } catch (err) {
+          console.warn("[Chart] Error computing trend analysis:", err);
+        }
+      }
 
+      // Fallback: safe/insufficient data timeline
       return {
-        ...baseSummary,
-        trendAnalysis: {
-          trend,
-          trendLineData,
-          thresholdAnalysis,
-          futurePrediction: normalizedFuturePrediction,
-          earlyRisk
-        },
-        timelinePrediction: normalizedTimeline
+        ...safeBaseSummary,
+        trendAnalysis: null,
+        timelinePrediction: {
+          isValid: true,
+          isLowRisk: true,
+          currentRisk: safeBaseSummary.riskLabel?.toLowerCase() || "low",
+          message: t("chart.timelineStable", "Risk trend is stable or improving"),
+          confidence: safeBaseSummary.confidence || 0,
+          yearsToModerate: null,
+          yearsToCritical: null,
+          yearsToHighRisk: null,
+          monthsToModerate: null,
+          monthsToCritical: null,
+          monthsToHighRisk: null,
+          predictedDateModerate: null,
+          predictedDateCritical: null,
+          predictedDateHighRisk: null
+        }
+      };
+    } catch (err) {
+      console.error("[Chart] Error computing dementia summary:", err);
+      // Return minimal valid summary to ensure rendering
+      return {
+        probability: 0,
+        probabilityPercent: 0,
+        riskLabel: "Low",
+        trend: "stable",
+        slope: 0,
+        confidence: 0,
+        latestRisk: null,
+        dataPoints: 0,
+        latestMetrics: {},
+        trendAnalysis: null,
+        timelinePrediction: {
+          isValid: false,
+          isLowRisk: true,
+          currentRisk: "low",
+          message: t("chart.insufficientData", "Insufficient data for analysis"),
+          confidence: 0,
+          yearsToModerate: null,
+          yearsToCritical: null,
+          yearsToHighRisk: null,
+          monthsToModerate: null,
+          monthsToCritical: null,
+          monthsToHighRisk: null,
+          predictedDateModerate: null,
+          predictedDateCritical: null,
+          predictedDateHighRisk: null
+        }
       };
     }
-
-    // Fallback: safe/insufficient data timeline
-    return {
-      ...baseSummary,
-      trendAnalysis: null,
-      timelinePrediction: {
-        isValid: true,
-        isLowRisk: true,
-        currentRisk: baseSummary.riskLabel || "low",
-        message: t("chart.timelineStable", "Risk trend is stable or improving"),
-        confidence: baseSummary.confidence || 0,
-        yearsToModerate: null,
-        yearsToCritical: null,
-        yearsToHighRisk: null,
-        monthsToModerate: null,
-        monthsToCritical: null,
-        monthsToHighRisk: null,
-        predictedDateModerate: null,
-        predictedDateCritical: null,
-        predictedDateHighRisk: null
-      }
-    };
   }, [chartData, metricsType, t]);
 
   const trendInfo = useMemo(() => {
@@ -1359,25 +1456,32 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           </div>
         )}
 
-        {metricsType === "dementia" && dementiaSummary && (
-          <div className="card mb-4">
-            <div className="card-header d-flex align-items-center gap-2">
-              <div className="fs-3">🧠</div>
-              <div>
-                <h2 className="h5 mb-0">{t("chart.dementiaSummary", "Cognitive Risk Summary")}</h2>
-                <small className="text-muted">
-                  {t("chart.dementiaSummaryHint", "Latest data, trend, and probability of deterioration or improvement")}
-                </small>
+        {metricsType === "dementia" && (
+          dementiaSummary ? (
+            <div className="card mb-4">
+              <div className="card-header d-flex align-items-center gap-2">
+                <div className="fs-3">🧠</div>
+                <div>
+                  <h2 className="h5 mb-0">{t("chart.dementiaSummary", "Cognitive Risk Summary")}</h2>
+                  <small className="text-muted">
+                    {t("chart.dementiaSummaryHint", "Latest data, trend, and probability of deterioration or improvement")}
+                  </small>
+                </div>
               </div>
-            </div>
-            <div className="card-body">
+              <div className="card-body">
               <div className="row g-3">
                 <div className="col-12 col-md-3">
                   <div className="card bg-light h-100">
                     <div className="card-body">
                       <div className="text-muted small mb-1">{t("chart.probability", "Probability (deterioration)")}</div>
-                      <div className="h3 mb-1">{dementiaSummary.probabilityPercent.toFixed(1)}%</div>
-                      <span className="badge bg-secondary">{dementiaSummary.riskLabel}</span>
+                      <div className="h3 mb-1">
+                        {dementiaSummary?.probabilityPercent != null 
+                          ? Number(dementiaSummary.probabilityPercent).toFixed(1) 
+                          : "0.0"}%
+                      </div>
+                      <span className="badge bg-secondary">
+                        {dementiaSummary?.riskLabel || "Low"}
+                      </span>
                       <div className="small text-muted mt-1">
                         {t("chart.summaryNoteProb", "Higher % suggests greater deterioration risk")}
                       </div>
@@ -1390,13 +1494,13 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                       <div className="text-muted small mb-1">{t("chart.trend", "Trend")}</div>
                       <div className="d-flex align-items-center gap-2 mb-1">
                         <span className={`badge ${trendInfo?.className || "bg-secondary text-white"}`}>
-                          {trendInfo?.icon} {trendInfo?.label || dementiaSummary.trend}
+                          {trendInfo?.icon || "⏸️"} {trendInfo?.label || dementiaSummary?.trend || "Stable"}
                         </span>
                       </div>
                       <small className="text-muted">
-                        {dementiaSummary.trend === "deteriorating"
+                        {dementiaSummary?.trend === "deteriorating"
                           ? t("chart.trendWorse", "Higher risk over recent entries")
-                          : dementiaSummary.trend === "improving"
+                          : dementiaSummary?.trend === "improving"
                             ? t("chart.trendBetter", "Risk moving down")
                             : t("chart.trendStable", "Risk stable")}
                       </small>
@@ -1407,9 +1511,13 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   <div className="card h-100">
                     <div className="card-body">
                       <div className="text-muted small mb-1">{t("chart.latestRisk", "Latest risk score")}</div>
-                      <div className="h4 mb-1">{dementiaSummary.latestRisk != null ? Math.round(dementiaSummary.latestRisk * 10) / 10 : "—"}</div>
+                      <div className="h4 mb-1">
+                        {dementiaSummary?.latestRisk != null 
+                          ? Math.round(Number(dementiaSummary.latestRisk) * 10) / 10 
+                          : "—"}
+                      </div>
                       <small className="text-muted">
-                        {t("chart.dataPoints", "Data Points")}: {dementiaSummary.dataPoints}
+                        {t("chart.dataPoints", "Data Points")}: {dementiaSummary?.dataPoints ?? 0}
                       </small>
                       <div className="small text-muted mt-1">
                         {t("chart.summaryNoteLatest", "Most recent score in the series")}
@@ -1420,7 +1528,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               </div>
 
               {/* Enhanced Trend Analysis for Dementia Risk */}
-              {dementiaSummary.trendAnalysis && (
+              {dementiaSummary?.trendAnalysis && (
                 <div className="row g-3 mt-3">
                   <div className="col-12">
                     <div className="card border-info">
@@ -1429,124 +1537,131 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                       </div>
                       <div className="card-body">
                         <div className="trend-grid">
-                          <div className="card">
-                            <div className="card-body">
-                              <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-muted">{t("chart.linearTrend", "Linear Trend")}:</span>
-                                <strong>{dementiaSummary.trendAnalysis.trend.equation}</strong>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="text-muted">{t("chart.trendSlope", "Trend Slope")}:</span>
-                                <strong className={dementiaSummary.trendAnalysis.trend.slope > 0 ? 'text-danger' : 'text-success'}>
-                                  {dementiaSummary.trendAnalysis.trend.slope > 0 ? '+' : ''}{dementiaSummary.trendAnalysis.trend.slope.toFixed(4)}
-                                </strong>
-                              </div>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="text-muted">{t("chart.rSquared", "R² (Fit)")}:</span>
-                                <strong>{(dementiaSummary.trendAnalysis.trend.rSquared * 100).toFixed(1)}%</strong>
+                          {dementiaSummary.trendAnalysis.trend && (
+                            <div className="card">
+                              <div className="card-body">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="text-muted">{t("chart.linearTrend", "Linear Trend")}:</span>
+                                  <strong>{dementiaSummary.trendAnalysis.trend.equation || "N/A"}</strong>
+                                </div>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="text-muted">{t("chart.trendSlope", "Trend Slope")}:</span>
+                                  <strong className={(dementiaSummary.trendAnalysis.trend.slope ?? 0) > 0 ? 'text-danger' : 'text-success'}>
+                                    {(dementiaSummary.trendAnalysis.trend.slope ?? 0) > 0 ? '+' : ''}
+                                    {Number(dementiaSummary.trendAnalysis.trend.slope ?? 0).toFixed(4)}
+                                  </strong>
+                                </div>
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <span className="text-muted">{t("chart.rSquared", "R² (Fit)")}:</span>
+                                  <strong>{((dementiaSummary.trendAnalysis.trend.rSquared ?? 0) * 100).toFixed(1)}%</strong>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          )}
                           
-                          <div className="card">
-                            <div className="card-body">
-                              {dementiaSummary.trendAnalysis.futurePrediction.isValid ? (
-                                <>
-                                  <div className="mb-2">
-                                    <strong className="text-primary">{t("chart.predictedThresholdDate", "Predicted Threshold Crossing Date")}:</strong>
+                          {dementiaSummary.trendAnalysis.futurePrediction && (
+                            <div className="card">
+                              <div className="card-body">
+                                {dementiaSummary.trendAnalysis.futurePrediction.isValid ? (
+                                  <>
+                                    <div className="mb-2">
+                                      <strong className="text-primary">{t("chart.predictedThresholdDate", "Predicted Threshold Crossing Date")}:</strong>
+                                    </div>
+                                    <div className="h5 text-primary mb-2 highlight-badge">
+                                      {dementiaSummary.trendAnalysis.futurePrediction.predictedDate 
+                                        ? dementiaSummary.trendAnalysis.futurePrediction.predictedDate.toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                          })
+                                        : '—'}
+                                    </div>
+                                    <div className="small text-muted">
+                                      {t("chart.daysFromNow", "Days from now")}: {dementiaSummary.trendAnalysis.futurePrediction.daysFromNow ?? '—'}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-muted">
+                                    <small>{dementiaSummary.trendAnalysis.futurePrediction?.reason || t("chart.noPrediction", "Prediction not available")}</small>
                                   </div>
-                                  <div className="h5 text-primary mb-2 highlight-badge">
-                                    {dementiaSummary.trendAnalysis.futurePrediction.predictedDate 
-                                      ? dementiaSummary.trendAnalysis.futurePrediction.predictedDate.toLocaleDateString('en-US', { 
-                                          year: 'numeric', 
-                                          month: 'long', 
-                                          day: 'numeric' 
-                                        })
-                                      : '—'}
-                                  </div>
-                                  <div className="small text-muted">
-                                    {t("chart.daysFromNow", "Days from now")}: {dementiaSummary.trendAnalysis.futurePrediction.daysFromNow || '—'}
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="text-muted">
-                                  <small>{dementiaSummary.trendAnalysis.futurePrediction.reason || t("chart.noPrediction", "Prediction not available")}</small>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
-                          <div className="card">
-                            <div className="card-body">
-                              {dementiaSummary.timelinePrediction && dementiaSummary.timelinePrediction.isValid ? (
-                                <div className={`alert ${dementiaSummary.timelinePrediction.currentRisk === 'very_high' || dementiaSummary.timelinePrediction.currentRisk === 'high' ? 'alert-danger' : dementiaSummary.timelinePrediction.isLowRisk ? 'alert-success' : 'alert-info'} mb-0`}>
-                                  <strong>⏰ {t("chart.predictedTimeline", "Predicted Dementia Timeline")}</strong>
-                                  <div className="mt-2">
-                                    {dementiaSummary.timelinePrediction.isLowRisk ? (
-                                      <div>
-                                        <div className="h5 mb-1">{t("chart.timelineLowRisk", "Low Risk")}</div>
-                                        <div className="small">{dementiaSummary.timelinePrediction.message}</div>
-                                      </div>
-                                    ) : dementiaSummary.timelinePrediction.yearsToCritical !== null && dementiaSummary.timelinePrediction.yearsToCritical !== undefined ? (
-                                      <div>
-                                        {dementiaSummary.timelinePrediction.yearsToCritical === 0 ? (
-                                          <>
-                                            <div className="h5 text-danger mb-1">{t("chart.timelineNow", "Now")}</div>
-                                            <div className="small">{t("chart.timelineHighRiskNow", "High risk detected - immediate attention recommended")}</div>
-                                          </>
-                                        ) : dementiaSummary.timelinePrediction.yearsToCritical < 1 ? (
-                                          <>
-                                            <div className="h5 mb-1 highlight-badge">
-                                              {dementiaSummary.timelinePrediction.monthsToCritical} {t("chart.months", "months")}
+                          {dementiaSummary.timelinePrediction && (
+                            <div className="card">
+                              <div className="card-body">
+                                {dementiaSummary.timelinePrediction.isValid ? (
+                                  <div className={`alert ${(dementiaSummary.timelinePrediction.currentRisk === 'very_high' || dementiaSummary.timelinePrediction.currentRisk === 'high') ? 'alert-danger' : dementiaSummary.timelinePrediction.isLowRisk ? 'alert-success' : 'alert-info'} mb-0`}>
+                                    <strong>⏰ {t("chart.predictedTimeline", "Predicted Dementia Timeline")}</strong>
+                                    <div className="mt-2">
+                                      {dementiaSummary.timelinePrediction.isLowRisk ? (
+                                        <div>
+                                          <div className="h5 mb-1">{t("chart.timelineLowRisk", "Low Risk")}</div>
+                                          <div className="small">{dementiaSummary.timelinePrediction.message || t("chart.timelineStable", "Risk trend is stable or improving")}</div>
+                                        </div>
+                                      ) : dementiaSummary.timelinePrediction.yearsToCritical !== null && dementiaSummary.timelinePrediction.yearsToCritical !== undefined ? (
+                                        <div>
+                                          {dementiaSummary.timelinePrediction.yearsToCritical === 0 ? (
+                                            <>
+                                              <div className="h5 text-danger mb-1">{t("chart.timelineNow", "Now")}</div>
+                                              <div className="small">{t("chart.timelineHighRiskNow", "High risk detected - immediate attention recommended")}</div>
+                                            </>
+                                          ) : dementiaSummary.timelinePrediction.yearsToCritical < 1 ? (
+                                            <>
+                                              <div className="h5 mb-1 highlight-badge">
+                                                {dementiaSummary.timelinePrediction.monthsToCritical ?? 0} {t("chart.months", "months")}
+                                              </div>
+                                              <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div className="h5 mb-1 highlight-badge">
+                                                {dementiaSummary.timelinePrediction.yearsToCritical} {t("chart.years", "years")}
+                                              </div>
+                                              <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
+                                            </>
+                                          )}
+                                          {dementiaSummary.timelinePrediction.predictedDateCritical && (
+                                            <div className="small text-muted mt-1">
+                                              {t("chart.estimatedDate", "Estimated date")}: {dementiaSummary.timelinePrediction.predictedDateCritical.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                                             </div>
-                                            <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <div className="h5 mb-1 highlight-badge">
-                                              {dementiaSummary.timelinePrediction.yearsToCritical} {t("chart.years", "years")}
-                                            </div>
-                                            <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
-                                          </>
-                                        )}
-                                        {dementiaSummary.timelinePrediction.predictedDateCritical && (
-                                          <div className="small text-muted mt-1">
-                                            {t("chart.estimatedDate", "Estimated date")}: {dementiaSummary.timelinePrediction.predictedDateCritical.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : dementiaSummary.timelinePrediction.yearsToModerate !== null && dementiaSummary.timelinePrediction.yearsToModerate !== undefined ? (
-                                      <div>
-                                        {dementiaSummary.timelinePrediction.yearsToModerate < 1 ? (
-                                          <>
-                                            <div className="h5 mb-1 highlight-badge">
-                                              {dementiaSummary.timelinePrediction.monthsToModerate} {t("chart.months", "months")}
-                                            </div>
-                                            <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <div className="h5 mb-1 highlight-badge">
-                                              {dementiaSummary.timelinePrediction.yearsToModerate} {t("chart.years", "years")}
-                                            </div>
-                                            <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>
-                                          </>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <div className="small">{dementiaSummary.timelinePrediction.message || t("chart.timelineUnavailable", "Timeline prediction unavailable")}</div>
-                                    )}
+                                          )}
+                                        </div>
+                                      ) : dementiaSummary.timelinePrediction.yearsToModerate !== null && dementiaSummary.timelinePrediction.yearsToModerate !== undefined ? (
+                                        <div>
+                                          {dementiaSummary.timelinePrediction.yearsToModerate < 1 ? (
+                                            <>
+                                              <div className="h5 mb-1 highlight-badge">
+                                                {dementiaSummary.timelinePrediction.monthsToModerate ?? 0} {t("chart.months", "months")}
+                                              </div>
+                                              <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div className="h5 mb-1 highlight-badge">
+                                                {dementiaSummary.timelinePrediction.yearsToModerate} {t("chart.years", "years")}
+                                              </div>
+                                              <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>
+                                            </>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="small">{dementiaSummary.timelinePrediction.message || t("chart.timelineUnavailable", "Timeline prediction unavailable")}</div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <div className="text-muted">
-                                  <small>{t("chart.timelineUnavailable", "Timeline prediction unavailable")}</small>
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="text-muted">
+                                    <small>{dementiaSummary.timelinePrediction?.message || t("chart.timelineUnavailable", "Timeline prediction unavailable")}</small>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
-                          {!(dementiaSummary.timelinePrediction && dementiaSummary.timelinePrediction.isValid && (dementiaSummary.timelinePrediction.currentRisk === 'high' || dementiaSummary.timelinePrediction.currentRisk === 'very_high')) && (
+                          {dementiaSummary.trendAnalysis?.earlyRisk && !(dementiaSummary.timelinePrediction && dementiaSummary.timelinePrediction.isValid && (dementiaSummary.timelinePrediction.currentRisk === 'high' || dementiaSummary.timelinePrediction.currentRisk === 'very_high')) && (
                             <div className="card">
                               <div className="card-body">
                                 {dementiaSummary.trendAnalysis.earlyRisk.earlyWarning ? (
@@ -1555,9 +1670,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                     <div className="small mt-1">
                                       {t("chart.earlyRiskText", "Trend analysis indicates potential risk threshold crossing. Consider consulting a healthcare professional.")}
                                     </div>
-                                    {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk && (
+                                    {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk != null && (
                                       <div className="mt-2">
-                                        <strong>{t("chart.projectedRisk", "Projected Risk")}:</strong> {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk.toFixed(1)}%
+                                        <strong>{t("chart.projectedRisk", "Projected Risk")}:</strong> {Number(dementiaSummary.trendAnalysis.earlyRisk.projectedRisk).toFixed(1)}%
                                       </div>
                                     )}
                                   </div>
@@ -1602,6 +1717,29 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               )}
             </div>
           </div>
+          ) : (
+            <div className="card mb-4">
+              <div className="card-header d-flex align-items-center gap-2">
+                <div className="fs-3">🧠</div>
+                <div>
+                  <h2 className="h5 mb-0">{t("chart.dementiaSummary", "Cognitive Risk Summary")}</h2>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="alert alert-info mb-0">
+                  <div className="d-flex align-items-center gap-2">
+                    <span>ℹ️</span>
+                    <div>
+                      <strong>{t("chart.noDataAvailable", "No Cognitive Data Available")}</strong>
+                      <div className="small mt-1">
+                        {t("chart.noDataMessage", "Complete cognitive assessment games to see your risk analysis and predictions here.")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
         )}
 
         {metricsType === "screening" && screeningRows.length > 0 && (

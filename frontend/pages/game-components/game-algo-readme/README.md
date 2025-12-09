@@ -243,6 +243,13 @@ Total Score = Sum of all Round Scores
 }
 ```
 
+### Waiting Time & Its Effect
+
+- Each round waits a random delay before showing the green signal: see Min/Max Delay per difficulty (e.g., Easy 2000–4000ms, Hard 500–2000ms).
+- The waiting period **does not add to your reaction-time penalty**; only the time after the green signal counts toward scoring.
+- Longer randomized waits increase user vigilance demands but keep scoring fair because the penalty starts only when the signal appears.
+- Early clicks during the waiting period show “TOO EARLY!” and the round does not count (no score change).
+
 ### Penalty for Early Click
 
 - Clicking before green signal shows "TOO EARLY!" warning
