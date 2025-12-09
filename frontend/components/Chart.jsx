@@ -46,6 +46,8 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
   const [selectedDataPoint, setSelectedDataPoint] = useState(null); // kept for compatibility, no popup rendered
   const [showTrends, setShowTrends] = useState(false);
+  const [trendDatasetFilter, setTrendDatasetFilter] = useState(null);
+  const lastClickRef = useRef({ time: 0, label: null });
   const chartRef = useRef(null);
 
   const normalizeArray = (arr, length) => {
@@ -418,9 +420,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     const trendDatasets = [];
     if (showTrends && trendAnalysis && typeof trendAnalysis === 'object') {
       filteredDatasets.forEach((ds, index) => {
+        if (trendDatasetFilter && trendDatasetFilter !== ds.label) return;
         const trendData = trendAnalysis[ds.label];
         if (trendData && trendData.trend && trendData.trend.isValid && chartType === "line") {
-          // Add trend line dataset
           const trendLineValues = trendData.trendLineData?.trendLine || [];
           if (trendLineValues.length > 0) {
             trendDatasets.push({
@@ -434,7 +436,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               pointHoverRadius: 0,
               fill: false,
               tension: 0,
-              order: index + 100, // Render after main datasets
+              order: index + 100,
               hidden: !visibleDatasets.has(ds.label) && visibleDatasets.size > 0,
             });
           }
@@ -677,6 +679,23 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       mode: 'index',
     },
     onHover: () => {},
+    onClick: (event, elements, chart) => {
+      if (!chart || !elements || elements.length === 0) return;
+      const datasetIndex = elements[0].datasetIndex;
+      const ds = chart.data.datasets?.[datasetIndex];
+      const label = ds?.label;
+      if (!label) return;
+
+      const now = Date.now();
+      const { time: lastTime, label: lastLabel } = lastClickRef.current;
+      const isDouble = label === lastLabel && now - lastTime < 350;
+      lastClickRef.current = { time: now, label };
+
+      if (isDouble) {
+        setShowTrends(true);
+        setTrendDatasetFilter((prev) => (prev === label ? null : label));
+      }
+    },
     animation: {
       duration: 800,
       easing: 'easeInOutQuart',
