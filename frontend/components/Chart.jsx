@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import "../css/components/Chart.css";
 import {
@@ -15,6 +15,13 @@ import {
 } from "chart.js";
 import { useTranslation } from "react-i18next";
 import { computeDementiaProbability } from "../utils/probability";
+import {
+  calculateLinearTrend,
+  calculateTrendLine,
+  detectThresholdCrossing,
+  predictFutureDate,
+  calculateEarlyRisk
+} from "../utils/chartUtils";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -34,6 +41,10 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [metricsType, setMetricsType] = useState("emotional");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [visibleDatasets, setVisibleDatasets] = useState(new Set());
+  const [dataRange, setDataRange] = useState({ start: 0, end: null });
+  const [selectedDataPoint, setSelectedDataPoint] = useState(null);
+  const chartRef = useRef(null);
 
   const normalizeArray = (arr, length) => {
     const targetLength = Number.isFinite(length) && length > 0 ? length : (Array.isArray(arr) ? arr.length : 0) || 0;
@@ -71,7 +82,33 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   useEffect(() => {
     const hasValidData = maxDataLength > 0 && chartData && Object.keys(chartData).length > 0;
     setHasData(hasValidData);
+    // Reset data range when data changes
+    setDataRange({ start: 0, end: null });
   }, [chartData, maxDataLength]);
+
+  // Initialize visible datasets when metrics type changes
+  useEffect(() => {
+    const allDatasets = new Set();
+    if (metricsType === "emotional") {
+      [t("chart.stress", "Stress"), t("chart.happiness", "Happiness"), t("chart.anxiety", "Anxiety"), t("chart.overallMood", "Overall Mood")].forEach(label => allDatasets.add(label));
+    } else if (metricsType === "screening") {
+      [t("chart.phq9", "PHQ-9"), t("chart.gad7", "GAD-7"), t("chart.ghq", "GHQ")].forEach(label => allDatasets.add(label));
+    } else if (metricsType === "dementia") {
+      [
+        t("chart.reactionTime", "Reaction Time") + " (ms)",
+        t("chart.accuracy", "Accuracy") + " (%)",
+        t("chart.workingMemorySpan", "Working Memory Span"),
+        t("chart.executiveFunction", "Executive Function"),
+        t("chart.visuospatialAccuracy", "Visuospatial Accuracy") + " (%)",
+        t("chart.attentionConsistency", "Attention Consistency") + " (%)",
+        t("chart.processingSpeed", "Processing Speed") + " (s)",
+        t("chart.learningCurve", "Learning Curve"),
+        t("chart.errorRate", "Error Rate") + " (%)",
+        t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)"
+      ].forEach(label => allDatasets.add(label));
+    }
+    setVisibleDatasets(allDatasets);
+  }, [metricsType, t]);
 
   const handleRefresh = async () => {
     if (onRefresh && !isRefreshing) {
@@ -85,10 +122,55 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     }
   };
 
+  // Filter labels and data based on range
+  const filteredLabels = useMemo(() => {
+    const start = dataRange.start || 0;
+    const end = dataRange.end !== null ? dataRange.end : effectiveLabels.length;
+    return effectiveLabels.slice(start, end);
+  }, [effectiveLabels, dataRange]);
+
+  // Get all available dataset labels for toggle buttons
+  const allDatasetLabels = useMemo(() => {
+    let labels = [];
+    
+    if (metricsType === "emotional") {
+      labels = [
+        t("chart.stress", "Stress"),
+        t("chart.happiness", "Happiness"),
+        t("chart.anxiety", "Anxiety"),
+        t("chart.overallMood", "Overall Mood")
+      ];
+    } else if (metricsType === "screening") {
+      labels = [
+        t("chart.phq9", "PHQ-9"),
+        t("chart.gad7", "GAD-7"),
+        t("chart.ghq", "GHQ")
+      ];
+    } else if (metricsType === "dementia") {
+      labels = [
+        t("chart.reactionTime", "Reaction Time") + " (ms)",
+        t("chart.accuracy", "Accuracy") + " (%)",
+        t("chart.workingMemorySpan", "Working Memory Span"),
+        t("chart.executiveFunction", "Executive Function"),
+        t("chart.visuospatialAccuracy", "Visuospatial Accuracy") + " (%)",
+        t("chart.attentionConsistency", "Attention Consistency") + " (%)",
+        t("chart.processingSpeed", "Processing Speed") + " (s)",
+        t("chart.learningCurve", "Learning Curve"),
+        t("chart.errorRate", "Error Rate") + " (%)",
+        t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)"
+      ];
+    }
+    return labels;
+  }, [metricsType, t]);
+
   const data = useMemo(() => {
     if (!effectiveLabels.length) return { labels: [], datasets: [] };
 
     const len = effectiveLabels.length;
+    const start = dataRange.start || 0;
+    const end = dataRange.end !== null ? dataRange.end : len;
+    const filteredLen = end - start;
+    
     let datasets = [];
 
     if (metricsType === "emotional") {
@@ -177,40 +259,148 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       ];
     }
 
-    return {
-      labels: effectiveLabels,
-      datasets: datasets.map((ds, index) => {
-        const isDashed = ds.borderDash && ds.borderDash.length > 0;
-        const baseColor = `rgba(${ds.color},1)`;
-        const fillColor = `rgba(${ds.color},${chartType === "line" ? 0.15 : 0.7})`;
+    // Filter datasets based on visibility and range
+    const filteredDatasets = datasets
+      .filter(ds => visibleDatasets.size === 0 || visibleDatasets.has(ds.label))
+      .map((ds, index) => {
+        // Slice data based on range
+        const slicedData = ds.data.slice(start, end);
         
         return {
-          label: ds.label,
-          data: ds.data,
-          borderColor: baseColor,
-          backgroundColor: fillColor,
-          borderWidth: chartType === "line" ? 3 : 2,
-          borderRadius: chartType === "bar" ? 6 : 0,
-          borderSkipped: false,
-          fill: chartType === "line",
-          spanGaps: true,
-          tension: chartType === "line" ? 0.4 : 0,
-          pointRadius: chartType === "line" ? 4 : 0,
-          pointHoverRadius: chartType === "line" ? 6 : 0,
-          pointBackgroundColor: baseColor,
-          pointBorderColor: '#FFFFFF',
-          pointBorderWidth: 2,
-          pointHoverBackgroundColor: baseColor,
-          pointHoverBorderColor: '#FFFFFF',
-          pointHoverBorderWidth: 3,
-          borderDash: isDashed ? ds.borderDash : [],
-          animation: {
-            delay: index * 50,
-          },
+          ...ds,
+          data: slicedData,
         };
-      }),
+      });
+
+    // Add trend lines as additional datasets
+    const trendDatasets = [];
+    filteredDatasets.forEach((ds, index) => {
+      const trendData = trendAnalysis[ds.label];
+      if (trendData && trendData.trend.isValid && chartType === "line") {
+        // Add trend line dataset
+        const trendLineValues = [...trendData.trendLineData.trendLine];
+        if (trendLineValues.length > 0) {
+          trendDatasets.push({
+            label: `${ds.label} (Trend)`,
+            data: trendLineValues,
+            borderColor: `rgba(${ds.color},0.6)`,
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false,
+            tension: 0,
+            order: index + 100, // Render after main datasets
+            hidden: !visibleDatasets.has(ds.label) && visibleDatasets.size > 0,
+          });
+        }
+      }
+    });
+
+    return {
+      labels: filteredLabels,
+      datasets: [
+        ...filteredDatasets.map((ds, index) => {
+          const isDashed = ds.borderDash && ds.borderDash.length > 0;
+          const baseColor = `rgba(${ds.color},1)`;
+          const fillColor = `rgba(${ds.color},${chartType === "line" ? 0.15 : 0.7})`;
+          
+          return {
+            label: ds.label,
+            data: ds.data,
+            borderColor: baseColor,
+            backgroundColor: fillColor,
+            borderWidth: chartType === "line" ? 3 : 2,
+            borderRadius: chartType === "bar" ? 6 : 0,
+            borderSkipped: false,
+            fill: chartType === "line",
+            spanGaps: true,
+            tension: chartType === "line" ? 0.4 : 0,
+            pointRadius: chartType === "line" ? 4 : 0,
+            pointHoverRadius: chartType === "line" ? 6 : 0,
+            pointBackgroundColor: baseColor,
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: baseColor,
+            pointHoverBorderColor: '#FFFFFF',
+            pointHoverBorderWidth: 3,
+            borderDash: isDashed ? ds.borderDash : [],
+            animation: {
+              delay: index * 50,
+            },
+            hidden: !visibleDatasets.has(ds.label) && visibleDatasets.size > 0,
+          };
+        }),
+        ...trendDatasets
+      ],
     };
-  }, [chartData, effectiveLabels, metricsType, chartType, t]);
+  }, [chartData, effectiveLabels, metricsType, chartType, visibleDatasets, dataRange, filteredLabels, trendAnalysis, t]);
+
+  // Calculate trends and early risk for all datasets
+  const trendAnalysis = useMemo(() => {
+    if (!data || !data.datasets || data.datasets.length === 0) return {};
+
+    const analysis = {};
+    
+    data.datasets.forEach((dataset) => {
+      const values = dataset.data.filter(v => v != null && Number.isFinite(v));
+      if (values.length < 2) return;
+
+      const trend = calculateLinearTrend(values);
+      const trendLineData = calculateTrendLine(values, trend, 5);
+      
+      // Determine thresholds based on metric type
+      let thresholds = { low: 30, moderate: 50, high: 70 };
+      let higherIsWorse = true;
+      
+      if (dataset.label.includes("Happiness") || dataset.label.includes("Accuracy") || 
+          dataset.label.includes("Working Memory") || dataset.label.includes("Executive") ||
+          dataset.label.includes("Visuospatial") || dataset.label.includes("Attention") ||
+          dataset.label.includes("Learning")) {
+        higherIsWorse = false;
+        thresholds = { low: 70, moderate: 50, high: 30 };
+      } else if (dataset.label.includes("Reaction Time") || dataset.label.includes("Processing Speed") ||
+                 dataset.label.includes("Error Rate")) {
+        higherIsWorse = true;
+        thresholds = { low: 30, moderate: 50, high: 70 };
+      }
+
+      const thresholdAnalysis = detectThresholdCrossing(values, thresholds, higherIsWorse);
+      
+      // Estimate days per data point (assuming weekly assessments)
+      const daysPerPoint = 7;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (values.length * daysPerPoint));
+      
+      const futurePrediction = predictFutureDate(
+        values,
+        thresholds.moderate,
+        higherIsWorse,
+        startDate,
+        daysPerPoint
+      );
+
+      const earlyRisk = calculateEarlyRisk(values, {
+        thresholds,
+        higherIsWorse,
+        startDate,
+        daysPerPoint,
+        riskMetric: dataset.label
+      });
+
+      analysis[dataset.label] = {
+        trend,
+        trendLineData,
+        thresholdAnalysis,
+        futurePrediction,
+        earlyRisk,
+        values
+      };
+    });
+
+    return analysis;
+  }, [data]);
 
   const dementiaSummary = useMemo(() => {
     if (metricsType !== "dementia") return null;
@@ -229,7 +419,39 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       errorRate: chartData?.errorRate,
     };
 
-    return computeDementiaProbability({ riskScores, metrics });
+    const baseSummary = computeDementiaProbability({ riskScores, metrics });
+    
+    // Add trend analysis for risk score
+    if (riskScores.length >= 2) {
+      const normalizedScores = riskScores.map(s => s <= 1 ? s * 100 : s);
+      const trend = calculateLinearTrend(normalizedScores);
+      const trendLineData = calculateTrendLine(normalizedScores, trend, 5);
+      const thresholds = { low: 30, moderate: 50, high: 70 };
+      const thresholdAnalysis = detectThresholdCrossing(normalizedScores, thresholds, true);
+      const daysPerPoint = 7;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (normalizedScores.length * daysPerPoint));
+      const futurePrediction = predictFutureDate(normalizedScores, thresholds.moderate, true, startDate, daysPerPoint);
+      const earlyRisk = calculateEarlyRisk(normalizedScores, {
+        thresholds,
+        higherIsWorse: true,
+        startDate,
+        daysPerPoint
+      });
+
+      return {
+        ...baseSummary,
+        trendAnalysis: {
+          trend,
+          trendLineData,
+          thresholdAnalysis,
+          futurePrediction,
+          earlyRisk
+        }
+      };
+    }
+
+    return baseSummary;
   }, [chartData, metricsType]);
 
   const trendInfo = useMemo(() => {
@@ -324,6 +546,19 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       intersect: false,
       mode: 'index',
     },
+    onHover: (event, activeElements) => {
+      if (activeElements.length > 0) {
+        const element = activeElements[0];
+        setSelectedDataPoint({
+          index: element.index,
+          dataset: element.datasetIndex,
+          value: element.element.$context.parsed.y,
+          label: filteredLabels[element.index]
+        });
+      } else {
+        setSelectedDataPoint(null);
+      }
+    },
     animation: {
       duration: 800,
       easing: 'easeInOutQuart',
@@ -347,8 +582,26 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           boxWidth: 12,
           boxHeight: 12,
         },
-        onClick: (e, legendItem) => {
+        onClick: (e, legendItem, legend) => {
+          const chart = legend.chart;
+          const index = legendItem.datasetIndex;
+          const meta = chart.getDatasetMeta(index);
           
+          // Toggle dataset visibility
+          meta.hidden = !meta.hidden;
+          
+          // Update visible datasets state
+          const newVisible = new Set(visibleDatasets);
+          const datasetLabel = legendItem.text;
+          
+          if (meta.hidden) {
+            newVisible.delete(datasetLabel);
+          } else {
+            newVisible.add(datasetLabel);
+          }
+          
+          setVisibleDatasets(newVisible);
+          chart.update();
         },
       },
       title: {
@@ -408,8 +661,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           autoSkip: true,
           maxRotation: 45,
           minRotation: 0,
+          maxTicksLimit: window.innerWidth < 768 ? 10 : window.innerWidth < 1024 ? 15 : 20,
           font: {
-            size: 11,
+            size: window.innerWidth < 576 ? 9 : 11,
             weight: '500',
           },
           color: '#5A5A5A',
@@ -561,69 +815,134 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         </div>
       </div>
 
-      <div className="chart-controls card-header d-flex justify-content-end align-items-center gap-3 flex-wrap pb-3">
-        <div className="d-flex flex-column gap-2">
-          <label htmlFor="chart-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
-            <span>📊</span>
-            {t("chart.chartType", "Chart Type")}
-          </label>
-          <select
-            id="chart-type-select"
-            name="chart-type-select"
-            value={chartType}
-            onChange={e => setChartType(e.target.value)}
-            className="form-select"
-            aria-label={t("chart.chartType", "Chart Type")}
-          >
-            <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
-            <option value="line">{t("chart.lineChart", "Line Chart")}</option>
-          </select>
-        </div>
-
-        <div className="d-flex flex-column gap-2">
-          <label htmlFor="chart-metric-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
-            <span>📈</span>
-            {t("chart.metricType", "Metric Type")}
-          </label>
-          <select
-            id="chart-metric-type-select"
-            name="chart-metric-type-select"
-            value={metricsType}
-            onChange={e => setMetricsType(e.target.value)}
-            className="form-select"
-            aria-label={t("chart.metricType", "Metric Type")}
-          >
-            <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
-            <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
-            <option value="dementia">{t("chart.dementiaMetrics", "Cognitive Impairment")}</option>
-          </select>
-        </div>
-
-        {onRefresh && (
-          <button 
-            className="btn btn-primary d-flex align-items-center gap-2" 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            aria-label={t("chart.refresh", "Refresh")}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className={isRefreshing ? 'spinning' : ''}
-              viewBox="0 0 16 16"
+        <div className="chart-controls card-header d-flex justify-content-between align-items-start gap-3 flex-wrap pb-3">
+        <div className="d-flex flex-wrap gap-3 align-items-end">
+          <div className="d-flex flex-column gap-2">
+            <label htmlFor="chart-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
+              <span>📊</span>
+              {t("chart.chartType", "Chart Type")}
+            </label>
+            <select
+              id="chart-type-select"
+              name="chart-type-select"
+              value={chartType}
+              onChange={e => setChartType(e.target.value)}
+              className="form-select"
+              aria-label={t("chart.chartType", "Chart Type")}
             >
-              <path
-                d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"
-              ></path>
-              <path
-                fillRule="evenodd"
-                d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"
-              ></path>
-            </svg>
-            {isRefreshing ? t("chart.refreshing", "Refreshing...") : t("chart.refresh", "Refresh")}
-          </button>
+              <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
+              <option value="line">{t("chart.lineChart", "Line Chart")}</option>
+            </select>
+          </div>
+
+          <div className="d-flex flex-column gap-2">
+            <label htmlFor="chart-metric-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
+              <span>📈</span>
+              {t("chart.metricType", "Metric Type")}
+            </label>
+            <select
+              id="chart-metric-type-select"
+              name="chart-metric-type-select"
+              value={metricsType}
+              onChange={e => setMetricsType(e.target.value)}
+              className="form-select"
+              aria-label={t("chart.metricType", "Metric Type")}
+            >
+              <option value="emotional">{t("chart.emotionalMetrics", "Emotional Metrics")}</option>
+              <option value="screening">{t("chart.screeningMetrics", "Screening Metrics")}</option>
+              <option value="dementia">{t("chart.dementiaMetrics", "Cognitive Impairment")}</option>
+            </select>
+          </div>
+
+          {onRefresh && (
+            <button 
+              className="btn btn-primary d-flex align-items-center gap-2" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              aria-label={t("chart.refresh", "Refresh")}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                className={isRefreshing ? 'spinning' : ''}
+                viewBox="0 0 16 16"
+              >
+                <path
+                  d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"
+                ></path>
+                <path
+                  fillRule="evenodd"
+                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"
+                ></path>
+              </svg>
+              {isRefreshing ? t("chart.refreshing", "Refreshing...") : t("chart.refresh", "Refresh")}
+            </button>
+          )}
+        </div>
+
+        {/* Dataset Visibility Toggle */}
+        {allDatasetLabels.length > 0 && (
+          <div className="d-flex flex-column gap-2 w-100 mt-2">
+            <label className="form-label d-flex align-items-center gap-2 mb-0">
+              <span>👁️</span>
+              <strong className="small">{t("chart.showDatasets", "Show/Hide Datasets")}</strong>
+            </label>
+            <div className="d-flex flex-wrap gap-2">
+              {allDatasetLabels.map((label, idx) => {
+                const isVisible = visibleDatasets.has(label);
+                return (
+                  <button
+                    key={`${label}-${idx}`}
+                    type="button"
+                    className={`btn btn-sm ${isVisible ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => {
+                      const newVisible = new Set(visibleDatasets);
+                      if (isVisible) {
+                        newVisible.delete(label);
+                      } else {
+                        newVisible.add(label);
+                      }
+                      setVisibleDatasets(newVisible);
+                      if (chartRef.current) {
+                        const chart = chartRef.current;
+                        // Find dataset index by label
+                        const datasetIndex = data.datasets.findIndex(ds => ds.label === label);
+                        if (datasetIndex >= 0) {
+                          const meta = chart.getDatasetMeta(datasetIndex);
+                          meta.hidden = !isVisible;
+                          chart.update();
+                        }
+                      }
+                    }}
+                    title={isVisible ? t("chart.hideDataset", "Click to hide") : t("chart.showDataset", "Click to show")}
+                  >
+                    {isVisible ? '✓' : '✗'} <span className="d-none d-md-inline">{label}</span>
+                    <span className="d-md-none">{label.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-info"
+                onClick={() => {
+                  const allLabels = new Set(allDatasetLabels);
+                  setVisibleDatasets(allLabels);
+                  if (chartRef.current) {
+                    const chart = chartRef.current;
+                    data.datasets.forEach((_, idx) => {
+                      chart.getDatasetMeta(idx).hidden = false;
+                    });
+                    chart.update();
+                  }
+                }}
+                title={t("chart.showAll", "Show all datasets")}
+              >
+                {t("chart.showAll", "Show All")}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -670,9 +989,182 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           </div>
         )}
 
-        <div className="chart-wrapper mb-4">
-          {chartType === "bar" ? <Bar data={data} options={options} /> : <Line data={data} options={options} />}
+        <div className="chart-wrapper mb-4 position-relative">
+          <div className="chart-container-responsive">
+            {chartType === "bar" ? (
+              <Bar ref={chartRef} data={data} options={options} />
+            ) : (
+              <Line ref={chartRef} data={data} options={options} />
+            )}
+          </div>
+          
+          {/* Data Range Filter */}
+          {effectiveLabels.length > 5 && (
+            <div className="chart-range-filter card mt-3">
+              <div className="card-body p-3">
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-3">
+                  <label className="form-label mb-0 d-flex align-items-center gap-2">
+                    <span>📊</span>
+                    <strong>{t("chart.dataRange", "Data Range")}:</strong>
+                  </label>
+                  <div className="d-flex flex-column flex-md-row gap-2 flex-grow-1">
+                    <div className="flex-grow-1">
+                      <label className="small text-muted">{t("chart.startIndex", "Start")}</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        min="0"
+                        max={effectiveLabels.length - 1}
+                        value={dataRange.start}
+                        onChange={(e) => {
+                          const val = Math.max(0, Math.min(parseInt(e.target.value) || 0, effectiveLabels.length - 1));
+                          setDataRange(prev => ({ ...prev, start: val }));
+                        }}
+                      />
+                    </div>
+                    <div className="flex-grow-1">
+                      <label className="small text-muted">{t("chart.endIndex", "End")}</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        min={dataRange.start + 1}
+                        max={effectiveLabels.length}
+                        value={dataRange.end !== null ? dataRange.end : effectiveLabels.length}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? null : Math.max(dataRange.start + 1, Math.min(parseInt(e.target.value) || effectiveLabels.length, effectiveLabels.length));
+                          setDataRange(prev => ({ ...prev, end: val }));
+                        }}
+                      />
+                    </div>
+                    <div className="d-flex align-items-end">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setDataRange({ start: 0, end: null })}
+                        title={t("chart.resetRange", "Reset to show all data")}
+                      >
+                        {t("chart.reset", "Reset")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <small className="text-muted">
+                    {t("chart.showing", "Showing")} {filteredLabels.length} {t("chart.of", "of")} {effectiveLabels.length} {t("chart.dataPoints", "data points")}
+                  </small>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selected Data Point Info */}
+          {selectedDataPoint && (
+            <div className="chart-selected-info card mt-2">
+              <div className="card-body p-2">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <strong>{selectedDataPoint.label}</strong>
+                    <span className="text-muted ms-2">
+                      {data.datasets[selectedDataPoint.dataset]?.label}: {selectedDataPoint.value?.toFixed(1)}
+                    </span>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-close"
+                    onClick={() => setSelectedDataPoint(null)}
+                    aria-label="Close"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Trend Analysis and Early Risk Section */}
+        {trendAnalysis && Object.keys(trendAnalysis).length > 0 && (
+          <div className="card mb-4 border-primary">
+            <div className="card-header bg-primary text-white d-flex align-items-center gap-2">
+              <div className="fs-3">📈</div>
+              <div>
+                <h2 className="h5 mb-0">{t("chart.trendAnalysis", "Trend Analysis & Early Risk Prediction")}</h2>
+                <small className="text-white-50">
+                  {t("chart.trendAnalysisHint", "Linear regression analysis with threshold detection and future predictions")}
+                </small>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                {Object.entries(trendAnalysis).slice(0, 6).map(([label, analysis]) => {
+                  if (!analysis.trend.isValid) return null;
+                  
+                  const { trend, thresholdAnalysis, futurePrediction, earlyRisk } = analysis;
+                  const trendIcon = trend.trend === 'increasing' ? '📈' : trend.trend === 'decreasing' ? '📉' : '➡️';
+                  const riskColor = earlyRisk.earlyWarning ? 'danger' : earlyRisk.riskLevel === 'moderate' ? 'warning' : 'success';
+                  
+                  return (
+                    <div key={label} className="col-12 col-md-6 col-lg-4">
+                      <div className="card h-100 border">
+                        <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                          <strong className="small text-truncate flex-grow-1" title={label}>{label}</strong>
+                          <span className="badge bg-info">{trendIcon}</span>
+                        </div>
+                        <div className="card-body">
+                          <div className="mb-2">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <span className="small text-muted">{t("chart.trendSlope", "Trend Slope")}:</span>
+                              <strong className={trend.slope > 0 ? 'text-danger' : trend.slope < 0 ? 'text-success' : 'text-muted'}>
+                                {trend.slope > 0 ? '+' : ''}{trend.slope.toFixed(3)}
+                              </strong>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <span className="small text-muted">{t("chart.rSquared", "R²")}:</span>
+                              <strong>{(trend.rSquared * 100).toFixed(1)}%</strong>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <span className="small text-muted">{t("chart.currentValue", "Current")}:</span>
+                              <strong>{earlyRisk.currentValue?.toFixed(1) || '—'}</strong>
+                            </div>
+                          </div>
+
+                          {earlyRisk.earlyWarning && (
+                            <div className="alert alert-warning py-2 mb-2">
+                              <small>
+                                <strong>⚠️ {t("chart.earlyWarning", "Early Warning")}:</strong> {t("chart.earlyWarningText", "Trend indicates potential risk threshold crossing")}
+                              </small>
+                            </div>
+                          )}
+
+                          {futurePrediction.isValid && futurePrediction.daysFromNow && (
+                            <div className="border-top pt-2">
+                              <div className="small text-muted mb-1">{t("chart.predictedDate", "Predicted Threshold Crossing")}:</div>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <strong className="text-primary">
+                                  {futurePrediction.predictedDate ? futurePrediction.predictedDate.toLocaleDateString() : '—'}
+                                </strong>
+                                <span className="badge bg-info">
+                                  {futurePrediction.daysFromNow} {t("chart.days", "days")}
+                                </span>
+                              </div>
+                              <div className="small text-muted mt-1">
+                                {t("chart.confidence", "Confidence")}: {(futurePrediction.confidence * 100).toFixed(0)}%
+                              </div>
+                            </div>
+                          )}
+
+                          {thresholdAnalysis.hasCrossed && (
+                            <div className="alert alert-danger py-2 mt-2 mb-0">
+                              <small>
+                                <strong>⚠️ {t("chart.thresholdCrossed", "Threshold Crossed")}</strong> {t("chart.atIndex", "at entry")} {thresholdAnalysis.crossedAt + 1}
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {metricsType === "dementia" && dementiaSummary && (
           <div className="card mb-4">
@@ -752,6 +1244,93 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                   </div>
                 </div>
               </div>
+
+              {/* Enhanced Trend Analysis for Dementia Risk */}
+              {dementiaSummary.trendAnalysis && (
+                <div className="row g-3 mt-3">
+                  <div className="col-12">
+                    <div className="card border-info">
+                      <div className="card-header bg-info text-white">
+                        <h3 className="h6 mb-0">📊 {t("chart.advancedTrendAnalysis", "Advanced Trend Analysis & Future Prediction")}</h3>
+                      </div>
+                      <div className="card-body">
+                        <div className="row g-3">
+                          <div className="col-md-4">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <span className="text-muted">{t("chart.linearTrend", "Linear Trend")}:</span>
+                              <strong>{dementiaSummary.trendAnalysis.trend.equation}</strong>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <span className="text-muted">{t("chart.trendSlope", "Trend Slope")}:</span>
+                              <strong className={dementiaSummary.trendAnalysis.trend.slope > 0 ? 'text-danger' : 'text-success'}>
+                                {dementiaSummary.trendAnalysis.trend.slope > 0 ? '+' : ''}{dementiaSummary.trendAnalysis.trend.slope.toFixed(4)}
+                              </strong>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span className="text-muted">{t("chart.rSquared", "R² (Fit)")}:</span>
+                              <strong>{(dementiaSummary.trendAnalysis.trend.rSquared * 100).toFixed(1)}%</strong>
+                            </div>
+                          </div>
+                          
+                          <div className="col-md-4">
+                            {dementiaSummary.trendAnalysis.futurePrediction.isValid && (
+                              <>
+                                <div className="mb-2">
+                                  <strong className="text-primary">{t("chart.predictedThresholdDate", "Predicted Threshold Crossing Date")}:</strong>
+                                </div>
+                                <div className="h5 text-primary mb-2">
+                                  {dementiaSummary.trendAnalysis.futurePrediction.predictedDate 
+                                    ? dementiaSummary.trendAnalysis.futurePrediction.predictedDate.toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                      })
+                                    : '—'}
+                                </div>
+                                <div className="small text-muted">
+                                  {t("chart.daysFromNow", "Days from now")}: {dementiaSummary.trendAnalysis.futurePrediction.daysFromNow || '—'}
+                                </div>
+                                <div className="small text-muted">
+                                  {t("chart.confidence", "Confidence")}: {(dementiaSummary.trendAnalysis.futurePrediction.confidence * 100).toFixed(0)}%
+                                </div>
+                              </>
+                            )}
+                            {!dementiaSummary.trendAnalysis.futurePrediction.isValid && (
+                              <div className="text-muted">
+                                <small>{dementiaSummary.trendAnalysis.futurePrediction.reason || t("chart.noPrediction", "Prediction not available")}</small>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="col-md-4">
+                            {dementiaSummary.trendAnalysis.earlyRisk.earlyWarning && (
+                              <div className="alert alert-warning mb-0">
+                                <strong>⚠️ {t("chart.earlyRiskWarning", "Early Risk Warning")}</strong>
+                                <div className="small mt-1">
+                                  {t("chart.earlyRiskText", "Trend analysis indicates potential risk threshold crossing. Consider consulting a healthcare professional.")}
+                                </div>
+                                {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk && (
+                                  <div className="mt-2">
+                                    <strong>{t("chart.projectedRisk", "Projected Risk")}:</strong> {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk.toFixed(1)}%
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {!dementiaSummary.trendAnalysis.earlyRisk.earlyWarning && (
+                              <div className="alert alert-success mb-0">
+                                <strong>✅ {t("chart.noEarlyRisk", "No Early Risk Detected")}</strong>
+                                <div className="small mt-1">
+                                  {t("chart.noEarlyRiskText", "Current trends do not indicate immediate risk threshold crossing.")}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {lastDementiaValues.length > 0 && (
                 <div className="mt-3">
