@@ -37,6 +37,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   const isMountedRef = useRef(true);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
@@ -280,7 +281,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
   }, []);
 
   return (
-    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+    <div className="container-fluid py-3">
       <div className="row justify-content-center">
         <div className="col-12 col-lg-10">
           <div className="card shadow-sm border-0 mb-4">
@@ -355,9 +356,7 @@ export default function PatternRecall({ onFinish, onExit, ageGroup = "20-30" }) 
                         minWidth: '100px',
                         color: 'white',
                         fontSize: '1.2rem',
-                        transition: 'all 0.3s ease',
                         border: activeIndex === idx ? '3px solid white' : 'none',
-                        transform: activeIndex === idx ? 'scale(1.1)' : 'scale(1)',
                         boxShadow: activeIndex === idx ? '0 4px 12px rgba(0,0,0,0.3)' : 'none'
                       }}
                     >

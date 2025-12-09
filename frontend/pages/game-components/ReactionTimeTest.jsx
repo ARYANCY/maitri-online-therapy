@@ -127,6 +127,7 @@ export default function ReactionTimeTest({ onFinish, onExit, ageGroup = "20-30" 
   }, [difficulty, showResult, handleClick, handleExit]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
@@ -206,7 +207,7 @@ export default function ReactionTimeTest({ onFinish, onExit, ageGroup = "20-30" 
   }, []);
 
   return (
-    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+    <div className="container-fluid py-3">
       <div className="row justify-content-center">
         <div className="col-12 col-lg-10">
           <div className="card shadow-sm border-0 mb-4">
@@ -273,7 +274,6 @@ export default function ReactionTimeTest({ onFinish, onExit, ageGroup = "20-30" 
           ...getBoxStyle(),
                     width: '300px',
                     height: '300px',
-                    cursor: 'pointer',
           transition: "background-color 0.3s ease, border-color 0.3s ease",
                     boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                     border: '4px solid',

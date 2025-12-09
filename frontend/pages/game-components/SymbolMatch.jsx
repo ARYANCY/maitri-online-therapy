@@ -31,6 +31,7 @@ export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   const flipTimeoutRef = useRef(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (flipTimeoutRef.current) clearTimeout(flipTimeoutRef.current);
@@ -131,7 +132,7 @@ export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   const progress = grid.length > 0 ? Math.round((matched.length / grid.length) * 100) : 0;
 
   return (
-    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+    <div className="container-fluid py-3">
       {showInstructions && (
         <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999 }} onClick={() => setShowInstructions(false)}>
           <div className="card shadow-lg" style={{ maxWidth: '500px', width: '90%' }} onClick={(e) => e.stopPropagation()}>

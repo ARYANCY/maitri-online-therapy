@@ -310,16 +310,7 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
                 borderRadius: "16px",
                 padding: "1rem",
                 fontWeight: 600,
-                fontSize: "1.1rem",
-                transition: "all 0.3s ease"
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = `0 8px 20px ${performance.color}40`;
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "none";
+                fontSize: "1.1rem"
               }}
             >
               {t("dementia.saveContinue", "Save & Continue")} →

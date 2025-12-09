@@ -74,6 +74,7 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
   }, []);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
@@ -189,7 +190,7 @@ export default function ColorSequence({ onFinish, onExit, ageGroup = "20-30" }) 
   }, []);
 
   return (
-    <div className="container-fluid py-4" style={{ position: 'relative' }}>
+    <div className="container-fluid py-3">
       <div className="row justify-content-center">
         <div className="col-12 col-lg-10">
           <div className="card shadow-sm border-0 mb-4">
