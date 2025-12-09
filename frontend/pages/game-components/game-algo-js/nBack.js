@@ -2,9 +2,7 @@
 import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
-  easy: { level: 1, rounds: 5 },
   medium: { level: 2, rounds: 7 },
-  hard: { level: 3, rounds: 10 },
 };
 
 export const SEQUENCE_LENGTH = 7;
@@ -56,11 +54,8 @@ export const validateInput = (value) => {
   return "";
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const getSequenceDisplayTime = () => 1500;

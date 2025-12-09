@@ -11,7 +11,7 @@ import {
 
 export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
-  const [difficulty, setDifficulty] = useState(null);
+  const [difficulty, setDifficulty] = useState("medium");
   const [sequence, setSequence] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [round, setRound] = useState(1);
@@ -178,45 +178,12 @@ export default function DigitSpan({ onFinish, onExit, ageGroup = "20-30" }) {
     }
   };
 
-  if (!difficulty) {
-    return (
-      <div className="container py-4">
-        <div className="row justify-content-center">
-          <div className="col-12 col-md-8 col-lg-6">
-            <div className="card shadow-sm border-0">
-              <div className="card-body text-center p-4">
-                <h2 className="h3 mb-3 fw-bold">{t("dementia.games.digitSpan")}</h2>
-                <p className="text-muted mb-4">{t("dementia.selectDifficulty")}</p>
-                <div className="d-flex flex-column gap-3 mb-4">
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("easy")}
-                  >
-                    {t("dementia.easy")} <span className="badge bg-primary ms-2">3 {t("dementia.digits", "digits")}</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("medium")}
-                  >
-                    {t("dementia.medium")} <span className="badge bg-primary ms-2">5 {t("dementia.digits", "digits")}</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("hard")}
-                  >
-                    {t("dementia.hard")} <span className="badge bg-primary ms-2">7 {t("dementia.digits", "digits")}</span>
-                  </button>
-                </div>
-                <button className="btn btn-outline-secondary w-100" onClick={handleExit}>
-                  {t("dementia.exit")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Auto-start game with medium difficulty
+  useEffect(() => {
+    if (difficulty === "medium" && round === 1 && phase === "show" && sequence.length === 0) {
+      startGame("medium");
+    }
+  }, []);
 
   return (
     <div className="container-fluid py-4" style={{ position: 'relative' }}>

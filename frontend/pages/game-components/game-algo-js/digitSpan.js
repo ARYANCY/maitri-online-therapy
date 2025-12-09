@@ -2,17 +2,11 @@
 import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
-  easy: { length: 3, rounds: 5 },
   medium: { length: 5, rounds: 7 },
-  hard: { length: 7, rounds: 10 },
 };
 
-export const generateDigitSequence = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  
-  const { length } = DIFFICULTY[difficulty];
+export const generateDigitSequence = (difficulty = "medium") => {
+  const { length } = DIFFICULTY.medium;
   return Array.from({ length }, () => Math.floor(Math.random() * 9) + 1);
 };
 
@@ -41,11 +35,8 @@ export const validateInput = (input) => {
   return input.replace(/\D/g, "");
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const isGameComplete = (currentRound, maxRounds) => {

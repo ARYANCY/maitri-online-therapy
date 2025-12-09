@@ -3,9 +3,7 @@ import { shuffleArray } from './utils';
 import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
-  easy: { rounds: 5, pairs: 3 },
   medium: { rounds: 7, pairs: 6 },
-  hard: { rounds: 10, pairs: 9 },
 };
 
 export const CARD_SYMBOLS = [
@@ -55,11 +53,8 @@ export const isRoundComplete = (matchedCount, gridSize) => {
   return matchedCount === gridSize && gridSize > 0;
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}. Must be one of: easy, medium, hard`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const calculateEfficiency = (totalMatches, totalAttempts) => {

@@ -140,7 +140,8 @@ Return a risk assessment based on these cognitive game results.`;
       mapGamesToDomains,
       calculateWeightedRiskScore,
       normalizeGameScore,
-      getDomainMappingInfo
+      getDomainMappingInfo,
+      getAgeAdjustedDomainWeights
     } = require("../utils/cognitiveDomainMapper");
 
     const calculateCognitiveMetrics = (gameResults) => {
@@ -294,7 +295,10 @@ Return a risk assessment based on these cognitive game results.`;
     const cognitiveMetrics = calculateCognitiveMetrics(gameResults);
     
     const domainScores = mapGamesToDomains(gameResults, commonAgeGroup);
-    const weightedRiskScore = calculateWeightedRiskScore(domainScores);
+    const weightedRiskScore = calculateWeightedRiskScore(domainScores, commonAgeGroup);
+    
+    // Get age-adjusted domain weights
+    const ageAdjustedWeights = getAgeAdjustedDomainWeights(commonAgeGroup);
     
     cognitiveMetrics.cognitiveDomains = {
       memory: Math.round(domainScores.memory * 10) / 10,
@@ -303,12 +307,13 @@ Return a risk assessment based on these cognitive game results.`;
       orientation: Math.round(domainScores.orientation * 10) / 10,
       executive: Math.round(domainScores.executive * 10) / 10,
       domainWeights: {
-        memory: 0.35,
-        language: 0.20,
-        attention: 0.20,
-        orientation: 0.125,
-        executive: 0.125
+        memory: Math.round(ageAdjustedWeights.memory * 1000) / 1000,
+        language: Math.round(ageAdjustedWeights.language * 1000) / 1000,
+        attention: Math.round(ageAdjustedWeights.attention * 1000) / 1000,
+        orientation: Math.round(ageAdjustedWeights.orientation * 1000) / 1000,
+        executive: Math.round(ageAdjustedWeights.executive * 1000) / 1000
       },
+      ageGroup: commonAgeGroup,
       weightedRiskScore: Math.round(weightedRiskScore * 100) / 100
     };
     

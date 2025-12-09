@@ -12,7 +12,7 @@ import {
 
 export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
-  const [difficulty, setDifficulty] = useState(null);
+  const [difficulty, setDifficulty] = useState("medium");
   const [round, setRound] = useState(1);
   const [maxRounds, setMaxRounds] = useState(5);
   const [grid, setGrid] = useState([]);
@@ -121,48 +121,12 @@ export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
     onFinish?.(result);
   };
 
-  if (!difficulty) {
-    return (
-      <div className="container py-4">
-        <div className="row justify-content-center">
-          <div className="col-12 col-md-8 col-lg-6">
-            <div className="card shadow-sm border-0">
-              <div className="card-body text-center p-4">
-                <h2 className="h3 mb-3 fw-bold">{t("dementia.games.symbolMatch", "Symbol Matching")}</h2>
-                <p className="text-muted mb-4">
-                  {t("dementia.symbolMatchDescription", "Test your visual memory and pattern recognition by matching pairs of symbols. This assessment evaluates your working memory and attention to detail.")}
-                </p>
-                <p className="text-muted mb-4">{t("dementia.selectDifficulty")}</p>
-                <div className="d-flex flex-column gap-3 mb-4">
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("easy")}
-                  >
-                    {t("dementia.easy", "Easy")} <span className="badge bg-primary ms-2">{DIFFICULTY.easy.pairs} pairs • {DIFFICULTY.easy.rounds} rounds</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("medium")}
-                  >
-                    {t("dementia.medium", "Medium")} <span className="badge bg-primary ms-2">{DIFFICULTY.medium.pairs} pairs • {DIFFICULTY.medium.rounds} rounds</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("hard")}
-                  >
-                    {t("dementia.hard", "Hard")} <span className="badge bg-primary ms-2">{DIFFICULTY.hard.pairs} pairs • {DIFFICULTY.hard.rounds} rounds</span>
-                  </button>
-                </div>
-                <button className="btn btn-outline-secondary w-100" onClick={onExit}>
-                  {t("dementia.exit", "Exit")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Auto-start game with medium difficulty
+  useEffect(() => {
+    if (difficulty === "medium" && round === 1 && !showResult) {
+      startGame("medium");
+    }
+  }, []);
 
   const progress = grid.length > 0 ? Math.round((matched.length / grid.length) * 100) : 0;
 

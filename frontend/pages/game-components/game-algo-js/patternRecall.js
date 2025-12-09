@@ -3,26 +3,12 @@ import { shuffleArray, getColorStyle as baseColorStyle } from './utils';
 import { normalizeScoreByAge } from './ageNormalization';
 
 export const DIFFICULTY = {
-  easy: { 
-    rounds: 4, 
-    sequenceLength: 3, 
-    colors: ["red", "green", "blue", "yellow"],
-    showDuration: 800,
-    inputTimeout: 15000
-  },
   medium: { 
     rounds: 6, 
     sequenceLength: 4, 
     colors: ["red", "green", "blue", "yellow", "purple"],
     showDuration: 700,
     inputTimeout: 12000
-  },
-  hard: { 
-    rounds: 8, 
-    sequenceLength: 5, 
-    colors: ["red", "green", "blue", "yellow", "purple", "orange"],
-    showDuration: 600,
-    inputTimeout: 10000
   },
 };
 
@@ -55,12 +41,8 @@ export const getColorName = (color, t = null) => {
   return names[color] || color;
 };
 
-export const generateSequence = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  
-  const { colors, sequenceLength } = DIFFICULTY[difficulty];
+export const generateSequence = (difficulty = "medium") => {
+  const { colors, sequenceLength } = DIFFICULTY.medium;
   return Array.from({ length: sequenceLength }, () => 
     colors[Math.floor(Math.random() * colors.length)]
   );
@@ -80,11 +62,8 @@ export const calculateRoundScore = (sequenceLength) => {
   return sequenceLength * 10;
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const preparePatternRecallResult = (totalScore, totalTime, difficulty, maxRounds, completedRounds, sequenceLength, ageGroup = "20-30") => {

@@ -3,23 +3,15 @@ import { shuffleArray } from './utils';
 import { normalizeScoreByAge } from './ageNormalization';
 
 export const SYMBOLS = {
-  easy: ["★", "●", "▲", "■", "◆", "♥"],
   medium: ["★", "●", "▲", "■", "◆", "♥", "♦", "♠", "♣", "☀", "☁", "☂"],
-  hard: ["★", "●", "▲", "■", "◆", "♥", "♦", "♠", "♣", "☀", "☁", "☂", "☃", "☄", "☎", "☏", "☐", "☑", "☒", "☓"]
 };
 
 export const DIFFICULTY = {
-  easy: { rounds: 5, pairs: 4, timeLimit: 120 },
   medium: { rounds: 7, pairs: 6, timeLimit: 180 },
-  hard: { rounds: 10, pairs: 9, timeLimit: 240 },
 };
 
-export const generateGrid = (pairs, level) => {
-  if (!SYMBOLS[level]) {
-    throw new Error(`Invalid level: ${level}`);
-  }
-  
-  const symbolSet = SYMBOLS[level];
+export const generateGrid = (pairs, level = "medium") => {
+  const symbolSet = SYMBOLS.medium;
   const selectedSymbols = symbolSet.slice(0, pairs);
   const pairsArray = [...selectedSymbols, ...selectedSymbols];
   return shuffleArray(pairsArray);
@@ -36,11 +28,8 @@ export const calculateAccuracy = (matches, attempts) => {
   return Math.round((matches / attempts) * 100);
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const prepareSymbolMatchResult = (totalScore, totalTime, difficulty, maxRounds, matchedCount, attempts, ageGroup = "20-30") => {

@@ -13,7 +13,7 @@ import {
 
 export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
   const { t } = useTranslation();
-  const [difficulty, setDifficulty] = useState(null);
+  const [difficulty, setDifficulty] = useState("medium");
   const [round, setRound] = useState(1);
   const [maxRounds, setMaxRounds] = useState(5);
   const [timer, setTimer] = useState(0);
@@ -112,53 +112,12 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
     }
   };
 
-  if (!difficulty) {
-    return (
-      <div className="container py-4">
-        <div className="row justify-content-center">
-          <div className="col-12 col-md-8 col-lg-6">
-            <div className="card shadow-sm border-0">
-              <div className="card-body text-center p-4">
-                <h2 className="h3 mb-3 fw-bold">{t("dementia.games.stroopTest", "Stroop Test")}</h2>
-                <p className="text-muted mb-3">
-                  {t("dementia.stroopTest.description", "Test your cognitive flexibility by identifying the color of words, not the text itself.")}
-                </p>
-                <p className="small text-muted mb-4">
-                  {t("dementia.selectDifficulty", "Select a difficulty level:")}
-                </p>
-                <div className="d-flex flex-column gap-3 mb-4">
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("easy")}
-                  >
-                    {t("dementia.easy", "Easy")}
-                    <span className="badge bg-primary ms-2">({t("dementia.stroopTest.easyInfo", "3 colors, 5 rounds")})</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("medium")}
-                  >
-                    {t("dementia.medium", "Medium")}
-                    <span className="badge bg-primary ms-2">({t("dementia.stroopTest.mediumInfo", "4 colors, 7 rounds")})</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary btn-lg"
-                    onClick={() => startGame("hard")}
-                  >
-                    {t("dementia.hard", "Hard")}
-                    <span className="badge bg-primary ms-2">({t("dementia.stroopTest.hardInfo", "5 colors, 10 rounds")})</span>
-                  </button>
-                </div>
-                <button className="btn btn-outline-secondary w-100" onClick={handleExit}>
-                  {t("dementia.exit", "Exit")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Auto-start game with medium difficulty
+  useEffect(() => {
+    if (difficulty === "medium" && round === 1 && !showResult) {
+      startGame("medium");
+    }
+  }, []);
 
   return (
     <div className="container-fluid py-4" style={{ position: 'relative' }}>

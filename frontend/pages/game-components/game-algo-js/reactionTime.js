@@ -2,17 +2,11 @@
 import { normalizeScoreByAge, getExpectedReactionTime } from './ageNormalization';
 
 export const DIFFICULTY = {
-  easy: { rounds: 5, minDelay: 2000, maxDelay: 4000 },
   medium: { rounds: 7, minDelay: 1000, maxDelay: 3000 },
-  hard: { rounds: 10, minDelay: 500, maxDelay: 2000 },
 };
 
-export const calculateDelay = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  
-  const { minDelay, maxDelay } = DIFFICULTY[difficulty];
+export const calculateDelay = (difficulty = "medium") => {
+  const { minDelay, maxDelay } = DIFFICULTY.medium;
   return Math.random() * (maxDelay - minDelay) + minDelay;
 };
 
@@ -30,11 +24,8 @@ export const getBestReactionTime = (reactionTimes) => {
   return Math.min(...reactionTimes);
 };
 
-export const getGameConfig = (difficulty) => {
-  if (!DIFFICULTY[difficulty]) {
-    throw new Error(`Invalid difficulty: ${difficulty}`);
-  }
-  return { ...DIFFICULTY[difficulty] };
+export const getGameConfig = (difficulty = "medium") => {
+  return { ...DIFFICULTY.medium };
 };
 
 export const prepareReactionTimeResult = (totalScore, totalTime, difficulty, maxRounds, reactionTimes, ageGroup = "20-30") => {

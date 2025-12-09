@@ -4,14 +4,99 @@
  * Based on neuropsychological assessment principles
  */
 
-// Cognitive Domain Weights (clinically validated)
-const DOMAIN_WEIGHTS = {
+// Base Cognitive Domain Weights (clinically validated for 20-30 age group)
+const BASE_DOMAIN_WEIGHTS = {
   memory: 0.35,        // 35% - Main early dementia marker (increased)
   language: 0.20,      // 20% - Word-finding issues early
   attention: 0.20,     // 20% - Executive decline affects attention
   orientation: 0.125,  // 12.5% - Moderate impact
   executive: 0.125     // 12.5% - Important but late-stage
 };
+
+/**
+ * Get age-adjusted domain weights
+ * Older age groups: Higher weight on memory (early marker), lower on executive (late-stage)
+ * Younger age groups: More balanced weights
+ * @param {string} ageGroup - Age group string
+ * @returns {Object} Age-adjusted domain weights
+ */
+function getAgeAdjustedDomainWeights(ageGroup = "20-30") {
+  const ageAdjustments = {
+    "10-15": {
+      memory: 0.30,      // Lower weight - still developing
+      language: 0.25,    // Higher weight - language still developing
+      attention: 0.25,   // Higher weight - attention developing
+      orientation: 0.10,
+      executive: 0.10    // Lower weight - executive still developing
+    },
+    "15-20": {
+      memory: 0.32,
+      language: 0.22,
+      attention: 0.22,
+      orientation: 0.12,
+      executive: 0.12
+    },
+    "20-30": {
+      memory: 0.35,
+      language: 0.20,
+      attention: 0.20,
+      orientation: 0.125,
+      executive: 0.125
+    },
+    "30-40": {
+      memory: 0.36,      // Slightly increased - early decline marker
+      language: 0.20,
+      attention: 0.20,
+      orientation: 0.12,
+      executive: 0.12
+    },
+    "40-50": {
+      memory: 0.38,      // Increased - memory decline starts
+      language: 0.20,
+      attention: 0.19,
+      orientation: 0.12,
+      executive: 0.11
+    },
+    "50-60": {
+      memory: 0.40,      // Further increased - memory is key marker
+      language: 0.20,
+      attention: 0.18,
+      orientation: 0.12,
+      executive: 0.10
+    },
+    "60-70": {
+      memory: 0.42,      // High weight - primary early marker
+      language: 0.20,
+      attention: 0.17,
+      orientation: 0.12,
+      executive: 0.09
+    },
+    "70-80": {
+      memory: 0.45,      // Very high weight - memory is critical
+      language: 0.20,
+      attention: 0.15,
+      orientation: 0.12,
+      executive: 0.08
+    },
+    "80-90": {
+      memory: 0.48,      // Highest weight - memory is primary concern
+      language: 0.20,
+      attention: 0.13,
+      orientation: 0.12,
+      executive: 0.07
+    }
+  };
+
+  // Normalize weights to ensure they sum to 1.0
+  const weights = ageAdjustments[ageGroup] || BASE_DOMAIN_WEIGHTS;
+  const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+  const normalized = {};
+  Object.keys(weights).forEach(key => {
+    normalized[key] = weights[key] / sum;
+  });
+
+  return normalized;
+}
 
 // Game to Cognitive Domain Mapping
 const GAME_DOMAIN_MAPPING = {
@@ -144,9 +229,9 @@ function normalizeGameScore(rawScore, gameKey, difficulty, gameDetail, ageGroup 
 }
 
 /**
- * Map game results to cognitive domain scores
+ * Map game results to cognitive domain scores with age-adjusted domain weights
  * @param {Array} gameResults - Array of game result objects
- * @param {string} ageGroup - Age group (optional)
+ * @param {string} ageGroup - Age group (optional, used for normalization and weightage)
  * @returns {Object} Cognitive domain scores (0-10 scale)
  */
 function mapGamesToDomains(gameResults, ageGroup = null) {
@@ -210,16 +295,20 @@ function mapGamesToDomains(gameResults, ageGroup = null) {
 }
 
 /**
- * Calculate weighted cognitive risk score
+ * Calculate weighted cognitive risk score with age-adjusted weights
  * @param {Object} domainScores - Domain scores (0-10 scale)
+ * @param {string} ageGroup - Age group for weight adjustment (optional)
  * @returns {number} Weighted risk score (0-1, where 0 = no risk, 1 = high risk)
  */
-function calculateWeightedRiskScore(domainScores) {
+function calculateWeightedRiskScore(domainScores, ageGroup = "20-30") {
+  // Get age-adjusted domain weights
+  const domainWeights = getAgeAdjustedDomainWeights(ageGroup);
+  
   // Convert domain scores to risk contributions (higher score = lower risk)
   const riskContributions = {};
-  Object.keys(DOMAIN_WEIGHTS).forEach(domain => {
+  Object.keys(domainWeights).forEach(domain => {
     const score = domainScores[domain] || 0;
-    const weight = DOMAIN_WEIGHTS[domain];
+    const weight = domainWeights[domain];
     // Invert: score 10 = risk 0, score 0 = risk 1
     const riskContribution = (1 - (score / 10)) * weight;
     riskContributions[domain] = riskContribution;
@@ -234,18 +323,23 @@ function calculateWeightedRiskScore(domainScores) {
 
 /**
  * Get cognitive domain mapping information
+ * @param {string} ageGroup - Age group for weight adjustment (optional)
  * @returns {Object} Complete mapping information
  */
-function getDomainMappingInfo() {
+function getDomainMappingInfo(ageGroup = "20-30") {
   return {
-    domainWeights: DOMAIN_WEIGHTS,
+    baseDomainWeights: BASE_DOMAIN_WEIGHTS,
+    ageAdjustedDomainWeights: getAgeAdjustedDomainWeights(ageGroup),
     gameMappings: GAME_DOMAIN_MAPPING,
-    clinicalJustification: 'Based on neuropsychological assessment principles and validated cognitive screening tools (MMSE, MoCA, ACE-III)'
+    ageGroup: ageGroup,
+    clinicalJustification: 'Based on neuropsychological assessment principles and validated cognitive screening tools (MMSE, MoCA, ACE-III). Domain weights adjust by age group to reflect age-appropriate cognitive decline patterns.'
   };
 }
 
 module.exports = {
-  DOMAIN_WEIGHTS,
+  BASE_DOMAIN_WEIGHTS,
+  DOMAIN_WEIGHTS: BASE_DOMAIN_WEIGHTS, // Keep for backward compatibility
+  getAgeAdjustedDomainWeights,
   GAME_DOMAIN_MAPPING,
   calculateMaxPossibleScore,
   normalizeGameScore,
