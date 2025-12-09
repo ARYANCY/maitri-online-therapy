@@ -1128,6 +1128,64 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           </div>
         )}
 
+        {/* Data Range Filter (separate section) */}
+        {effectiveLabels.length > 5 && (
+          <div className="chart-range-filter card mb-3">
+            <div className="card-body p-3">
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-3">
+                <label className="form-label mb-0 d-flex align-items-center gap-2">
+                  <span>📊</span>
+                  <strong>{t("chart.dataRange", "Data Range")}:</strong>
+                </label>
+                <div className="d-flex flex-column flex-md-row gap-2 flex-grow-1">
+                  <div className="flex-grow-1">
+                    <label className="small text-muted">{t("chart.startIndex", "Start")}</label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      min="0"
+                      max={effectiveLabels.length - 1}
+                      value={dataRange.start}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(parseInt(e.target.value) || 0, effectiveLabels.length - 1));
+                        setDataRange(prev => ({ ...prev, start: val }));
+                      }}
+                    />
+                  </div>
+                  <div className="flex-grow-1">
+                    <label className="small text-muted">{t("chart.endIndex", "End")}</label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      min={dataRange.start + 1}
+                      max={effectiveLabels.length}
+                      value={dataRange.end !== null ? dataRange.end : effectiveLabels.length}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? null : Math.max(dataRange.start + 1, Math.min(parseInt(e.target.value) || effectiveLabels.length, effectiveLabels.length));
+                        setDataRange(prev => ({ ...prev, end: val }));
+                      }}
+                    />
+                  </div>
+                  <div className="d-flex align-items-end">
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => setDataRange({ start: 0, end: null })}
+                      title={t("chart.resetRange", "Reset to show all data")}
+                    >
+                      {t("chart.reset", "Reset")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <small className="text-muted">
+                  {t("chart.showing", "Showing")} {filteredLabels.length} {t("chart.of", "of")} {effectiveLabels.length} {t("chart.dataPoints", "data points")}
+                </small>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="chart-wrapper mb-4 position-relative">
           <div className="chart-container-responsive" style={{ minHeight: "400px", width: "100%" }}>
             {data && data.labels && data.labels.length > 0 && data.datasets && data.datasets.length > 0 ? (
@@ -1160,64 +1218,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
             )}
           </div>
           
-          {/* Data Range Filter */}
-          {effectiveLabels.length > 5 && (
-            <div className="chart-range-filter card mt-3">
-              <div className="card-body p-3">
-                <div className="d-flex flex-column flex-md-row align-items-md-center gap-3">
-                  <label className="form-label mb-0 d-flex align-items-center gap-2">
-                    <span>📊</span>
-                    <strong>{t("chart.dataRange", "Data Range")}:</strong>
-                  </label>
-                  <div className="d-flex flex-column flex-md-row gap-2 flex-grow-1">
-                    <div className="flex-grow-1">
-                      <label className="small text-muted">{t("chart.startIndex", "Start")}</label>
-                      <input
-                        type="number"
-                        className="form-control form-control-sm"
-                        min="0"
-                        max={effectiveLabels.length - 1}
-                        value={dataRange.start}
-                        onChange={(e) => {
-                          const val = Math.max(0, Math.min(parseInt(e.target.value) || 0, effectiveLabels.length - 1));
-                          setDataRange(prev => ({ ...prev, start: val }));
-                        }}
-                      />
-                    </div>
-                    <div className="flex-grow-1">
-                      <label className="small text-muted">{t("chart.endIndex", "End")}</label>
-                      <input
-                        type="number"
-                        className="form-control form-control-sm"
-                        min={dataRange.start + 1}
-                        max={effectiveLabels.length}
-                        value={dataRange.end !== null ? dataRange.end : effectiveLabels.length}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? null : Math.max(dataRange.start + 1, Math.min(parseInt(e.target.value) || effectiveLabels.length, effectiveLabels.length));
-                          setDataRange(prev => ({ ...prev, end: val }));
-                        }}
-                      />
-                    </div>
-                    <div className="d-flex align-items-end">
-                      <button
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setDataRange({ start: 0, end: null })}
-                        title={t("chart.resetRange", "Reset to show all data")}
-                      >
-                        {t("chart.reset", "Reset")}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <small className="text-muted">
-                    {t("chart.showing", "Showing")} {filteredLabels.length} {t("chart.of", "of")} {effectiveLabels.length} {t("chart.dataPoints", "data points")}
-                  </small>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Selected Data Point Info */}
           {selectedDataPoint && (
             <div className="chart-selected-info card mt-2">
