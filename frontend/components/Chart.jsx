@@ -712,31 +712,18 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index',
-    },
+    interaction: { intersect: false, mode: 'index' },
     onHover: () => {},
     onClick: () => {},
-    animation: {
-      duration: 800,
-      easing: 'easeInOutQuart',
-      onComplete: () => {
-        
-      },
-    },
+    animation: { duration: 600, easing: 'easeOutCubic' },
     plugins: {
       legend: {
         position: "top",
         align: "center",
         labels: {
           usePointStyle: true,
-          padding: 15,
-          font: {
-            size: 13,
-            weight: '600',
-            family: 'Inter, sans-serif',
-          },
+          padding: 12,
+          font: { size: 13, weight: '600', family: 'Inter, sans-serif' },
           color: '#1C1C1C',
           boxWidth: 12,
           boxHeight: 12,
@@ -745,20 +732,11 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           const chart = legend.chart;
           const index = legendItem.datasetIndex;
           const meta = chart.getDatasetMeta(index);
-          
-          // Toggle dataset visibility
           meta.hidden = !meta.hidden;
-          
-          // Update visible datasets state
           const newVisible = new Set(visibleDatasets);
           const datasetLabel = legendItem.text;
-          
-          if (meta.hidden) {
-            newVisible.delete(datasetLabel);
-          } else {
-            newVisible.add(datasetLabel);
-          }
-          
+          if (meta.hidden) newVisible.delete(datasetLabel);
+          else newVisible.add(datasetLabel);
           setVisibleDatasets(newVisible);
           chart.update();
         },
@@ -766,16 +744,9 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       title: {
         display: true,
         text: `${t("chart.title", "User Metrics")} (${metricsType === "emotional" ? t("chart.emotionalMetrics", "Emotional Metrics") : metricsType === "screening" ? t("chart.screeningMetrics", "Screening Metrics") : t("chart.dementiaMetrics", "Dementia Progress")})`,
-        font: {
-          size: 18,
-          weight: '700',
-          family: 'Inter, sans-serif',
-        },
+        font: { size: 18, weight: '700', family: 'Inter, sans-serif' },
         color: '#1C1C1C',
-        padding: {
-          top: 10,
-          bottom: 20,
-        },
+        padding: { top: 6, bottom: 12 },
       },
       tooltip: {
         enabled: true,
@@ -784,27 +755,22 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         bodyColor: '#FFFFFF',
         borderColor: 'rgba(111, 174, 154, 0.5)',
         borderWidth: 2,
-        padding: 12,
+        padding: 10,
         cornerRadius: 8,
         displayColors: true,
-        titleFont: {
-          size: 14,
-          weight: '700',
-        },
-        bodyFont: {
-          size: 13,
-          weight: '500',
-        },
+        titleFont: { size: 14, weight: '700' },
+        bodyFont: { size: 13, weight: '500' },
         callbacks: {
           label: function(context) {
             let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
+            if (label) label += ': ';
             if (context.parsed.y !== null) {
               const value = context.parsed.y;
-              if (metricsType === "dementia" && label.includes("Risk")) {
-                label += value + '%';
+              const labelLower = (context.dataset.label || '').toLowerCase();
+              if (labelLower.includes("risk") || labelLower.includes("%") || labelLower.includes("accuracy") || labelLower.includes("error")) {
+                label += `${value.toFixed(1)}%`;
+              } else if (labelLower.includes("time") || labelLower.includes("processing")) {
+                label += `${value.toFixed(1)} ms`;
               } else {
                 label += value.toFixed(1);
               }
@@ -818,25 +784,15 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       x: {
         ticks: {
           autoSkip: true,
-          maxRotation: 45,
+          maxRotation: 30,
           minRotation: 0,
           maxTicksLimit: window.innerWidth < 768 ? 10 : window.innerWidth < 1024 ? 15 : 20,
-          font: {
-            size: window.innerWidth < 576 ? 9 : 11,
-            weight: '500',
-          },
+          font: { size: window.innerWidth < 576 ? 9 : 11, weight: '500' },
           color: '#5A5A5A',
-          padding: 8,
+          padding: 6,
         },
-        grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.05)',
-          lineWidth: 1,
-        },
-        border: {
-          display: true,
-          color: 'rgba(111, 174, 154, 0.2)',
-        },
+        grid: { display: true, color: 'rgba(0, 0, 0, 0.05)', lineWidth: 1 },
+        border: { display: true, color: 'rgba(111, 174, 154, 0.2)' },
       },
       y: {
         beginAtZero: true,
@@ -846,28 +802,18 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               ? Math.max(...data.datasets.flatMap(ds => ds.data || []).filter(v => v != null), 10) * 1.1
               : 50),
         ticks: {
-          font: {
-            size: 11,
-            weight: '500',
-          },
+          font: { size: 11, weight: '500' },
           color: '#5A5A5A',
-          padding: 8,
+          padding: 6,
           callback: function(value) {
-            if (metricsType === "dementia" && value <= 100) {
-              return value;
+            if (metricsType === "dementia") {
+              return `${value}%`;
             }
             return value.toFixed(0);
           },
         },
-        grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.05)',
-          lineWidth: 1,
-        },
-        border: {
-          display: true,
-          color: 'rgba(111, 174, 154, 0.2)',
-        },
+        grid: { display: true, color: 'rgba(0, 0, 0, 0.05)', lineWidth: 1 },
+        border: { display: true, color: 'rgba(111, 174, 154, 0.2)' },
       },
     },
   }), [data, metricsType, t, filteredLabels, visibleDatasets, setVisibleDatasets]);
