@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import "../css/components/GameInstructions.css";
 
 export default function GameInstructions({ gameKey, onClose, onStart }) {
   const { t } = useTranslation();
@@ -44,18 +45,12 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
 
   return (
     <div 
-      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center"
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-        zIndex: 9999,
-        padding: '0',
-        overflow: 'hidden'
-      }}
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center game-instructions-overlay"
       ref={overlayRef} 
       onClick={onClose}
     >
       <div 
-        className="card shadow-lg h-100" 
+        className="card shadow-lg h-100 game-instructions-card" 
         style={{ 
           maxWidth: '800px', 
           width: '100%', 

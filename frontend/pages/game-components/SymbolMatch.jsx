@@ -134,7 +134,7 @@ export default function SymbolMatch({ onFinish, onExit, ageGroup = "20-30" }) {
   return (
     <div className="container-fluid py-3">
       {showInstructions && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999 }} onClick={() => setShowInstructions(false)}>
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 10020, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowInstructions(false)}>
           <div className="card shadow-lg" style={{ maxWidth: '500px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
             <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
               <h3 className="h5 mb-0">{t("dementia.howToPlay", "How to Play")}</h3>

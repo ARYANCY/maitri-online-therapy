@@ -272,31 +272,33 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         };
       });
 
-    // Add trend lines as additional datasets
+    // Add trend lines as additional datasets (only if trendAnalysis is available)
     const trendDatasets = [];
-    filteredDatasets.forEach((ds, index) => {
-      const trendData = trendAnalysis[ds.label];
-      if (trendData && trendData.trend.isValid && chartType === "line") {
-        // Add trend line dataset
-        const trendLineValues = [...trendData.trendLineData.trendLine];
-        if (trendLineValues.length > 0) {
-          trendDatasets.push({
-            label: `${ds.label} (Trend)`,
-            data: trendLineValues,
-            borderColor: `rgba(${ds.color},0.6)`,
-            backgroundColor: 'transparent',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            fill: false,
-            tension: 0,
-            order: index + 100, // Render after main datasets
-            hidden: !visibleDatasets.has(ds.label) && visibleDatasets.size > 0,
-          });
+    if (trendAnalysis && typeof trendAnalysis === 'object') {
+      filteredDatasets.forEach((ds, index) => {
+        const trendData = trendAnalysis[ds.label];
+        if (trendData && trendData.trend && trendData.trend.isValid && chartType === "line") {
+          // Add trend line dataset
+          const trendLineValues = trendData.trendLineData?.trendLine || [];
+          if (trendLineValues.length > 0) {
+            trendDatasets.push({
+              label: `${ds.label} (Trend)`,
+              data: trendLineValues,
+              borderColor: `rgba(${ds.color},0.6)`,
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              pointRadius: 0,
+              pointHoverRadius: 0,
+              fill: false,
+              tension: 0,
+              order: index + 100, // Render after main datasets
+              hidden: !visibleDatasets.has(ds.label) && visibleDatasets.size > 0,
+            });
+          }
         }
-      }
-    });
+      });
+    }
 
     return {
       labels: filteredLabels,
@@ -338,12 +340,66 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   }, [chartData, effectiveLabels, metricsType, chartType, visibleDatasets, dataRange, filteredLabels, trendAnalysis, t]);
 
   // Calculate trends and early risk for all datasets
+  // Use filteredDatasets directly instead of data to avoid circular dependency
   const trendAnalysis = useMemo(() => {
-    if (!data || !data.datasets || data.datasets.length === 0) return {};
+    if (!effectiveLabels.length) return {};
+
+    const len = effectiveLabels.length;
+    const start = dataRange.start || 0;
+    const end = dataRange.end !== null ? dataRange.end : len;
+    
+    // Build datasets for trend analysis (same logic as data useMemo but without Chart.js formatting)
+    let datasetsForAnalysis = [];
+    
+    if (metricsType === "emotional") {
+      datasetsForAnalysis = [
+        { label: t("chart.stress", "Stress"), data: normalizeArray(chartData.stress_level, len).slice(start, end), color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: normalizeArray(chartData.happiness_level, len).slice(start, end), color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: normalizeArray(chartData.anxiety_level, len).slice(start, end), color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: normalizeArray(chartData.overall_mood_level, len).slice(start, end), color: "54,162,235" },
+      ];
+    } else if (metricsType === "screening") {
+      datasetsForAnalysis = [
+        { label: t("chart.phq9", "PHQ-9"), data: normalizeArray(chartData.phq9_score, len).slice(start, end), color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: normalizeArray(chartData.gad7_score, len).slice(start, end), color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: normalizeArray(chartData.ghq_score, len).slice(start, end), color: "255,206,86" },
+      ];
+    } else if (metricsType === "dementia") {
+      const metricColors = {
+        reactionTime: "255,99,132",
+        accuracy: "75,192,192",
+        workingMemory: "54,162,235",
+        executiveFunction: "255,206,86",
+        visuospatial: "153,102,255",
+        attention: "255,159,64",
+        language: "201,203,207",
+        processingSpeed: "255,99,71",
+        learningCurve: "50,205,50",
+        errorRate: "220,20,60"
+      };
+      
+      datasetsForAnalysis = [
+        { label: t("chart.reactionTime", "Reaction Time") + " (ms)", data: normalizeArray(chartData.reactionTimeAverage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.reactionTime },
+        { label: t("chart.accuracy", "Accuracy") + " (%)", data: normalizeArray(chartData.accuracyPercentage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.accuracy },
+        { label: t("chart.workingMemorySpan", "Working Memory Span"), data: normalizeArray(chartData.workingMemorySpan, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.workingMemory },
+        { label: t("chart.executiveFunction", "Executive Function"), data: normalizeArray(chartData.executiveFunction, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.executiveFunction },
+        { label: t("chart.visuospatialAccuracy", "Visuospatial Accuracy") + " (%)", data: normalizeArray(chartData.visuospatialAccuracy, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.visuospatial },
+        { label: t("chart.attentionConsistency", "Attention Consistency") + " (%)", data: normalizeArray(chartData.attentionConsistency, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.attention },
+        { label: t("chart.processingSpeed", "Processing Speed") + " (s)", data: normalizeArray(chartData.processingSpeed, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.processingSpeed },
+        { label: t("chart.learningCurve", "Learning Curve"), data: normalizeArray(chartData.learningCurve, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.learningCurve },
+        { label: t("chart.errorRate", "Error Rate") + " (%)", data: normalizeArray(chartData.errorRate, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.errorRate },
+        { label: t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)", data: normalizeArray(chartData.dementia_risk_score, len).slice(start, end).map(score => score <= 1 ? Math.round(score * 100) : Math.round(score)), color: "153,102,255" },
+      ];
+    }
+
+    // Filter by visible datasets
+    const filteredDatasetsForAnalysis = datasetsForAnalysis.filter(ds => visibleDatasets.size === 0 || visibleDatasets.has(ds.label));
+
+    if (filteredDatasetsForAnalysis.length === 0) return {};
 
     const analysis = {};
     
-    data.datasets.forEach((dataset) => {
+    filteredDatasetsForAnalysis.forEach((dataset) => {
       const values = dataset.data.filter(v => v != null && Number.isFinite(v));
       if (values.length < 2) return;
 
@@ -400,7 +456,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     });
 
     return analysis;
-  }, [data]);
+  }, [chartData, effectiveLabels, metricsType, visibleDatasets, dataRange, t]);
 
   const dementiaSummary = useMemo(() => {
     if (metricsType !== "dementia") return null;
@@ -711,7 +767,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         },
       },
     },
-  }), [data, metricsType, t]);
+  }), [data, metricsType, t, filteredLabels, visibleDatasets, setVisibleDatasets]);
 
   
   const statistics = useMemo(() => {
@@ -766,6 +822,24 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
 
     return [];
   }, [hasData, data, dementiaSummary, statistics, trendInfo, metricsType, t]);
+
+  // Debug logging for troubleshooting
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log("[Chart Debug]", {
+        hasData,
+        maxDataLength,
+        effectiveLabelsLength: effectiveLabels.length,
+        chartDataKeys: chartData ? Object.keys(chartData) : [],
+        chartDataSample: chartData ? Object.entries(chartData).slice(0, 3).map(([k, v]) => [k, Array.isArray(v) ? v.length : typeof v]) : null,
+        dataLabels: data?.labels?.length || 0,
+        dataDatasets: data?.datasets?.length || 0,
+        metricsType,
+        chartType,
+        visibleDatasetsSize: visibleDatasets.size
+      });
+    }
+  }, [hasData, maxDataLength, effectiveLabels.length, chartData, data, metricsType, chartType, visibleDatasets.size]);
 
   if (!data || !data.datasets || !data.datasets.length || !hasData) {
     return (
@@ -990,11 +1064,34 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         )}
 
         <div className="chart-wrapper mb-4 position-relative">
-          <div className="chart-container-responsive">
-            {chartType === "bar" ? (
-              <Bar ref={chartRef} data={data} options={options} />
+          <div className="chart-container-responsive" style={{ minHeight: "400px", width: "100%" }}>
+            {data && data.labels && data.labels.length > 0 && data.datasets && data.datasets.length > 0 ? (
+              <>
+                {chartType === "bar" ? (
+                  <Bar 
+                    ref={chartRef} 
+                    data={data} 
+                    options={options}
+                    style={{ display: 'block', width: '100%', height: '100%' }}
+                  />
+                ) : (
+                  <Line 
+                    ref={chartRef} 
+                    data={data} 
+                    options={options}
+                    style={{ display: 'block', width: '100%', height: '100%' }}
+                  />
+                )}
+              </>
             ) : (
-              <Line ref={chartRef} data={data} options={options} />
+              <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "400px", width: "100%" }}>
+                <div className="text-center">
+                  <div className="spinner-border text-primary mb-3" role="status">
+                    <span className="visually-hidden">Loading chart...</span>
+                  </div>
+                  <p className="text-muted">{t("chart.loadingChart", "Loading chart data...")}</p>
+                </div>
+              </div>
             )}
           </div>
           

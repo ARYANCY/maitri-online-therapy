@@ -106,12 +106,17 @@ export default function ViewResult({
       className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        zIndex: 9999,
+        zIndex: 10020,
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         padding: '1rem',
         transition: 'opacity 0.3s ease',
-        opacity: fadeOut ? 0 : 1
+        opacity: fadeOut ? 0 : 1,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
