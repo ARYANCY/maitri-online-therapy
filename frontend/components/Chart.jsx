@@ -1075,41 +1075,33 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       <div className="card-body">
         
         {statistics && (
-          <div className="row g-3 mb-4">
-            <div className="col-6 col-md-3">
-              <div className="card text-center">
-                <div className="card-body">
-                  <div className="fs-3 mb-2">📊</div>
-                  <div className="text-muted small">{t("chart.average", "Average")}</div>
-                  <div className="h4 mb-0">{statistics.avg}</div>
-                </div>
+          <div className="chart-grid mb-4">
+            <div className="card text-center">
+              <div className="card-body">
+                <div className="fs-3 mb-2">📊</div>
+                <div className="text-muted small">{t("chart.average", "Average")}</div>
+                <div className="h4 mb-0">{statistics.avg}</div>
               </div>
             </div>
-            <div className="col-6 col-md-3">
-              <div className="card text-center">
-                <div className="card-body">
-                  <div className="fs-3 mb-2">⬆️</div>
-                  <div className="text-muted small">{t("chart.maximum", "Maximum")}</div>
-                  <div className="h4 mb-0">{statistics.max}</div>
-                </div>
+            <div className="card text-center">
+              <div className="card-body">
+                <div className="fs-3 mb-2">⬆️</div>
+                <div className="text-muted small">{t("chart.maximum", "Maximum")}</div>
+                <div className="h4 mb-0">{statistics.max}</div>
               </div>
             </div>
-            <div className="col-6 col-md-3">
-              <div className="card text-center">
-                <div className="card-body">
-                  <div className="fs-3 mb-2">⬇️</div>
-                  <div className="text-muted small">{t("chart.minimum", "Minimum")}</div>
-                  <div className="h4 mb-0">{statistics.min}</div>
-                </div>
+            <div className="card text-center">
+              <div className="card-body">
+                <div className="fs-3 mb-2">⬇️</div>
+                <div className="text-muted small">{t("chart.minimum", "Minimum")}</div>
+                <div className="h4 mb-0">{statistics.min}</div>
               </div>
             </div>
-            <div className="col-6 col-md-3">
-              <div className="card text-center">
-                <div className="card-body">
-                  <div className="fs-3 mb-2">📈</div>
-                  <div className="text-muted small">{t("chart.dataPoints", "Data Points")}</div>
-                  <div className="h4 mb-0">{statistics.count}</div>
-                </div>
+            <div className="card text-center">
+              <div className="card-body">
+                <div className="fs-3 mb-2">📈</div>
+                <div className="text-muted small">{t("chart.dataPoints", "Data Points")}</div>
+                <div className="h4 mb-0">{statistics.count}</div>
               </div>
             </div>
           </div>
@@ -1671,15 +1663,13 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
               <h2 className="h5 mb-0">{t("chart.quickSummary", "Quick Summary")}</h2>
             </div>
             <div className="card-body">
-              <div className="row g-3">
+              <div className="chart-grid">
                 {summaryItems.map((item, idx) => (
-                  <div className="col-6 col-md-3" key={`${item.title}-${idx}`}>
-                    <div className="card h-100">
-                      <div className="card-body">
-                        <div className="text-muted small mb-1">{item.title}</div>
-                        <div className="h4 mb-1">{item.value}</div>
-                        <small className="text-muted">{item.note}</small>
-                      </div>
+                  <div className="card h-100" key={`${item.title}-${idx}`}>
+                    <div className="card-body">
+                      <div className="text-muted small mb-1">{item.title}</div>
+                      <div className="h4 mb-1">{item.value}</div>
+                      <small className="text-muted">{item.note}</small>
                     </div>
                   </div>
                 ))}
