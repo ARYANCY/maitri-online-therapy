@@ -345,11 +345,174 @@ export function calculateEarlyRisk(values, config = {}) {
   };
 }
 
+/**
+ * Predict dementia timeline based on risk score trends
+ * Estimates when dementia risk may reach critical thresholds
+ * @param {Array<number>} riskScores - Historical risk scores (0-100 scale)
+ * @param {Object} config - Configuration object
+ * @returns {Object} Timeline prediction with years to dementia
+ */
+export function predictDementiaTimeline(riskScores = [], config = {}) {
+  const {
+    startDate = new Date(),
+    daysPerPoint = 7,
+    criticalThreshold = 70, // High risk threshold
+    moderateThreshold = 50,  // Moderate risk threshold
+    highRiskThreshold = 80   // Very high risk threshold
+  } = config;
+
+  const nums = riskScores.map(Number).filter(n => Number.isFinite(n) && n >= 0 && n <= 100);
+  
+  if (nums.length < 2) {
+    return {
+      isValid: false,
+      reason: 'Insufficient data points',
+      yearsToModerate: null,
+      yearsToCritical: null,
+      yearsToHighRisk: null,
+      currentRisk: 'unknown',
+      confidence: 0
+    };
+  }
+
+  const latest = nums[nums.length - 1];
+  const trend = calculateLinearTrend(nums);
+  
+  // Determine current risk level
+  let currentRisk = 'low';
+  if (latest >= highRiskThreshold) {
+    currentRisk = 'very_high';
+  } else if (latest >= criticalThreshold) {
+    currentRisk = 'high';
+  } else if (latest >= moderateThreshold) {
+    currentRisk = 'moderate';
+  }
+
+  // If already at high risk, return early warning
+  if (currentRisk === 'very_high' || currentRisk === 'high') {
+    return {
+      isValid: true,
+      currentRisk,
+      yearsToModerate: 0,
+      yearsToCritical: 0,
+      yearsToHighRisk: 0,
+      message: 'High risk detected - immediate attention recommended',
+      confidence: 0.95,
+      trend: trend.trend,
+      latestScore: latest
+    };
+  }
+
+  // If trend is improving or stable with low risk, dementia may not occur
+  if (trend.slope <= 0 && latest < moderateThreshold) {
+    return {
+      isValid: true,
+      currentRisk,
+      yearsToModerate: null,
+      yearsToCritical: null,
+      yearsToHighRisk: null,
+      message: 'Risk trend is stable or improving - dementia unlikely in near future',
+      confidence: Math.max(0.3, trend.rSquared),
+      trend: trend.trend,
+      latestScore: latest,
+      isLowRisk: true
+    };
+  }
+
+  // Calculate predictions for different thresholds
+  const predictions = {};
+  const thresholds = [
+    { name: 'moderate', value: moderateThreshold },
+    { name: 'critical', value: criticalThreshold },
+    { name: 'highRisk', value: highRiskThreshold }
+  ];
+
+  thresholds.forEach(({ name, value }) => {
+    if (latest >= value) {
+      predictions[name] = { years: 0, days: 0, isValid: true };
+    } else if (trend.slope > 0) {
+      // Calculate when trend line will cross threshold
+      const currentX = nums.length - 1;
+      const xAtCrossing = (value - trend.intercept) / trend.slope;
+      
+      if (xAtCrossing > currentX) {
+        const pointsFromNow = xAtCrossing - currentX;
+        const daysFromNow = pointsFromNow * daysPerPoint;
+        const yearsFromNow = daysFromNow / 365.25;
+        
+        predictions[name] = {
+          years: Math.max(0, Number(yearsFromNow.toFixed(1))),
+          days: Math.ceil(daysFromNow),
+          months: Math.ceil(daysFromNow / 30),
+          isValid: true,
+          predictedDate: new Date(startDate.getTime() + daysFromNow * 24 * 60 * 60 * 1000)
+        };
+      } else {
+        predictions[name] = { years: null, days: null, isValid: false, reason: 'Threshold already crossed' };
+      }
+    } else {
+      predictions[name] = { years: null, days: null, isValid: false, reason: 'Trend not increasing' };
+    }
+  });
+
+  // Calculate confidence based on R-squared and data quality
+  const confidence = Math.min(0.95, trend.rSquared * Math.min(1, nums.length / 10));
+  
+  // Generate human-readable message
+  let message = '';
+  if (predictions.critical?.isValid && predictions.critical.years !== null) {
+    const years = predictions.critical.years;
+    if (years < 1) {
+      message = `High risk may occur within ${predictions.critical.months} months`;
+    } else if (years < 5) {
+      message = `High risk may occur within ${years} years`;
+    } else if (years < 10) {
+      message = `High risk may occur in approximately ${years} years`;
+    } else {
+      message = `High risk may occur in ${years} years (long-term projection)`;
+    }
+  } else if (predictions.moderate?.isValid && predictions.moderate.years !== null) {
+    const years = predictions.moderate.years;
+    if (years < 1) {
+      message = `Moderate risk may occur within ${predictions.moderate.months} months`;
+    } else {
+      message = `Moderate risk may occur in approximately ${years} years`;
+    }
+  } else {
+    message = 'Risk trend is stable or improving';
+  }
+
+  return {
+    isValid: true,
+    currentRisk,
+    yearsToModerate: predictions.moderate?.years ?? null,
+    yearsToCritical: predictions.critical?.years ?? null,
+    yearsToHighRisk: predictions.highRisk?.years ?? null,
+    daysToModerate: predictions.moderate?.days ?? null,
+    daysToCritical: predictions.critical?.days ?? null,
+    daysToHighRisk: predictions.highRisk?.days ?? null,
+    monthsToModerate: predictions.moderate?.months ?? null,
+    monthsToCritical: predictions.critical?.months ?? null,
+    monthsToHighRisk: predictions.highRisk?.months ?? null,
+    predictedDateModerate: predictions.moderate?.predictedDate ?? null,
+    predictedDateCritical: predictions.critical?.predictedDate ?? null,
+    predictedDateHighRisk: predictions.highRisk?.predictedDate ?? null,
+    message,
+    confidence: Number(confidence.toFixed(2)),
+    trend: trend.trend,
+    trendSlope: trend.slope,
+    rSquared: trend.rSquared,
+    latestScore: latest,
+    equation: trend.equation
+  };
+}
+
 export default {
   calculateLinearTrend,
   calculateTrendLine,
   detectThresholdCrossing,
   predictFutureDate,
-  calculateEarlyRisk
+  calculateEarlyRisk,
+  predictDementiaTimeline
 };
 
