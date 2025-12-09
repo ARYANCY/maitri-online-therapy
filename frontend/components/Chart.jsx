@@ -44,7 +44,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [hasData, setHasData] = useState(false);
   const [visibleDatasets, setVisibleDatasets] = useState(new Set());
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
-  const [selectedDataPoint, setSelectedDataPoint] = useState(null);
+  const [selectedDataPoint, setSelectedDataPoint] = useState(null); // kept for compatibility, no popup rendered
   const chartRef = useRef(null);
 
   const normalizeArray = (arr, length) => {
@@ -682,19 +682,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       intersect: false,
       mode: 'index',
     },
-    onHover: (event, activeElements) => {
-      if (activeElements.length > 0) {
-        const element = activeElements[0];
-        setSelectedDataPoint({
-          index: element.index,
-          dataset: element.datasetIndex,
-          value: element.element.$context.parsed.y,
-          label: filteredLabels[element.index]
-        });
-      } else {
-        setSelectedDataPoint(null);
-      }
-    },
+    onHover: () => {},
     animation: {
       duration: 800,
       easing: 'easeInOutQuart',
@@ -1307,26 +1295,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
             )}
           </div>
           
-          {/* Selected Data Point Info */}
-          {selectedDataPoint && (
-            <div className="chart-selected-info card mt-2">
-              <div className="card-body p-2">
-                <div className="d-flex align-items-center justify-content-between">
-                  <div>
-                    <strong>{selectedDataPoint.label}</strong>
-                    <span className="text-muted ms-2">
-                      {data.datasets[selectedDataPoint.dataset]?.label}: {selectedDataPoint.value?.toFixed(1)}
-                    </span>
-                  </div>
-                  <button
-                    className="btn btn-sm btn-close"
-                    onClick={() => setSelectedDataPoint(null)}
-                    aria-label="Close"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Trend Analysis and Early Risk Section */}
