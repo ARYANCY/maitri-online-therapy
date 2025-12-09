@@ -1,7 +1,6 @@
 /**
  * Utility helpers to compute probability and trend for dementia risk.
- * This is intentionally simple and transparent: it uses the latest value
- * and a linear slope over the series to estimate direction.
+ * Now more robust: combines latest value, recent slope, and stability.
  */
 
 const clamp = (val, min = 0, max = 1) => Math.min(max, Math.max(min, val));
@@ -35,26 +34,50 @@ const linearSlope = (values) => {
   return (n * sumXY - sumX * sumY) / denom;
 };
 
+const rollingAvg = (values, k = 3) => {
+  const y = toNumberArray(values);
+  if (!y.length) return null;
+  const start = Math.max(0, y.length - k);
+  const slice = y.slice(start);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+};
+
+const stdDev = (values) => {
+  const y = toNumberArray(values);
+  if (y.length < 2) return 0;
+  const avg = y.reduce((a, b) => a + b, 0) / y.length;
+  const variance = y.reduce((acc, v) => acc + Math.pow(v - avg, 2), 0) / y.length;
+  return Math.sqrt(variance);
+};
+
 export function computeDementiaProbability({ riskScores = [], metrics = {} } = {}) {
-  const scores = toNumberArray(riskScores).map((s) => (s <= 1 ? s * 100 : s)); // normalize to 0-100 scale
+  // Normalize to 0-100 scale
+  const scores = toNumberArray(riskScores).map((s) => (s <= 1 ? s * 100 : s));
   const latest = scores.length ? scores[scores.length - 1] : null;
+  const avgRecent = rollingAvg(scores, 3);
   const slope = linearSlope(scores);
+  const volatility = stdDev(scores);
 
-  // Confidence grows with more data points, capped
-  const confidence = clamp(scores.length / 10, 0, 1);
+  // Confidence: more points + lower volatility
+  const confidence = clamp((scores.length / 12) * 0.6 + (1 / (1 + volatility / 25)) * 0.4, 0, 1);
 
-  // Probability combines latest score and slope signal
-  const slopeSignal = clamp(slope / 25, -0.25, 0.25); // slope influence bounded
-  const baseProb = latest != null ? latest / 100 : 0.5;
-  const probability = clamp(baseProb + slopeSignal, 0, 1);
-
+  // Trend direction
   const trend =
-    slope > 0.2 ? "deteriorating" :
-    slope < -0.2 ? "improving" : "stable";
+    slope > 0.3 ? "deteriorating" :
+    slope < -0.3 ? "improving" : "stable";
+
+  // Probability: weighted combo of latest, recent average, and slope influence
+  const latestProb = latest != null ? latest / 100 : 0.5;
+  const avgProb = avgRecent != null ? avgRecent / 100 : latestProb;
+  const slopeSignal = clamp(slope / 20, -0.3, 0.3);
+  const stabilityPenalty = clamp(volatility / 120, 0, 0.15); // higher volatility reduces probability confidence
+
+  let probability = latestProb * 0.6 + avgProb * 0.25 + slopeSignal * 0.15;
+  probability = clamp(probability - stabilityPenalty, 0, 1);
 
   const riskLabel =
-    probability > 0.7 ? "High" :
-    probability > 0.4 ? "Moderate" : "Low";
+    probability >= 0.75 ? "High" :
+    probability >= 0.45 ? "Moderate" : "Low";
 
   // Pull a few latest cognitive metrics to echo back
   const latestMetrics = Object.entries(metrics || {}).reduce((acc, [key, val]) => {

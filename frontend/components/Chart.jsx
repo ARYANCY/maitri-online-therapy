@@ -80,6 +80,13 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     return Array.from({ length: len }, (_, i) => chartLabels[i] || `${t("chart.entry", "Entry")} ${i + 1}`);
   }, [chartLabels, maxDataLength, t]);
 
+  // Force line chart for dementia metrics to surface projections/thresholds
+  useEffect(() => {
+    if (metricsType === "dementia") {
+      setChartType("line");
+    }
+  }, [metricsType]);
+
   useEffect(() => {
     const hasValidData = maxDataLength > 0 && chartData && Object.keys(chartData).length > 0;
     setHasData(hasValidData);
@@ -131,6 +138,8 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   }, [effectiveLabels, dataRange]);
 
   // Get all available dataset labels for toggle buttons
+  const riskThresholdLabel = t("chart.riskThreshold", "Risk Threshold (50%)");
+
   const allDatasetLabels = useMemo(() => {
     let labels = [];
     
@@ -158,11 +167,12 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         t("chart.processingSpeed", "Processing Speed") + " (s)",
         t("chart.learningCurve", "Learning Curve"),
         t("chart.errorRate", "Error Rate") + " (%)",
-        t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)"
+        t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)",
+        riskThresholdLabel
       ];
     }
     return labels;
-  }, [metricsType, t]);
+  }, [metricsType, t, riskThresholdLabel]);
 
   // Range analysis summary
   const rangeSummary = useMemo(() => {
@@ -376,19 +386,19 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           color: metricColors.errorRate 
         },
         
-        { 
-          label: t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)", 
+        {
+          label: t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)",
           data: normalizeArray(chartData.dementia_risk_score, len).map(score => {
             return score <= 1 ? Math.round(score * 100) : Math.round(score);
-          }), 
+          }),
           color: "153,102,255",
-          borderDash: [5, 5] 
+          borderDash: [5, 5]
         }
       ];
 
       if (chartType === "line") {
         datasets.push({
-          label: t("chart.riskThreshold", "Risk Threshold (50%)"),
+          label: riskThresholdLabel,
           data: Array(len).fill(50),
           color: "120,120,120",
           borderDash: [8, 8],
@@ -475,7 +485,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         ...trendDatasets
       ],
     };
-  }, [chartData, effectiveLabels, metricsType, chartType, visibleDatasets, dataRange, filteredLabels, trendAnalysis, t]);
+  }, [chartData, effectiveLabels, metricsType, chartType, visibleDatasets, dataRange, filteredLabels, trendAnalysis, t, riskThresholdLabel]);
 
   const dementiaSummary = useMemo(() => {
     if (metricsType !== "dementia") return null;
@@ -878,6 +888,21 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           value: dementiaSummary.latestRisk != null ? `${Math.round(dementiaSummary.latestRisk * 10) / 10}` : "—",
           note: t("chart.summaryPoints", "Data points") + `: ${dementiaSummary.dataPoints}`,
         },
+        dementiaSummary.trendAnalysis?.futurePrediction
+          ? {
+              title: t("chart.summaryThreshold", "Threshold Crossing"),
+              value: dementiaSummary.trendAnalysis.futurePrediction.predictedDate
+                ? dementiaSummary.trendAnalysis.futurePrediction.predictedDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })
+                : "—",
+              note: dementiaSummary.trendAnalysis.futurePrediction.isValid
+                ? `${t("chart.daysFromNow", "Days from now")}: ${dementiaSummary.trendAnalysis.futurePrediction.daysFromNow || "—"}`
+                : t("chart.noPrediction", "Prediction not available")
+            }
+          : null,
       ];
 
       // Add predicted timeline if available
@@ -1507,7 +1532,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                   <div className="mb-2">
                                     <strong className="text-primary">{t("chart.predictedThresholdDate", "Predicted Threshold Crossing Date")}:</strong>
                                   </div>
-                                  <div className="h5 text-primary mb-2">
+                                  <div className="h5 text-primary mb-2 highlight-badge">
                                     {dementiaSummary.trendAnalysis.futurePrediction.predictedDate 
                                       ? dementiaSummary.trendAnalysis.futurePrediction.predictedDate.toLocaleDateString('en-US', { 
                                           year: 'numeric', 
@@ -1551,14 +1576,14 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                           </>
                                         ) : dementiaSummary.timelinePrediction.yearsToCritical < 1 ? (
                                           <>
-                                            <div className="h5 mb-1">
+                                            <div className="h5 mb-1 highlight-badge">
                                               {dementiaSummary.timelinePrediction.monthsToCritical} {t("chart.months", "months")}
                                             </div>
                                             <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
                                           </>
                                         ) : (
                                           <>
-                                            <div className="h5 mb-1">
+                                            <div className="h5 mb-1 highlight-badge">
                                               {dementiaSummary.timelinePrediction.yearsToCritical} {t("chart.years", "years")}
                                             </div>
                                             <div className="small">{t("chart.timelinePredictionText", "Based on current trend, high risk may occur within this timeframe")}</div>
@@ -1574,14 +1599,14 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                       <div>
                                         {dementiaSummary.timelinePrediction.yearsToModerate < 1 ? (
                                           <>
-                                            <div className="h5 mb-1">
+                                            <div className="h5 mb-1 highlight-badge">
                                               {dementiaSummary.timelinePrediction.monthsToModerate} {t("chart.months", "months")}
                                             </div>
                                             <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>
                                           </>
                                         ) : (
                                           <>
-                                            <div className="h5 mb-1">
+                                            <div className="h5 mb-1 highlight-badge">
                                               {dementiaSummary.timelinePrediction.yearsToModerate} {t("chart.years", "years")}
                                             </div>
                                             <div className="small">{t("chart.timelineModerateRiskText", "Moderate risk may occur within this timeframe")}</div>

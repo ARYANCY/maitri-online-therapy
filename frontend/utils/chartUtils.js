@@ -362,8 +362,10 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
   } = config;
 
   const nums = riskScores.map(Number).filter(n => Number.isFinite(n) && n >= 0 && n <= 100);
-  
-  if (nums.length < 2) {
+  const n = nums.length;
+
+  // Require at least 3 points for a reasonable projection
+  if (n < 3) {
     return {
       isValid: false,
       reason: 'Insufficient data points',
@@ -375,8 +377,35 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
     };
   }
 
-  const latest = nums[nums.length - 1];
+  const latest = nums[n - 1];
   const trend = calculateLinearTrend(nums);
+  const slope = trend.slope;
+  const r2 = trend.rSquared || 0;
+
+  // If trend is flat or improving, and latest below moderate, consider low risk
+  if (slope <= 0 && latest < moderateThreshold) {
+    return {
+      isValid: true,
+      isLowRisk: true,
+      currentRisk: 'low',
+      yearsToModerate: null,
+      yearsToCritical: null,
+      yearsToHighRisk: null,
+      monthsToModerate: null,
+      monthsToCritical: null,
+      monthsToHighRisk: null,
+      predictedDateModerate: null,
+      predictedDateCritical: null,
+      predictedDateHighRisk: null,
+      message: 'Risk trend is stable or improving; no projected threshold crossing',
+      confidence: Math.min(0.4 + r2 * 0.4, 0.85),
+      trend: trend.trend,
+      trendSlope: slope,
+      rSquared: r2,
+      latestScore: latest,
+      equation: trend.equation
+    };
+  }
   
   // Determine current risk level
   let currentRisk = 'low';
@@ -388,8 +417,8 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
     currentRisk = 'moderate';
   }
 
-  // If already at high risk, return early warning
-  if (currentRisk === 'very_high' || currentRisk === 'high') {
+  // If already at very high risk AND slope is increasing, flag immediate
+  if ((currentRisk === 'very_high' || currentRisk === 'high') && slope > 0.05) {
     return {
       isValid: true,
       currentRisk,
@@ -397,25 +426,30 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
       yearsToCritical: 0,
       yearsToHighRisk: 0,
       message: 'High risk detected - immediate attention recommended',
-      confidence: 0.95,
+      confidence: Math.min(0.95, 0.6 + r2 * 0.4),
       trend: trend.trend,
-      latestScore: latest
+      trendSlope: slope,
+      rSquared: r2,
+      latestScore: latest,
+      isLowRisk: false
     };
   }
 
-  // If trend is improving or stable with low risk, dementia may not occur
-  if (trend.slope <= 0 && latest < moderateThreshold) {
+  // If high but slope not increasing, treat as monitored but not immediate
+  if ((currentRisk === 'very_high' || currentRisk === 'high') && slope <= 0.05) {
     return {
       isValid: true,
       currentRisk,
-      yearsToModerate: null,
-      yearsToCritical: null,
-      yearsToHighRisk: null,
-      message: 'Risk trend is stable or improving - dementia unlikely in near future',
-      confidence: Math.max(0.3, trend.rSquared),
+      yearsToModerate: 0,
+      yearsToCritical: 0,
+      yearsToHighRisk: 0,
+      message: 'High risk present but stable; close monitoring advised',
+      confidence: Math.min(0.8, 0.5 + r2 * 0.3),
       trend: trend.trend,
+      trendSlope: slope,
+      rSquared: r2,
       latestScore: latest,
-      isLowRisk: true
+      isLowRisk: false
     };
   }
 
@@ -430,10 +464,10 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
   thresholds.forEach(({ name, value }) => {
     if (latest >= value) {
       predictions[name] = { years: 0, days: 0, isValid: true };
-    } else if (trend.slope > 0) {
+    } else if (slope > 0.05) {
       // Calculate when trend line will cross threshold
       const currentX = nums.length - 1;
-      const xAtCrossing = (value - trend.intercept) / trend.slope;
+      const xAtCrossing = (value - trend.intercept) / slope;
       
       if (xAtCrossing > currentX) {
         const pointsFromNow = xAtCrossing - currentX;
@@ -451,12 +485,16 @@ export function predictDementiaTimeline(riskScores = [], config = {}) {
         predictions[name] = { years: null, days: null, isValid: false, reason: 'Threshold already crossed' };
       }
     } else {
-      predictions[name] = { years: null, days: null, isValid: false, reason: 'Trend not increasing' };
+      predictions[name] = { years: null, days: null, isValid: false, reason: 'Trend not increasing enough for projection' };
     }
   });
 
-  // Calculate confidence based on R-squared and data quality
-  const confidence = Math.min(0.95, trend.rSquared * Math.min(1, nums.length / 10));
+  // Calculate confidence based on R-squared, data points, and slope strength
+  const slopeStrength = Math.min(Math.abs(slope) / 1.5, 1); // normalize slope influence
+  const confidence = Math.min(
+    0.95,
+    (r2 * 0.6) + (Math.min(n / 12, 1) * 0.25) + (slopeStrength * 0.15)
+  );
   
   // Generate human-readable message
   let message = '';
