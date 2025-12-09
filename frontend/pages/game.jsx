@@ -459,6 +459,9 @@ export default function Game({ onDataUpdate }) {
   const handleGameClick = useCallback((game) => {
     setSelectedGame(game);
     setShowInstructions(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, []);
 
   const handleStartGame = useCallback(() => {
