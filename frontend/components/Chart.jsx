@@ -2146,41 +2146,33 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
             </div>
           </div>
           <div className="card-body">
-            <div className="row g-3 mb-3">
-              <div className="col-md-6">
-                <div className="d-flex align-items-start gap-3">
-                  <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>1</div>
-                  <div>
-                    <strong>{t("chart.step1Title", "Select Chart Type")}</strong>
-                    <p className="text-muted mb-0 small">{t("chart.step1Desc", "Choose between Bar Chart (for individual data points) or Line Chart (for trend visualization) using the first dropdown menu.")}</p>
-                  </div>
+            <div className="section-grid mb-3">
+              <div className="d-flex align-items-start gap-3">
+                <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>1</div>
+                <div>
+                  <strong>{t("chart.step1Title", "Select Chart Type")}</strong>
+                  <p className="text-muted mb-0 small">{t("chart.step1Desc", "Choose between Bar Chart (for individual data points) or Line Chart (for trend visualization) using the first dropdown menu.")}</p>
                 </div>
               </div>
-              <div className="col-md-6">
-                <div className="d-flex align-items-start gap-3">
-                  <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>2</div>
-                  <div>
-                    <strong>{t("chart.step2Title", "Choose Metric Category")}</strong>
-                    <p className="text-muted mb-0 small">{t("chart.step2Desc", "Select from Emotional Metrics, Screening Metrics, or Cognitive Impairment using the second dropdown to view different assessment types.")}</p>
-                  </div>
+              <div className="d-flex align-items-start gap-3">
+                <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>2</div>
+                <div>
+                  <strong>{t("chart.step2Title", "Choose Metric Category")}</strong>
+                  <p className="text-muted mb-0 small">{t("chart.step2Desc", "Select from Emotional Metrics, Screening Metrics, or Cognitive Impairment using the second dropdown to view different assessment types.")}</p>
                 </div>
               </div>
-              <div className="col-md-6">
-                <div className="d-flex align-items-start gap-3">
-                  <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>3</div>
-                  <div>
-                    <strong>{t("chart.step3Title", "Refresh Data")}</strong>
-                    <p className="text-muted mb-0 small">{t("chart.step3Desc", "Click the 'Refresh' button to update the chart with your latest assessment data and ensure you're viewing the most current information.")}</p>
-                  </div>
+              <div className="d-flex align-items-start gap-3">
+                <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>3</div>
+                <div>
+                  <strong>{t("chart.step3Title", "Refresh Data")}</strong>
+                  <p className="text-muted mb-0 small">{t("chart.step3Desc", "Click the 'Refresh' button to update the chart with your latest assessment data and ensure you're viewing the most current information.")}</p>
                 </div>
               </div>
-              <div className="col-md-6">
-                <div className="d-flex align-items-start gap-3">
-                  <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>4</div>
-                  <div>
-                    <strong>{t("chart.step4Title", "Interpret Results")}</strong>
-                    <p className="text-muted mb-0 small">{t("chart.step4Desc", "Review the definitions below to understand what each metric means. Lower scores in screening tools and higher scores in emotional metrics generally indicate better wellbeing.")}</p>
-                  </div>
+              <div className="d-flex align-items-start gap-3">
+                <div className="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px', minWidth: '32px'}}>4</div>
+                <div>
+                  <strong>{t("chart.step4Title", "Interpret Results")}</strong>
+                  <p className="text-muted mb-0 small">{t("chart.step4Desc", "Review the definitions below to understand what each metric means. Lower scores in screening tools and higher scores in emotional metrics generally indicate better wellbeing.")}</p>
                 </div>
               </div>
             </div>
