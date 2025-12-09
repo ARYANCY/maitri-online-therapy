@@ -99,9 +99,9 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
 
   return (
     <div
-      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center p-3"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         zIndex: 10020,
         transition: 'opacity 0.2s ease',
         opacity: fadeOut ? 0 : 1,
@@ -109,17 +109,18 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0
+        bottom: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden'
       }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div 
         className="card shadow border-0 position-relative" 
         style={{
-          maxWidth: '640px',
+          maxWidth: '900px',
           width: '100%',
-          maxHeight: '90vh',
-          overflow: 'auto',
+          overflow: 'visible',
           display: 'flex', 
           flexDirection: 'column', 
           borderRadius: '12px',
@@ -159,7 +160,7 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             flex: '1', 
             display: 'flex', 
             flexDirection: 'column', 
-            overflowY: 'auto',
+            overflowY: 'visible',
             background: "#f8fafc"
           }}
         >
@@ -169,8 +170,8 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
           </div>
 
           <div className="row g-3 mb-4">
-            <div className="col-6">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+            <div className="col-12 col-md-6">
+              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "12px", background: "white" }}>
                 <div className="card-body text-center p-4">
                   <div className="fs-1 mb-2">🎯</div>
                   <div className="text-muted small mb-2">{t("dementia.score", "Score")}</div>
@@ -182,8 +183,8 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
               </div>
             </div>
 
-            <div className="col-6">
-              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+            <div className="col-12 col-md-6">
+              <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "12px", background: "white" }}>
                 <div className="card-body text-center p-4">
                   <div className="fs-1 mb-2">⏱️</div>
                   <div className="text-muted small mb-2">{t("dementia.time", "Time")}</div>
@@ -197,8 +198,8 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
           {additionalStats.length > 0 && (
             <div className="row g-2 mb-4">
               {additionalStats.map((stat, idx) => (
-                <div key={idx} className="col-6">
-                  <div className="card border-0 shadow-sm" style={{ borderRadius: "16px", background: "white" }}>
+                <div key={idx} className="col-12 col-md-6 col-lg-4">
+                  <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "12px", background: "white" }}>
                     <div className="card-body text-center p-3">
                       <div className="fs-4 mb-1">{stat.icon}</div>
                       <div className="text-muted small mb-1">{stat.label}</div>

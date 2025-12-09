@@ -19,7 +19,11 @@ export const getColorStyle = (color) => {
 
 export const generateSequence = (difficulty = "medium") => {
   const { colors, sequenceLength } = DIFFICULTY.medium;
-  const sequence = Array.from({ length: sequenceLength }, () => 
+  if (!Array.isArray(colors) || colors.length === 0 || !Number.isFinite(sequenceLength)) {
+    return { sequence: [], shuffledColors: [] };
+  }
+  const len = Math.max(1, sequenceLength);
+  const sequence = Array.from({ length: len }, () => 
     colors[Math.floor(Math.random() * colors.length)]
   );
   const shuffledColors = shuffleArray([...colors]);
@@ -28,13 +32,16 @@ export const generateSequence = (difficulty = "medium") => {
 };
 
 export const calculateRoundScore = (userSequence, correctSequence) => {
+  if (!Array.isArray(userSequence) || !Array.isArray(correctSequence)) return 0;
+  const len = Math.min(userSequence.length, correctSequence.length);
   let score = 0;
-  userSequence.forEach((color, idx) => {
-    if (color === correctSequence[idx]) {
+  for (let i = 0; i < len; i++) {
+    if (userSequence[i] === correctSequence[i]) {
       score += 10;
     }
-  });
-  return score;
+  }
+  const maxScore = (correctSequence.length || 0) * 10;
+  return Math.max(0, Math.min(score, maxScore));
 };
 
 export const isSequenceComplete = (userSequence, correctSequence) => {

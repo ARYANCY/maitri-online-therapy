@@ -19,13 +19,12 @@ export const calculateRoundScore = (userChoice, correctColor, timeSpent) => {
     return 0; // Wrong answer = 0 points
   }
   
+  const safeTime = Number.isFinite(timeSpent) && timeSpent > 0 ? timeSpent : 0;
+
   // Correct answer: reward faster responses
-  // Maximum score: 10 points for instant response (0 seconds)
-  // Minimum score: 1 point for slow response (10+ seconds)
-  // Linear decay: 10 points at 0s, 1 point at 10s+
   const maxTime = 10;
   const baseScore = 10;
-  const timePenalty = Math.min(timeSpent / maxTime, 1) * (baseScore - 1);
+  const timePenalty = Math.min(safeTime / maxTime, 1) * (baseScore - 1);
   const finalScore = Math.max(1, baseScore - timePenalty);
   
   return Math.round(finalScore * 10) / 10; // Round to 1 decimal place

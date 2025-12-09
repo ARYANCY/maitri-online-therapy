@@ -25,12 +25,15 @@ export const FRUIT_SYMBOLS = [
 ];
 
 export const generateGrid = (pairs) => {
-  const selectedFruits = FRUIT_SYMBOLS.slice(0, pairs);
+  const safePairs = Math.max(1, Math.min(pairs || 0, FRUIT_SYMBOLS.length));
+  const selectedFruits = FRUIT_SYMBOLS.slice(0, safePairs);
   const double = [...selectedFruits, ...selectedFruits];
   return shuffleArray(double);
 };
 
 export const checkMatch = (grid, first, second) => {
+  if (!Array.isArray(grid) || first === second) return false;
+  if (first < 0 || second < 0 || first >= grid.length || second >= grid.length) return false;
   return grid[first] === grid[second];
 };
 

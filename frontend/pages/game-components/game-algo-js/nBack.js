@@ -12,10 +12,10 @@ export const generateSequence = (length = SEQUENCE_LENGTH) => {
 };
 
 export const calculateScore = (sequence, userInputs, nLevel) => {
-  if (!sequence.length || !userInputs.length) {
+  if (!Array.isArray(sequence) || !Array.isArray(userInputs) || sequence.length === 0) {
     return { score: 0, correct: 0, total: 0 };
   }
-  
+
   let score = 0;
   let correct = 0;
   let total = 0;
@@ -29,6 +29,8 @@ export const calculateScore = (sequence, userInputs, nLevel) => {
       correct++;
     }
   }
+
+  score = Math.max(0, Math.min(score, total * 10));
 
   return { score, correct, total };
 };

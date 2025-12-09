@@ -11,7 +11,8 @@ export const calculateDelay = (difficulty = "medium") => {
 };
 
 export const calculateRoundScore = (reactionTime) => {
-  return Math.max(0, 1000 - reactionTime);
+  const rt = Number.isFinite(reactionTime) && reactionTime > 0 ? reactionTime : 0;
+  return Math.max(0, 1000 - rt);
 };
 
 export const calculateAverageReactionTime = (reactionTimes) => {

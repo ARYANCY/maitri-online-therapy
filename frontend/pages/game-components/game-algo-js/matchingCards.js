@@ -25,11 +25,9 @@ export const CARD_SYMBOLS = [
 ];
 
 export const generateGrid = (pairs) => {
-
-  const selectedSymbols = CARD_SYMBOLS.slice(0, pairs);
-
+  const safePairs = Math.max(1, Math.min(pairs || 0, CARD_SYMBOLS.length));
+  const selectedSymbols = CARD_SYMBOLS.slice(0, safePairs);
   const double = [...selectedSymbols, ...selectedSymbols];
-
   return shuffleArray(double);
 };
 
@@ -43,9 +41,8 @@ export const checkMatch = (grid, first, second) => {
 
 export const getMatchScore = (difficulty = 'easy', timeTaken = 0) => {
   const baseScore = 10;
-
-  const timeBonus = Math.max(0, Math.floor((30 - timeTaken) / 5));
-  
+  const safeTime = Number.isFinite(timeTaken) ? timeTaken : 0;
+  const timeBonus = Math.max(0, Math.floor((30 - safeTime) / 5));
   return baseScore + timeBonus;
 };
 
@@ -58,12 +55,13 @@ export const getGameConfig = (difficulty = "medium") => {
 };
 
 export const calculateEfficiency = (totalMatches, totalAttempts) => {
-  if (totalAttempts === 0) return 0;
+  if (!Number.isFinite(totalAttempts) || totalAttempts <= 0) return 0;
+  if (!Number.isFinite(totalMatches) || totalMatches < 0) return 0;
   return Math.round((totalMatches / totalAttempts) * 100);
 };
 
 export const calculateAverageTimePerMatch = (totalTime, totalMatches) => {
-  if (totalMatches === 0) return 0;
+  if (!Number.isFinite(totalTime) || !Number.isFinite(totalMatches) || totalMatches <= 0) return 0;
   return Math.round((totalTime / totalMatches) * 10) / 10;
 };
 

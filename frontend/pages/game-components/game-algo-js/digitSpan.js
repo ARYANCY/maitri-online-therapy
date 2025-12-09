@@ -11,23 +11,28 @@ export const generateDigitSequence = (difficulty = "medium") => {
 };
 
 export const calculateScore = (userInput, correctSequence) => {
-  if (!userInput || !correctSequence.length) {
-    return { score: 0, correct: 0, total: correctSequence.length };
+  if (!Array.isArray(correctSequence) || correctSequence.length === 0) {
+    return { score: 0, correct: 0, total: 0 };
   }
-  
-  const userDigits = userInput.split("").map(Number);
+
+  const safeInput = typeof userInput === "string" ? userInput : "";
+  const userDigits = safeInput.split("").map(Number).filter(Number.isFinite);
   let correct = 0;
-  
+
   for (let i = 0; i < Math.min(userDigits.length, correctSequence.length); i++) {
     if (userDigits[i] === correctSequence[i]) {
       correct++;
     }
   }
-  
+
+  const total = correctSequence.length;
+  const rawScore = correct * 10;
+  const score = Math.max(0, Math.min(rawScore, total * 10));
+
   return {
-    score: correct * 10,
+    score,
     correct,
-    total: correctSequence.length
+    total
   };
 };
 

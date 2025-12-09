@@ -43,23 +43,31 @@ export const getColorName = (color, t = null) => {
 
 export const generateSequence = (difficulty = "medium") => {
   const { colors, sequenceLength } = DIFFICULTY.medium;
-  return Array.from({ length: sequenceLength }, () => 
+  if (!Array.isArray(colors) || colors.length === 0 || !Number.isFinite(sequenceLength)) {
+    return [];
+  }
+  const len = Math.max(1, sequenceLength);
+  return Array.from({ length: len }, () => 
     colors[Math.floor(Math.random() * colors.length)]
   );
 };
 
 export const checkSequence = (userSequence, correctSequence) => {
+  if (!Array.isArray(userSequence) || !Array.isArray(correctSequence)) return false;
   if (userSequence.length !== correctSequence.length) return false;
   return userSequence.every((color, idx) => color === correctSequence[idx]);
 };
 
 export const isLatestInputCorrect = (userSequence, correctSequence) => {
+  if (!Array.isArray(userSequence) || !Array.isArray(correctSequence)) return false;
   const lastIdx = userSequence.length - 1;
+  if (lastIdx < 0 || lastIdx >= correctSequence.length) return false;
   return userSequence[lastIdx] === correctSequence[lastIdx];
 };
 
 export const calculateRoundScore = (sequenceLength) => {
-  return sequenceLength * 10;
+  const len = Number.isFinite(sequenceLength) && sequenceLength > 0 ? sequenceLength : 0;
+  return len * 10;
 };
 
 export const getGameConfig = (difficulty = "medium") => {
