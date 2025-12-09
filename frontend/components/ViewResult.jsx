@@ -302,7 +302,7 @@ export default function ViewResult({
               }}
             >
               <div className="row g-3 mb-4">
-                <div className="col-6">
+                <div className="col-6 col-lg-4">
                   <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
                     <div className="card-body text-center p-4">
                       <div className="fs-1 mb-2">📊</div>
@@ -313,13 +313,27 @@ export default function ViewResult({
                     </div>
                   </div>
                 </div>
-                <div className="col-6">
+                <div className="col-6 col-lg-4">
                   <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
                     <div className="card-body text-center p-4">
                       <div className="fs-1 mb-2">🎯</div>
                       <div className="text-muted small mb-2">{t("dementia.riskLevel", "Risk Level")}</div>
                       <div className="h4 mb-0 fw-bold" style={{ color: riskStyle.color }}>
                         {riskAssessment.riskLevel ? riskAssessment.riskLevel.charAt(0).toUpperCase() + riskAssessment.riskLevel.slice(1) : "N/A"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12 col-lg-4">
+                  <div className="card border-0 shadow-sm h-100" style={{ borderRadius: "16px", background: "white" }}>
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-2">📅</div>
+                      <div className="text-muted small mb-2">{t("dementia.profile", "Profile")}</div>
+                      <div className="h6 mb-1 fw-bold text-primary">
+                        {(riskAssessment.ageGroup || riskAssessment.gameResults?.[0]?.ageGroup || t("dementia.unknown", "Unknown")).toString().split("/")[0]}
+                      </div>
+                      <div className="text-muted small">
+                        {t("dementia.gamesAnalyzed", "Games analyzed")}: {riskAssessment.gameResults?.length || 0}
                       </div>
                     </div>
                   </div>
@@ -378,7 +392,7 @@ export default function ViewResult({
                               <div className="d-flex justify-content-between align-items-center mb-2">
                                 <span className="fw-semibold">{domainLabels[domain] || domain}</span>
                                 <span className="fw-bold" style={{ color: scoreColor, fontSize: "1.1rem" }}>
-                                  {typeof score === 'number' ? score.toFixed(1) : score}/10
+                                  {typeof score === 'number' ? score.toFixed(1) : score}
                                 </span>
                               </div>
                               <div className="progress" style={{ height: "8px", borderRadius: "10px" }}>
@@ -386,7 +400,7 @@ export default function ViewResult({
                                   className="progress-bar"
                                   role="progressbar"
                                   style={{ 
-                                    width: `${(score / 10) * 100}%`,
+                                    width: `${typeof score === 'number' ? Math.max(0, Math.min(100, (score / 10) * 100)) : 0}%`,
                                     background: scoreColor,
                                     borderRadius: "10px"
                                   }}
