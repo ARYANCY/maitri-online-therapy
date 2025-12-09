@@ -38,7 +38,7 @@ ChartJS.register(
 export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const { t } = useTranslation();
 
-  const [chartType, setChartType] = useState("bar");
+  const [chartType] = useState("line"); // force line view for consistent trend/threshold
   const [metricsType, setMetricsType] = useState("emotional");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasData, setHasData] = useState(false);
@@ -79,13 +79,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     if (chartLabels && chartLabels.length >= len) return chartLabels;
     return Array.from({ length: len }, (_, i) => chartLabels[i] || `${t("chart.entry", "Entry")} ${i + 1}`);
   }, [chartLabels, maxDataLength, t]);
-
-  // Force line chart for dementia metrics to surface projections/thresholds
-  useEffect(() => {
-    if (metricsType === "dementia") {
-      setChartType("line");
-    }
-  }, [metricsType]);
 
   useEffect(() => {
     const hasValidData = maxDataLength > 0 && chartData && Object.keys(chartData).length > 0;
@@ -1015,24 +1008,16 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       </div>
 
         <div className="chart-controls card-header d-flex justify-content-between align-items-start gap-3 flex-wrap pb-3">
-        <div className="d-flex flex-wrap gap-3 align-items-end">
-          <div className="d-flex flex-column gap-2">
-            <label htmlFor="chart-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
-              <span>📊</span>
-              {t("chart.chartType", "Chart Type")}
-            </label>
-            <select
-              id="chart-type-select"
-              name="chart-type-select"
-              value={chartType}
-              onChange={e => setChartType(e.target.value)}
-              className="form-select"
-              aria-label={t("chart.chartType", "Chart Type")}
-            >
-              <option value="bar">{t("chart.barChart", "Bar Chart")}</option>
-              <option value="line">{t("chart.lineChart", "Line Chart")}</option>
-            </select>
-          </div>
+          <div className="d-flex flex-wrap gap-3 align-items-end">
+            <div className="d-flex flex-column gap-2">
+              <label className="form-label d-flex align-items-center gap-2 mb-0">
+                <span>📈</span>
+                {t("chart.lineChart", "Line Chart")}
+              </label>
+              <div className="badge bg-primary text-white">
+                {t("chart.lineTrendOnly", "Trend view (line)")}
+              </div>
+            </div>
 
           <div className="d-flex flex-column gap-2">
             <label htmlFor="chart-metric-type-select" className="form-label d-flex align-items-center gap-2 mb-0">
