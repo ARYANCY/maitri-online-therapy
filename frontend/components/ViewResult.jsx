@@ -98,6 +98,12 @@ export default function ViewResult({
     ? Math.round(Math.max(0, Math.min(1, riskAssessment.riskScore)) * 100)
     : 0;
 
+  const formatAgeGroup = () => {
+    const raw = riskAssessment?.ageGroup || riskAssessment?.gameResults?.[0]?.ageGroup;
+    if (!raw) return t("dementia.unknown", "Unknown");
+    return raw.toString().split("/")[0].trim();
+  };
+
   if (!showModal) return null;
 
   return (
@@ -330,7 +336,7 @@ export default function ViewResult({
                       <div className="fs-1 mb-2">📅</div>
                       <div className="text-muted small mb-2">{t("dementia.profile", "Profile")}</div>
                       <div className="h6 mb-1 fw-bold text-primary">
-                        {(riskAssessment.ageGroup || riskAssessment.gameResults?.[0]?.ageGroup || t("dementia.unknown", "Unknown")).toString().split("/")[0]}
+                        {formatAgeGroup()}
                       </div>
                       <div className="text-muted small">
                         {t("dementia.gamesAnalyzed", "Games analyzed")}: {riskAssessment.gameResults?.length || 0}
@@ -368,8 +374,11 @@ export default function ViewResult({
                       🧠 {t("dementia.cognitiveDomains", "Cognitive Domain Scores")}
                     </h5>
                     <div className="row g-3">
-                      {Object.entries(riskAssessment.cognitiveMetrics.cognitiveDomains).filter(([key]) => 
-                        !['domainWeights', 'weightedRiskScore'].includes(key)
+                      {Object.entries(riskAssessment.cognitiveMetrics.cognitiveDomains).filter(([key, score]) => 
+                        !['domainWeights', 'weightedRiskScore'].includes(key) &&
+                        typeof score === 'number' &&
+                        !isNaN(score) &&
+                        score > 0
                       ).map(([domain, score]) => {
                         const weight = riskAssessment.cognitiveMetrics.cognitiveDomains.domainWeights?.[domain] || 0;
                         const domainLabels = {
