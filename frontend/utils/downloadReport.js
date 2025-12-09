@@ -3,6 +3,13 @@ import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import GuLogo from "@/images/logo.png";
 import { computeDementiaProbability } from "./probability";
+import {
+  calculateLinearTrend,
+  predictFutureDate,
+  detectThresholdCrossing,
+  calculateEarlyRisk,
+  predictDementiaTimeline
+} from "./chartUtils";
 
 // Constants
 const PDF_CONFIG = {
@@ -256,6 +263,16 @@ const generatePDFReport = async (
   const marginX = PDF_CONFIG.margin;
   let y = marginX;
 
+  const toNumberArray = (arr = []) =>
+    (Array.isArray(arr) ? arr : [arr]).map((v) => Number(v)).filter((v) => Number.isFinite(v));
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    const date = d instanceof Date ? d : new Date(d);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
+
   // Header
   y = addPDFHeader(pdf, pageWidth, y);
 
@@ -319,6 +336,101 @@ const generatePDFReport = async (
     y
   );
   y += 8;
+
+  // Cognitive Risk & Timeline (Dementia) quick summary
+  const riskScoresRaw = normalizedChartData?.dementia_risk_score || [];
+  const riskScores = toNumberArray(riskScoresRaw).map((s) => (s <= 1 ? s * 100 : s)); // normalize to 0-100
+  const riskProbability = computeDementiaProbability({ riskScores });
+  const thresholds = { low: 30, moderate: 50, high: 70 };
+  const daysPerPoint = 7;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (riskScores.length * daysPerPoint));
+
+  let trend = null;
+  let thresholdPrediction = null;
+  let earlyRisk = null;
+  let timelinePrediction = null;
+
+  if (riskScores.length >= 2) {
+    trend = calculateLinearTrend(riskScores);
+    thresholdPrediction = predictFutureDate(riskScores, thresholds.moderate, true, startDate, daysPerPoint);
+    earlyRisk = calculateEarlyRisk(riskScores, {
+      thresholds,
+      higherIsWorse: true,
+      startDate,
+      daysPerPoint,
+      riskMetric: "Cognitive Impairment Risk"
+    });
+    timelinePrediction = predictDementiaTimeline(riskScores, {
+      startDate,
+      daysPerPoint,
+      criticalThreshold: 70,
+      moderateThreshold: 50,
+      highRiskThreshold: 80
+    });
+  }
+
+  pdf.setFont("helvetica", "bold").setFontSize(11);
+  pdf.setTextColor(44, 62, 80);
+  pdf.text("Cognitive Risk Snapshot", marginX, y);
+  y += 6;
+  pdf.setFont("helvetica", "normal").setFontSize(9);
+  pdf.setTextColor(0, 0, 0);
+
+  pdf.text(
+    `Dementia Risk Probability: ${riskProbability.probabilityPercent?.toFixed(1) || "—"}% (${riskProbability.riskLabel || "N/A"})`,
+    marginX,
+    y
+  );
+  y += 5;
+  pdf.text(
+    `Trend: ${riskProbability.trend || "N/A"} | Data points: ${riskProbability.dataPoints || riskScores.length || 0}`,
+    marginX,
+    y
+  );
+  y += 5;
+  if (trend) {
+    pdf.text(`Trend equation: ${trend.equation} (R²: ${(trend.rSquared * 100).toFixed(1)}%)`, marginX, y);
+    y += 5;
+  }
+
+  if (thresholdPrediction && thresholdPrediction.isValid) {
+    const days = thresholdPrediction.daysFromNow;
+    const years = days ? (days / 365.25).toFixed(1) : "—";
+    pdf.text(
+      `Threshold (50%) may be crossed in ~${days || "—"} days (~${years} years) on ${formatDate(thresholdPrediction.predictedDate)}`,
+      marginX,
+      y
+    );
+    y += 5;
+  } else {
+    pdf.text("Threshold crossing: Not projected (currently safe / stable trend)", marginX, y);
+    y += 5;
+  }
+
+  if (timelinePrediction && timelinePrediction.isValid) {
+    let timelineLine = "";
+    if (timelinePrediction.isLowRisk) {
+      timelineLine = `Low risk: ${timelinePrediction.message || "Stable or improving trend"}`;
+    } else if (timelinePrediction.yearsToCritical !== null && timelinePrediction.yearsToCritical !== undefined) {
+      const years = timelinePrediction.yearsToCritical;
+      const months = timelinePrediction.monthsToCritical;
+      const dateStr = formatDate(timelinePrediction.predictedDateCritical);
+      timelineLine = `High risk in ~${years ?? "—"} years (${months ?? "—"} months), estimated date: ${dateStr}`;
+    } else if (timelinePrediction.yearsToModerate !== null && timelinePrediction.yearsToModerate !== undefined) {
+      const years = timelinePrediction.yearsToModerate;
+      const months = timelinePrediction.monthsToModerate;
+      const dateStr = formatDate(timelinePrediction.predictedDateModerate);
+      timelineLine = `Moderate risk in ~${years ?? "—"} years (${months ?? "—"} months), estimated date: ${dateStr}`;
+    } else {
+      timelineLine = timelinePrediction.message || "Timeline prediction unavailable";
+    }
+    pdf.text(`Timeline: ${timelineLine}`, marginX, y, { maxWidth: pageWidth - 2 * marginX });
+    y += 8;
+  } else {
+    pdf.text("Timeline: Not enough data for timeline prediction", marginX, y);
+    y += 8;
+  }
 
   // Metrics Overview Table Section
   pdf.setFont("helvetica", "bold").setFontSize(11);
@@ -1125,15 +1237,45 @@ const generateCSVReport = (normalizedChartData, metricKeys) => {
   }, 100);
 };
 
-// Enhanced JSON report
+// Enhanced JSON report with cognitive risk + timeline
 const generateJSONReport = (normalizedChartData, metricKeys, user) => {
+  const toNumberArray = (arr = []) =>
+    (Array.isArray(arr) ? arr : [arr]).map((v) => Number(v)).filter((v) => Number.isFinite(v));
+
+  const riskScores = toNumberArray(normalizedChartData?.dementia_risk_score).map((s) => (s <= 1 ? s * 100 : s));
+  const thresholds = { low: 30, moderate: 50, high: 70 };
+  const daysPerPoint = 7;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (riskScores.length * daysPerPoint));
+
+  const prob = computeDementiaProbability({ riskScores });
+  const trend = riskScores.length >= 2 ? calculateLinearTrend(riskScores) : null;
+  const futurePrediction =
+    riskScores.length >= 2
+      ? predictFutureDate(riskScores, thresholds.moderate, true, startDate, daysPerPoint)
+      : null;
+  const earlyRisk =
+    riskScores.length >= 2
+      ? calculateEarlyRisk(riskScores, { thresholds, higherIsWorse: true, startDate, daysPerPoint })
+      : null;
+  const timeline =
+    riskScores.length >= 2
+      ? predictDementiaTimeline(riskScores, {
+          startDate,
+          daysPerPoint,
+          criticalThreshold: 70,
+          moderateThreshold: 50,
+          highRiskThreshold: 80
+        })
+      : null;
+
   const report = {
     metadata: {
       title: "Maitri Mental Health Report",
       generated_at: new Date().toISOString(),
       institution: "Gauhati University",
       disclaimer: "AI-generated self-assessment, not a clinical diagnosis.",
-      version: "2.0",
+      version: "2.1",
     },
     user: {
       name: user?.name || "Guest",
@@ -1146,6 +1288,55 @@ const generateJSONReport = (normalizedChartData, metricKeys, user) => {
         (sum, key) => sum + (normalizedChartData[key]?.length || 0),
         0
       ),
+      dementia_risk_probability_percent: prob?.probabilityPercent ?? null,
+      dementia_risk_label: prob?.riskLabel ?? null,
+      dementia_trend: prob?.trend ?? null,
+      dementia_risk_points: prob?.dataPoints ?? riskScores.length,
+    },
+    cognitiveRisk: {
+      probabilityPercent: prob?.probabilityPercent ?? null,
+      riskLabel: prob?.riskLabel ?? null,
+      trend: prob?.trend ?? null,
+      dataPoints: prob?.dataPoints ?? riskScores.length,
+      trendEquation: trend?.equation ?? null,
+      rSquared: trend?.rSquared ?? null,
+      thresholdPrediction: futurePrediction
+        ? {
+            predictedDate: futurePrediction.predictedDate ?? null,
+            daysFromNow: futurePrediction.daysFromNow ?? null,
+            confidence: futurePrediction.confidence ?? 0,
+            isValid: futurePrediction.isValid ?? false,
+            reason: futurePrediction.reason ?? null
+          }
+        : null,
+      earlyRisk: earlyRisk
+        ? {
+            riskLevel: earlyRisk.riskLevel,
+            earlyWarning: earlyRisk.earlyWarning,
+            projectedRisk: earlyRisk.projectedRisk,
+            daysToRisk: earlyRisk.daysToRisk,
+            predictedDate: earlyRisk.predictedDate,
+            confidence: earlyRisk.confidence
+          }
+        : null,
+      timeline: timeline
+        ? {
+            isValid: timeline.isValid,
+            currentRisk: timeline.currentRisk,
+            yearsToModerate: timeline.yearsToModerate,
+            yearsToCritical: timeline.yearsToCritical,
+            yearsToHighRisk: timeline.yearsToHighRisk,
+            monthsToModerate: timeline.monthsToModerate,
+            monthsToCritical: timeline.monthsToCritical,
+            monthsToHighRisk: timeline.monthsToHighRisk,
+            predictedDateModerate: timeline.predictedDateModerate,
+            predictedDateCritical: timeline.predictedDateCritical,
+            predictedDateHighRisk: timeline.predictedDateHighRisk,
+            isLowRisk: timeline.isLowRisk || false,
+            message: timeline.message || null,
+            confidence: timeline.confidence || 0
+          }
+        : null
     },
     table: buildTableData(normalizedChartData),
     metrics: metricKeys.map((key) => {
