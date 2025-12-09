@@ -105,12 +105,10 @@ export default function ViewResult({
       ref={overlayRef}
       className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         zIndex: 10020,
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
         padding: '1rem',
-        transition: 'opacity 0.3s ease',
+        transition: 'opacity 0.2s ease',
         opacity: fadeOut ? 0 : 1,
         position: 'fixed',
         top: 0,
@@ -128,7 +126,7 @@ export default function ViewResult({
       aria-labelledby="results-modal-title"
     >
       <div 
-        className="card shadow-lg border-0"
+        className="card shadow border-0"
         onClick={(e) => e.stopPropagation()}
         style={{ 
           maxWidth: "900px",
@@ -137,8 +135,9 @@ export default function ViewResult({
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          borderRadius: "24px",
-          background: "white"
+          borderRadius: "12px",
+          background: "white",
+          zIndex: 10021
         }}
       >
         <button
@@ -150,70 +149,31 @@ export default function ViewResult({
             top: "1rem",
             right: "1rem",
             zIndex: 10,
-            background: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "50%",
-            width: "40px",
-            height: "40px",
+            width: "32px",
+            height: "32px",
             padding: "0",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "1.5rem",
+            fontSize: "1.1rem",
             fontWeight: "bold",
-            border: "2px solid rgba(0,0,0,0.1)"
+            borderRadius: "50%"
           }}
         >
           ×
         </button>
 
         {loadingAssessment ? (
-          <div style={{ 
-            padding: "4rem 2rem", 
-            textAlign: "center", 
-            minHeight: "400px",
-            display: "flex", 
-            flexDirection: "column", 
-            justifyContent: "center",
-            alignItems: "center"
-          }}>
-            <div 
-              className="rounded-circle d-flex align-items-center justify-content-center mb-4"
-              style={{
-                background: "linear-gradient(135deg, #3b82f620, #3b82f610)",
-                border: "4px solid #3b82f640",
-                width: "120px",
-                height: "120px",
-                animation: "pulse 2s infinite"
-              }}
-            >
-              <div style={{ fontSize: "64px" }}>⏳</div>
+          <div className="d-flex flex-column align-items-center justify-content-center text-center" style={{ padding: "3rem 2rem", minHeight: "360px" }}>
+            <div className="spinner-border text-primary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
-            <h2 className="h3 mb-3 fw-bold" style={{ color: "#3b82f6" }}>
+            <h2 className="h4 mb-2 fw-bold text-primary">
               {t("dementia.calculatingAssessment", "Calculating assessment...")}
             </h2>
-            <p className="text-muted mb-2" style={{ fontSize: "1rem" }}>
+            <p className="text-muted mb-0" style={{ fontSize: "0.95rem" }}>
               {t("dementia.pleaseWait", "Please wait while we analyze your results...")}
             </p>
-            <p className="text-muted" style={{ fontSize: "0.875rem", fontStyle: "italic" }}>
-              {t("dementia.aiEvaluationNote", "AI evaluation may take up to 2 minutes. Please be patient.")}
-            </p>
-            <div style={{
-              width: "80%",
-              maxWidth: "400px",
-              height: "6px",
-              background: "#e5e7eb",
-              borderRadius: "10px",
-              marginTop: "2rem",
-              overflow: "hidden"
-            }}>
-              <div style={{
-                width: "100%",
-                height: "100%",
-                background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6)",
-                backgroundSize: "200% 100%",
-                animation: "shimmer 2s infinite linear"
-              }} />
-            </div>
           </div>
         ) : assessmentError ? (
           <div style={{ 

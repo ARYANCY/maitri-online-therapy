@@ -60,52 +60,8 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
   const performance = getPerformanceLevel();
 
   useEffect(() => {
-    setAnimatedScore(0);
-    setAnimatedTime(0);
-    
-    const scoreSteps = 60;
-    const timeSteps = 40;
-    const scoreStep = score > 0 ? score / scoreSteps : 0;
-    const timeStep = time > 0 ? time / timeSteps : 0;
-
-    let scoreCurrent = 0,
-      timeCurrent = 0,
-      scoreFrame = 0,
-      timeFrame = 0;
-
-    const animateScore = () => {
-      if (scoreFrame < scoreSteps && score > 0) {
-        scoreCurrent = Math.min(score, scoreCurrent + scoreStep);
-        setAnimatedScore(Math.round(scoreCurrent));
-        scoreFrame++;
-        requestAnimationFrame(animateScore);
-      } else {
-        setAnimatedScore(score);
-      }
-    };
-
-    const animateTime = () => {
-      if (timeFrame < timeSteps && time > 0) {
-        timeCurrent = Math.min(time, timeCurrent + timeStep);
-        setAnimatedTime(Math.round(timeCurrent));
-        timeFrame++;
-        requestAnimationFrame(animateTime);
-      } else {
-        setAnimatedTime(time);
-      }
-    };
-
-    if (score > 0) {
-      animateScore();
-    } else {
-      setAnimatedScore(0);
-    }
-    
-    if (time > 0) {
-      setTimeout(() => animateTime(), 200);
-    } else {
-      setAnimatedTime(0);
-    }
+    setAnimatedScore(score || 0);
+    setAnimatedTime(time || 0);
   }, [score, time]);
 
   const formatTime = (seconds) => {
@@ -145,11 +101,9 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
     <div
       className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         zIndex: 10020,
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        transition: 'opacity 0.3s ease',
+        transition: 'opacity 0.2s ease',
         opacity: fadeOut ? 0 : 1,
         position: 'fixed',
         top: 0,
@@ -160,56 +114,43 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div 
-        className="card shadow-lg border-0 position-relative" 
+        className="card shadow border-0 position-relative" 
         style={{
-          maxWidth: '700px',
+          maxWidth: '640px',
           width: '100%',
           maxHeight: '90vh',
           overflow: 'auto',
           display: 'flex', 
           flexDirection: 'column', 
-          borderRadius: '24px',
-          background: 'white'
+          borderRadius: '12px',
+          background: 'white',
+          zIndex: 10021
         }}
       >
         <button 
-          className="btn-close position-absolute top-0 end-0 m-3" 
+          className="btn-close position-absolute top-0 end-0 m-2" 
           onClick={handleClose} 
           aria-label={t("dementia.close", "Close")}
           style={{
             zIndex: 10,
-            background: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "50%",
-            width: "40px",
-            height: "40px"
+            width: "32px",
+            height: "32px",
+            borderRadius: "50%"
           }}
         />
 
         <div
-          className="text-center p-5"
+          className="text-center p-4"
           style={{
-            background: performance.bgGradient,
-            borderBottom: `4px solid ${performance.color}`,
-            borderRadius: "24px 24px 0 0"
+            background: '#f8fafc',
+            borderBottom: `2px solid #e5e7eb`,
+            borderRadius: "12px 12px 0 0"
           }}
         >
-          <div 
-            className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-            style={{
-              background: "rgba(255, 255, 255, 0.9)",
-              border: `4px solid ${performance.color}`,
-              width: "120px",
-              height: "120px",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.15)"
-            }}
-          >
-            <div style={{ fontSize: "72px" }}>
-              {performance.emoji}
-            </div>
-          </div>
-          <h2 className="h3 mb-2 fw-bold" style={{ color: performance.color }}>
-            {t("dementia.testCompleted", "Test Completed!")}
+          <h2 className="h4 mb-1 fw-bold">
+            {t("dementia.testCompleted", "Test Completed!")} {performance.emoji}
           </h2>
+          <div className="text-muted small">{performance.message}</div>
         </div>
 
         <div 
@@ -222,20 +163,9 @@ export default function ResultPopup({ score, time, onNext, onRetry, detail = {} 
             background: "#f8fafc"
           }}
         >
-          <div
-            className="alert border-0 mb-4"
-            style={{
-              background: performance.bgGradient,
-              border: `2px solid ${performance.color}40`,
-              borderRadius: "16px"
-            }}
-          >
-            <div className="fw-bold mb-2" style={{ color: performance.color, fontSize: "1.1rem" }}>
-              {performance.message}
-            </div>
-            <div className="small" style={{ color: performance.color, opacity: 0.9 }}>
-              {performance.description}
-            </div>
+          <div className="mb-3">
+            <div className="fw-bold">{performance.message}</div>
+            <div className="text-muted small">{performance.description}</div>
           </div>
 
           <div className="row g-3 mb-4">
