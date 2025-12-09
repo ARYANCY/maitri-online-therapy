@@ -46,6 +46,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
   const [selectedDataPoint, setSelectedDataPoint] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
+  const trendDatasetFilter = null; // safety: legacy filter not used
   const chartRef = useRef(null);
 
   // Auto-pick metrics type based on available data if current type has no data
