@@ -910,7 +910,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         items.push({
           title: t("chart.summaryTimeline", "Predicted Timeline"),
           value: timelineValue,
-          note: timelineNote + (timeline.confidence > 0 ? ` (${(timeline.confidence * 100).toFixed(0)}% ${t("chart.confidence", "confidence")})` : ""),
+          note: timelineNote,
         });
       }
 
@@ -1287,9 +1287,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                   {futurePrediction.daysFromNow} {t("chart.days", "days")}
                                 </span>
                               </div>
-                              <div className="small text-muted mt-1">
-                                {t("chart.confidence", "Confidence")}: {(futurePrediction.confidence * 100).toFixed(0)}%
-                              </div>
                             </div>
                           )}
 
@@ -1368,25 +1365,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                     </div>
                   </div>
                 </div>
-                <div className="col-12 col-md-3">
-                  <div className="card h-100">
-                    <div className="card-body">
-                      <div className="text-muted small mb-1">{t("chart.confidence", "Confidence")}</div>
-                      <div className="h5 mb-1">{Math.round(dementiaSummary.confidence * 100)}%</div>
-                      <small className="text-muted">{t("chart.confidenceNote", "More data improves confidence")}</small>
-                      <div className="progress mt-2" style={{height: "6px"}}>
-                        <div
-                          className="progress-bar bg-primary"
-                          role="progressbar"
-                          style={{ width: `${Math.round(dementiaSummary.confidence * 100)}%` }}
-                          aria-valuenow={Math.round(dementiaSummary.confidence * 100)}
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Enhanced Trend Analysis for Dementia Risk */}
@@ -1436,9 +1414,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                   </div>
                                   <div className="small text-muted">
                                     {t("chart.daysFromNow", "Days from now")}: {dementiaSummary.trendAnalysis.futurePrediction.daysFromNow || '—'}
-                                  </div>
-                                  <div className="small text-muted">
-                                    {t("chart.confidence", "Confidence")}: {(dementiaSummary.trendAnalysis.futurePrediction.confidence * 100).toFixed(0)}%
                                   </div>
                                 </>
                               ) : (
@@ -1508,11 +1483,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                                       </div>
                                     ) : (
                                       <div className="small">{dementiaSummary.timelinePrediction.message || t("chart.timelineUnavailable", "Timeline prediction unavailable")}</div>
-                                    )}
-                                    {dementiaSummary.timelinePrediction.confidence > 0 && (
-                                      <div className="small text-muted mt-2">
-                                        {t("chart.confidence", "Confidence")}: {(dementiaSummary.timelinePrediction.confidence * 100).toFixed(0)}%
-                                      </div>
                                     )}
                                   </div>
                                 </div>
