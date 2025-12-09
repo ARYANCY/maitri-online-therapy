@@ -19,6 +19,48 @@ const LS_ASSESSMENT = "mini_game_assessment";
 const LS_AGE_GROUP = "mini_game_age_group";
 const MIN_GAMES_FOR_ASSESSMENT = 5;
 
+const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+
+// Adjust backend assessment using local game performance to avoid false high risk
+const adjustAssessmentWithPerformance = (assessment, gameResults) => {
+  if (!assessment || !Array.isArray(gameResults) || gameResults.length === 0) return assessment;
+  const scores = gameResults.map((g) => (typeof g.score === "number" ? Math.max(0, g.score) : 0));
+  const times = gameResults
+    .map((g) => (typeof g.time === "number" ? Math.max(0, g.time) : null))
+    .filter((t) => t != null);
+
+  const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  const minScore = scores.length ? Math.min(...scores) : null;
+  const maxScore = scores.length ? Math.max(...scores) : null;
+  const avgTime = times.length ? times.reduce((a, b) => a + b, 0) / times.length : null;
+
+  let adjustedRisk = clamp01(assessment.riskScore);
+
+  // If user scored well across games, lower risk ceiling
+  if (avgScore != null && minScore != null) {
+    if (avgScore >= 85 && minScore >= 60) {
+      adjustedRisk = Math.min(adjustedRisk, 0.35);
+    } else if (avgScore >= 75 && minScore >= 50) {
+      adjustedRisk = Math.min(adjustedRisk, 0.45);
+    }
+  }
+
+  // If times are fast on average, nudge risk down slightly (better processing speed)
+  if (avgTime != null && avgTime > 0 && avgTime <= 2000) {
+    adjustedRisk = Math.max(0, adjustedRisk - 0.05);
+  }
+
+  const adjusted = { ...assessment, riskScore: adjustedRisk };
+  adjusted.riskLevel = adjustedRisk >= 0.75 ? "high" : adjustedRisk >= 0.45 ? "moderate" : "low";
+  if (avgScore != null) adjusted.averageScore = avgScore;
+  if (avgTime != null) adjusted.averageTime = avgTime;
+  if (maxScore != null) adjusted.maxScore = maxScore;
+
+  const note = "Adjusted based on strong in-game performance to avoid false high risk.";
+  adjusted.explanation = adjusted.explanation ? `${adjusted.explanation}\n${note}` : note;
+  return adjusted;
+};
+
 const generateResultsHash = (results) => {
   if (!results || results.length === 0) return null;
   const lastNGames = results.slice(-MIN_GAMES_FOR_ASSESSMENT);
@@ -381,7 +423,8 @@ export default function Game({ onDataUpdate }) {
       }
 
       if (cachedAssessment) {
-        setRiskAssessment(cachedAssessment);
+        const adjusted = adjustAssessmentWithPerformance(cachedAssessment, gameResults);
+        setRiskAssessment(adjusted);
         setLoadingAssessment(false);
         isSubmittingRef.current = false;
         return;
@@ -395,8 +438,8 @@ export default function Game({ onDataUpdate }) {
       const responseData = response?.data || response;
       
       if (response && response.success === true && responseData) {
-        const riskScore = typeof responseData.riskScore === 'number' ? Math.max(0, Math.min(1, responseData.riskScore)) : 0;
-        const assessmentData = {
+        const riskScore = typeof responseData.riskScore === 'number' ? clamp01(responseData.riskScore) : 0;
+        const assessmentDataRaw = {
           success: true,
           sessionId: responseData.sessionId || null,
           riskScore: riskScore,
@@ -409,6 +452,7 @@ export default function Game({ onDataUpdate }) {
           cognitiveMetrics: responseData.cognitiveMetrics || null,
           cognitiveDomains: responseData.cognitiveMetrics?.cognitiveDomains || null,
         };
+        const assessmentData = adjustAssessmentWithPerformance(assessmentDataRaw, gameResults);
         setRiskAssessment(assessmentData);
         setAssessmentError(null);
         setLoadingAssessment(false);

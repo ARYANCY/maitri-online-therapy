@@ -50,6 +50,47 @@ const stdDev = (values) => {
   return Math.sqrt(variance);
 };
 
+// Normalize a metric to 0..1 where 1 is healthy/protective
+const normalizeMetric = (key, value) => {
+  if (!Number.isFinite(value)) return null;
+  switch (key) {
+    case "accuracy":
+    case "accuracyPercentage":
+    case "visuospatial":
+    case "visuospatialAccuracy":
+    case "attention":
+    case "attentionConsistency":
+    case "learningCurve":
+      return clamp(value / 100, 0, 1);
+    case "workingMemory":
+    case "workingMemorySpan":
+    case "executiveFunction":
+      return clamp(value / 10, 0, 1); // assume 0-10 or similar scale
+    case "reactionTime":
+    case "reactionTimeAverage":
+    case "processingSpeed":
+      // Faster is better: map typical 200-1200ms to 1..0
+      return clamp(1 - (value - 200) / 1000, 0, 1);
+    case "errorRate":
+      // Lower errors better; assume 0-100%
+      return clamp(1 - value / 100, 0, 1);
+    default:
+      return null;
+  }
+};
+
+// Combine metrics into a protective factor (reduces risk)
+const computeProtectiveFactor = (metrics = {}) => {
+  const entries = Object.entries(metrics || {});
+  const normalized = entries
+    .map(([k, v]) => normalizeMetric(k, Array.isArray(v) ? v[v.length - 1] : v))
+    .filter((v) => v != null);
+  if (!normalized.length) return 0;
+  const avg = normalized.reduce((a, b) => a + b, 0) / normalized.length;
+  // Map average protective health to up to 25% risk reduction
+  return clamp(avg * 0.25, 0, 0.25);
+};
+
 export function computeDementiaProbability({ riskScores = [], metrics = {} } = {}) {
   // Normalize to 0-100 scale
   const scores = toNumberArray(riskScores).map((s) => (s <= 1 ? s * 100 : s));
@@ -61,19 +102,22 @@ export function computeDementiaProbability({ riskScores = [], metrics = {} } = {
   // Confidence: more points + lower volatility
   const confidence = clamp((scores.length / 12) * 0.6 + (1 / (1 + volatility / 25)) * 0.4, 0, 1);
 
-  // Trend direction
+  // Trend direction (more tolerant to small slopes)
   const trend =
-    slope > 0.3 ? "deteriorating" :
-    slope < -0.3 ? "improving" : "stable";
+    slope > 0.6 ? "deteriorating" :
+    slope < -0.6 ? "improving" : "stable";
 
   // Probability: weighted combo of latest, recent average, and slope influence
   const latestProb = latest != null ? latest / 100 : 0.5;
   const avgProb = avgRecent != null ? avgRecent / 100 : latestProb;
-  const slopeSignal = clamp(slope / 20, -0.3, 0.3);
-  const stabilityPenalty = clamp(volatility / 120, 0, 0.15); // higher volatility reduces probability confidence
+  const slopeSignal = clamp(slope / 30, -0.25, 0.25);
+  const stabilityPenalty = clamp(volatility / 150, 0, 0.12); // higher volatility reduces probability
+
+  // Protective factor from high performance metrics
+  const protective = computeProtectiveFactor(metrics);
 
   let probability = latestProb * 0.6 + avgProb * 0.25 + slopeSignal * 0.15;
-  probability = clamp(probability - stabilityPenalty, 0, 1);
+  probability = clamp(probability - stabilityPenalty - protective, 0, 1);
 
   const riskLabel =
     probability >= 0.75 ? "High" :

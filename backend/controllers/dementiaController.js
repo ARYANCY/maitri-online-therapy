@@ -106,12 +106,13 @@ Analyze the following game results:
 - Game Performance Details: ${JSON.stringify(gameAnalysis)}
 
 Consider:
-1. Lower scores indicate potential cognitive decline
-2. Longer completion times may suggest attention or processing speed issues
-3. Consistent poor performance across multiple games is concerning
-4. Game types: memory, reaction time, pattern recognition, attention, etc.
+1) If all/most scores are strong (≥80) and no glaring issues, risk should be low or moderate, not high.
+2) Only flag high risk when multiple scores are poor and times are very slow.
+3) Penalize high risk if consistent poor performance across multiple games is evident.
+4) Otherwise keep risk moderate or low to avoid false positives.
+5) Game types: memory, reaction time, pattern recognition, attention, etc.
 
-Return a risk assessment based on these cognitive game results.`;
+Return a balanced, conservative risk assessment based strictly on these cognitive game results.`;
 
     let result = { 
       riskScore: 0.3, 
@@ -135,6 +136,41 @@ Return a risk assessment based on these cognitive game results.`;
     } catch (err) {
       logger.error("[Dementia.submitGameResults] Evaluation failed, using fallback", { error: err.message, stack: err.stack });
     }
+
+    // Deterministic safeguard: adjust risk based on actual scores/times to avoid false highs
+    const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+    const scoresArr = gameResults.map(r => Number.isFinite(r.score) ? Math.max(0, r.score) : 0);
+    const timesArr = gameResults.map(r => Number.isFinite(r.time) ? Math.max(0, r.time) : null).filter(v => v !== null);
+    const avgScore = scoresArr.length ? scoresArr.reduce((a,b)=>a+b,0) / scoresArr.length : null;
+    const minScore = scoresArr.length ? Math.min(...scoresArr) : null;
+    const maxScore = scoresArr.length ? Math.max(...scoresArr) : null;
+    const avgTime = timesArr.length ? timesArr.reduce((a,b)=>a+b,0) / timesArr.length : null;
+
+    let adjustedRisk = clamp01(result.riskScore);
+
+    // Strong performance: cap risk lower
+    if (avgScore !== null && minScore !== null) {
+      if (avgScore >= 85 && minScore >= 60) {
+        adjustedRisk = Math.min(adjustedRisk, 0.35);
+      } else if (avgScore >= 75 && minScore >= 50) {
+        adjustedRisk = Math.min(adjustedRisk, 0.45);
+      }
+    }
+
+    // Weak performance: push risk higher modestly
+    if (avgScore !== null && avgScore < 50 && minScore !== null && minScore < 40) {
+      adjustedRisk = Math.max(adjustedRisk, 0.55);
+    }
+
+    // Fast times can indicate better processing speed; modest nudge down
+    if (avgTime !== null && avgTime > 0 && avgTime <= 2000) {
+      adjustedRisk = Math.max(0, adjustedRisk - 0.05);
+    }
+
+    result.riskScore = adjustedRisk;
+    result.riskLevel = adjustedRisk >= 0.75 ? "high" : adjustedRisk >= 0.45 ? "moderate" : "low";
+    const note = "Risk adjusted using actual game scores/times to avoid false high risk after good performance.";
+    result.explanation = result.explanation ? `${result.explanation}\n${note}` : note;
 
     const {
       mapGamesToDomains,
