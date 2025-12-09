@@ -13,6 +13,49 @@ const AVAILABLE_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"];
 let currentModelIndex = 0;
 let currentKeyIndex = 0;
 
+// Helpers
+const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+const average = (arr = []) => {
+  const nums = arr.filter((n) => Number.isFinite(n));
+  return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+};
+const minVal = (arr = []) => {
+  const nums = arr.filter((n) => Number.isFinite(n));
+  return nums.length ? Math.min(...nums) : null;
+};
+const maxVal = (arr = []) => {
+  const nums = arr.filter((n) => Number.isFinite(n));
+  return nums.length ? Math.max(...nums) : null;
+};
+
+// Deterministic risk heuristic to cap false positives when performance is good
+const computeDeterministicRisk = (scores = [], times = []) => {
+  const avgScore = average(scores);
+  const minScore = minVal(scores);
+  const maxScore = maxVal(scores);
+  const avgTime = average(times);
+
+  // Base risk from average score (assume scores roughly 0-100)
+  let risk = avgScore != null ? clamp01(1 - avgScore / 120) : 0.4;
+
+  // Penalize very low minima
+  if (minScore != null && minScore < 40) risk = Math.min(1, risk + 0.12);
+  if (minScore != null && minScore < 25) risk = Math.min(1, risk + 0.1);
+
+  // Reward strong best scores
+  if (maxScore != null && maxScore >= 90) risk = Math.max(0, risk - 0.08);
+
+  // Time influence (longer times slightly increase risk; fast times reduce)
+  if (avgTime != null) {
+    if (avgTime > 4000) risk = Math.min(1, risk + 0.1);
+    else if (avgTime > 3000) risk = Math.min(1, risk + 0.05);
+    else if (avgTime < 1500) risk = Math.max(0, risk - 0.05);
+  }
+
+  // Clamp and return
+  return clamp01(risk);
+};
+
 function getNextGenAI() {
   const key = apiKeys[currentKeyIndex];
   currentKeyIndex = apiKeys.length ? (currentKeyIndex + 1) % apiKeys.length : 0;
@@ -138,22 +181,25 @@ Return a balanced, conservative risk assessment based strictly on these cognitiv
     }
 
     // Deterministic safeguard: adjust risk based on actual scores/times to avoid false highs
-    const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
     const scoresArr = gameResults.map(r => Number.isFinite(r.score) ? Math.max(0, r.score) : 0);
     const timesArr = gameResults.map(r => Number.isFinite(r.time) ? Math.max(0, r.time) : null).filter(v => v !== null);
-    const avgScore = scoresArr.length ? scoresArr.reduce((a,b)=>a+b,0) / scoresArr.length : null;
-    const minScore = scoresArr.length ? Math.min(...scoresArr) : null;
-    const maxScore = scoresArr.length ? Math.max(...scoresArr) : null;
-    const avgTime = timesArr.length ? timesArr.reduce((a,b)=>a+b,0) / timesArr.length : null;
+    const avgScore = average(scoresArr);
+    const minScore = minVal(scoresArr);
+    const maxScore = maxVal(scoresArr);
+    const avgTime = average(timesArr);
 
-    let adjustedRisk = clamp01(result.riskScore);
+    // Heuristic risk from raw performance
+    const deterministicRisk = computeDeterministicRisk(scoresArr, timesArr);
+
+    // Blend AI result with deterministic safeguard, biasing toward the lower (safer) of the two when performance is good
+    let adjustedRisk = clamp01((result.riskScore * 0.6) + (deterministicRisk * 0.4));
 
     // Strong performance: cap risk lower
     if (avgScore !== null && minScore !== null) {
       if (avgScore >= 85 && minScore >= 60) {
-        adjustedRisk = Math.min(adjustedRisk, 0.35);
+        adjustedRisk = Math.min(adjustedRisk, 0.30);
       } else if (avgScore >= 75 && minScore >= 50) {
-        adjustedRisk = Math.min(adjustedRisk, 0.45);
+        adjustedRisk = Math.min(adjustedRisk, 0.40);
       }
     }
 
@@ -169,7 +215,7 @@ Return a balanced, conservative risk assessment based strictly on these cognitiv
 
     result.riskScore = adjustedRisk;
     result.riskLevel = adjustedRisk >= 0.75 ? "high" : adjustedRisk >= 0.45 ? "moderate" : "low";
-    const note = "Risk adjusted using actual game scores/times to avoid false high risk after good performance.";
+    const note = "Risk blended with deterministic game-performance heuristic to avoid false high risk after strong play.";
     result.explanation = result.explanation ? `${result.explanation}\n${note}` : note;
 
     const {
