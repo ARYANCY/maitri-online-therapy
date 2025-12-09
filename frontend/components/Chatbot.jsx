@@ -951,7 +951,26 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
                   <span className="small">{t("chatbot.conversationProgress", "Conversation Progress")}</span>
                   <span className="small">{Math.round(conversationProgress)}%</span>
                 </div>
-                <div className="progress">
+                <div
+                  className="progress"
+                  style={{ position: "relative", height: "12px" }}
+                  aria-label={t("chatbot.cognitiveThresholdLabel", "Cognitive impairment threshold at 70%")}
+                >
+                  <div
+                    className="progress-threshold-line"
+                    style={{
+                      position: "absolute",
+                      left: "70%",
+                      top: 0,
+                      bottom: 0,
+                      width: "2px",
+                      background: "#dc3545",
+                      transform: "translateX(-1px)",
+                      pointerEvents: "none"
+                    }}
+                    aria-hidden="true"
+                    title={t("chatbot.cognitiveThresholdTooltip", "70% cognitive impairment threshold")}
+                  ></div>
                   <div 
                     className="progress-bar bg-success" 
                     role="progressbar"
@@ -960,6 +979,10 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
                     aria-valuemin="0"
                     aria-valuemax="100"
                   ></div>
+                </div>
+                <div className="d-flex justify-content-between small text-muted mt-1">
+                  <span>{t("chatbot.cognitiveThresholdLabel", "Cognitive impairment threshold at 70%")}</span>
+                  <span>{t("chatbot.straightLineMarker", "Straight line marker")}</span>
                 </div>
               </div>
             )}
