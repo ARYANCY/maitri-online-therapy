@@ -27,7 +27,7 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
   const intervalRef = useRef(null);
   const gameStartRef = useRef(0);
 
-  const initRound = () => {
+  const initRound = useCallback(() => {
     if (!difficulty) return;
 
     const { word, color } = generateStimulus(difficulty);
@@ -38,7 +38,7 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => setTimer((t) => t + 1), 1000);
-  };
+  }, [difficulty]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -47,26 +47,33 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
     };
   }, []);
 
-  const startGame = (level) => {
+  const startGame = useCallback((level) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    
     setDifficulty(level);
     setRound(1);
     setMaxRounds(DIFFICULTY[level].rounds);
     setTotalScore(0);
     setShowResult(false);
     setTotalTime(0);
+    setTimer(0);
     setCurrentWord("");
     setCurrentColor("");
     setShuffledColors([]);
     gameStartRef.current = Date.now();
-  };
+  }, []);
 
   useEffect(() => {
-    if (difficulty && !currentWord) {
-      initRound();
+    if (difficulty && !currentWord && !showResult && round <= maxRounds) {
+      // Small delay to ensure state is settled
+      const timer = setTimeout(() => {
+        initRound();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [difficulty, currentWord]);
+  }, [difficulty, currentWord, showResult, round, maxRounds, initRound]);
 
-  const handleChoice = (color) => {
+  const handleChoice = useCallback((color) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     const score = calculateRoundScore(color, currentColor, timer);
@@ -76,15 +83,16 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
       setRound((prev) => prev + 1);
       setCurrentWord("");
       setCurrentColor("");
+      setShuffledColors([]);
       setTimeout(() => {
         initRound();
-      }, 300);
+      }, 500);
     } else {
       const finalTime = Math.floor((Date.now() - gameStartRef.current) / 1000);
       setTotalTime(finalTime);
       setShowResult(true);
     }
-  };
+  }, [round, maxRounds, currentColor, timer, initRound]);
 
   const handleExit = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -102,7 +110,7 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleExit]);
 
-  const handleNext = (retry = false) => {
+  const handleNext = useCallback((retry = false) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setShowResult(false);
     if (retry) {
@@ -111,13 +119,12 @@ export default function StroopTest({ onFinish, onExit, ageGroup = "20-30" }) {
       const result = prepareStroopTestResult(totalScore, totalTime, difficulty, maxRounds, ageGroup);
       onFinish?.(result);
     }
-  };
+  }, [difficulty, totalScore, totalTime, maxRounds, ageGroup, startGame, onFinish]);
 
   // Auto-start game with medium difficulty
   useEffect(() => {
-    if (difficulty === "medium" && round === 1 && !showResult) {
-      startGame("medium");
-    }
+    startGame("medium");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

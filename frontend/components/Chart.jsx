@@ -163,6 +163,124 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     return labels;
   }, [metricsType, t]);
 
+  // Calculate trends and early risk for all datasets (compute first to avoid TDZ issues)
+  const trendAnalysis = useMemo(() => {
+    if (!effectiveLabels.length) return {};
+
+    const len = effectiveLabels.length;
+    const start = dataRange.start || 0;
+    const end = dataRange.end !== null ? dataRange.end : len;
+    
+    // Build datasets for trend analysis (same logic as data useMemo but without Chart.js formatting)
+    let datasetsForAnalysis = [];
+    
+    if (metricsType === "emotional") {
+      datasetsForAnalysis = [
+        { label: t("chart.stress", "Stress"), data: normalizeArray(chartData.stress_level, len).slice(start, end), color: "255,99,132" },
+        { label: t("chart.happiness", "Happiness"), data: normalizeArray(chartData.happiness_level, len).slice(start, end), color: "75,192,192" },
+        { label: t("chart.anxiety", "Anxiety"), data: normalizeArray(chartData.anxiety_level, len).slice(start, end), color: "255,206,86" },
+        { label: t("chart.overallMood", "Overall Mood"), data: normalizeArray(chartData.overall_mood_level, len).slice(start, end), color: "54,162,235" },
+      ];
+    } else if (metricsType === "screening") {
+      datasetsForAnalysis = [
+        { label: t("chart.phq9", "PHQ-9"), data: normalizeArray(chartData.phq9_score, len).slice(start, end), color: "255,99,132" },
+        { label: t("chart.gad7", "GAD-7"), data: normalizeArray(chartData.gad7_score, len).slice(start, end), color: "54,162,235" },
+        { label: t("chart.ghq", "GHQ"), data: normalizeArray(chartData.ghq_score, len).slice(start, end), color: "255,206,86" },
+      ];
+    } else if (metricsType === "dementia") {
+      const metricColors = {
+        reactionTime: "255,99,132",
+        accuracy: "75,192,192",
+        workingMemory: "54,162,235",
+        executiveFunction: "255,206,86",
+        visuospatial: "153,102,255",
+        attention: "255,159,64",
+        language: "201,203,207",
+        processingSpeed: "255,99,71",
+        learningCurve: "50,205,50",
+        errorRate: "220,20,60"
+      };
+      
+      datasetsForAnalysis = [
+        { label: t("chart.reactionTime", "Reaction Time") + " (ms)", data: normalizeArray(chartData.reactionTimeAverage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.reactionTime },
+        { label: t("chart.accuracy", "Accuracy") + " (%)", data: normalizeArray(chartData.accuracyPercentage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.accuracy },
+        { label: t("chart.workingMemorySpan", "Working Memory Span"), data: normalizeArray(chartData.workingMemorySpan, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.workingMemory },
+        { label: t("chart.executiveFunction", "Executive Function"), data: normalizeArray(chartData.executiveFunction, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.executiveFunction },
+        { label: t("chart.visuospatialAccuracy", "Visuospatial Accuracy") + " (%)", data: normalizeArray(chartData.visuospatialAccuracy, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.visuospatial },
+        { label: t("chart.attentionConsistency", "Attention Consistency") + " (%)", data: normalizeArray(chartData.attentionConsistency, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.attention },
+        { label: t("chart.processingSpeed", "Processing Speed") + " (s)", data: normalizeArray(chartData.processingSpeed, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.processingSpeed },
+        { label: t("chart.learningCurve", "Learning Curve"), data: normalizeArray(chartData.learningCurve, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.learningCurve },
+        { label: t("chart.errorRate", "Error Rate") + " (%)", data: normalizeArray(chartData.errorRate, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.errorRate },
+        { label: t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)", data: normalizeArray(chartData.dementia_risk_score, len).slice(start, end).map(score => score <= 1 ? Math.round(score * 100) : Math.round(score)), color: "153,102,255" },
+      ];
+    }
+
+    // Filter by visible datasets
+    const filteredDatasetsForAnalysis = datasetsForAnalysis.filter(ds => visibleDatasets.size === 0 || visibleDatasets.has(ds.label));
+
+    if (filteredDatasetsForAnalysis.length === 0) return {};
+
+    const analysis = {};
+    
+    filteredDatasetsForAnalysis.forEach((dataset) => {
+      const values = dataset.data.filter(v => v != null && Number.isFinite(v));
+      if (values.length < 2) return;
+
+      const trend = calculateLinearTrend(values);
+      const trendLineData = calculateTrendLine(values, trend, 5);
+      
+      // Determine thresholds based on metric type
+      let thresholds = { low: 30, moderate: 50, high: 70 };
+      let higherIsWorse = true;
+      
+      if (dataset.label.includes("Happiness") || dataset.label.includes("Accuracy") || 
+          dataset.label.includes("Working Memory") || dataset.label.includes("Executive") ||
+          dataset.label.includes("Visuospatial") || dataset.label.includes("Attention") ||
+          dataset.label.includes("Learning")) {
+        higherIsWorse = false;
+        thresholds = { low: 70, moderate: 50, high: 30 };
+      } else if (dataset.label.includes("Reaction Time") || dataset.label.includes("Processing Speed") ||
+                 dataset.label.includes("Error Rate")) {
+        higherIsWorse = true;
+        thresholds = { low: 30, moderate: 50, high: 70 };
+      }
+
+      const thresholdAnalysis = detectThresholdCrossing(values, thresholds, higherIsWorse);
+      
+      // Estimate days per data point (assuming weekly assessments)
+      const daysPerPoint = 7;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (values.length * daysPerPoint));
+      
+      const futurePrediction = predictFutureDate(
+        values,
+        thresholds.moderate,
+        higherIsWorse,
+        startDate,
+        daysPerPoint
+      );
+
+      const earlyRisk = calculateEarlyRisk(values, {
+        thresholds,
+        higherIsWorse,
+        startDate,
+        daysPerPoint,
+        riskMetric: dataset.label
+      });
+
+      analysis[dataset.label] = {
+        trend,
+        trendLineData,
+        thresholdAnalysis,
+        futurePrediction,
+        earlyRisk,
+        values
+      };
+    });
+
+    return analysis;
+  }, [chartData, effectiveLabels, metricsType, visibleDatasets, dataRange, t, normalizeArray, detectThresholdCrossing, predictFutureDate, calculateEarlyRisk]);
+
   const data = useMemo(() => {
     if (!effectiveLabels.length) return { labels: [], datasets: [] };
 
@@ -338,125 +456,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       ],
     };
   }, [chartData, effectiveLabels, metricsType, chartType, visibleDatasets, dataRange, filteredLabels, trendAnalysis, t]);
-
-  // Calculate trends and early risk for all datasets
-  // Use filteredDatasets directly instead of data to avoid circular dependency
-  const trendAnalysis = useMemo(() => {
-    if (!effectiveLabels.length) return {};
-
-    const len = effectiveLabels.length;
-    const start = dataRange.start || 0;
-    const end = dataRange.end !== null ? dataRange.end : len;
-    
-    // Build datasets for trend analysis (same logic as data useMemo but without Chart.js formatting)
-    let datasetsForAnalysis = [];
-    
-    if (metricsType === "emotional") {
-      datasetsForAnalysis = [
-        { label: t("chart.stress", "Stress"), data: normalizeArray(chartData.stress_level, len).slice(start, end), color: "255,99,132" },
-        { label: t("chart.happiness", "Happiness"), data: normalizeArray(chartData.happiness_level, len).slice(start, end), color: "75,192,192" },
-        { label: t("chart.anxiety", "Anxiety"), data: normalizeArray(chartData.anxiety_level, len).slice(start, end), color: "255,206,86" },
-        { label: t("chart.overallMood", "Overall Mood"), data: normalizeArray(chartData.overall_mood_level, len).slice(start, end), color: "54,162,235" },
-      ];
-    } else if (metricsType === "screening") {
-      datasetsForAnalysis = [
-        { label: t("chart.phq9", "PHQ-9"), data: normalizeArray(chartData.phq9_score, len).slice(start, end), color: "255,99,132" },
-        { label: t("chart.gad7", "GAD-7"), data: normalizeArray(chartData.gad7_score, len).slice(start, end), color: "54,162,235" },
-        { label: t("chart.ghq", "GHQ"), data: normalizeArray(chartData.ghq_score, len).slice(start, end), color: "255,206,86" },
-      ];
-    } else if (metricsType === "dementia") {
-      const metricColors = {
-        reactionTime: "255,99,132",
-        accuracy: "75,192,192",
-        workingMemory: "54,162,235",
-        executiveFunction: "255,206,86",
-        visuospatial: "153,102,255",
-        attention: "255,159,64",
-        language: "201,203,207",
-        processingSpeed: "255,99,71",
-        learningCurve: "50,205,50",
-        errorRate: "220,20,60"
-      };
-      
-      datasetsForAnalysis = [
-        { label: t("chart.reactionTime", "Reaction Time") + " (ms)", data: normalizeArray(chartData.reactionTimeAverage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.reactionTime },
-        { label: t("chart.accuracy", "Accuracy") + " (%)", data: normalizeArray(chartData.accuracyPercentage, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.accuracy },
-        { label: t("chart.workingMemorySpan", "Working Memory Span"), data: normalizeArray(chartData.workingMemorySpan, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.workingMemory },
-        { label: t("chart.executiveFunction", "Executive Function"), data: normalizeArray(chartData.executiveFunction, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.executiveFunction },
-        { label: t("chart.visuospatialAccuracy", "Visuospatial Accuracy") + " (%)", data: normalizeArray(chartData.visuospatialAccuracy, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.visuospatial },
-        { label: t("chart.attentionConsistency", "Attention Consistency") + " (%)", data: normalizeArray(chartData.attentionConsistency, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.attention },
-        { label: t("chart.processingSpeed", "Processing Speed") + " (s)", data: normalizeArray(chartData.processingSpeed, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.processingSpeed },
-        { label: t("chart.learningCurve", "Learning Curve"), data: normalizeArray(chartData.learningCurve, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.learningCurve },
-        { label: t("chart.errorRate", "Error Rate") + " (%)", data: normalizeArray(chartData.errorRate, len).slice(start, end).map(s => s !== null ? s : 0), color: metricColors.errorRate },
-        { label: t("chart.cognitiveRisk", "Cognitive Impairment Risk") + " (%)", data: normalizeArray(chartData.dementia_risk_score, len).slice(start, end).map(score => score <= 1 ? Math.round(score * 100) : Math.round(score)), color: "153,102,255" },
-      ];
-    }
-
-    // Filter by visible datasets
-    const filteredDatasetsForAnalysis = datasetsForAnalysis.filter(ds => visibleDatasets.size === 0 || visibleDatasets.has(ds.label));
-
-    if (filteredDatasetsForAnalysis.length === 0) return {};
-
-    const analysis = {};
-    
-    filteredDatasetsForAnalysis.forEach((dataset) => {
-      const values = dataset.data.filter(v => v != null && Number.isFinite(v));
-      if (values.length < 2) return;
-
-      const trend = calculateLinearTrend(values);
-      const trendLineData = calculateTrendLine(values, trend, 5);
-      
-      // Determine thresholds based on metric type
-      let thresholds = { low: 30, moderate: 50, high: 70 };
-      let higherIsWorse = true;
-      
-      if (dataset.label.includes("Happiness") || dataset.label.includes("Accuracy") || 
-          dataset.label.includes("Working Memory") || dataset.label.includes("Executive") ||
-          dataset.label.includes("Visuospatial") || dataset.label.includes("Attention") ||
-          dataset.label.includes("Learning")) {
-        higherIsWorse = false;
-        thresholds = { low: 70, moderate: 50, high: 30 };
-      } else if (dataset.label.includes("Reaction Time") || dataset.label.includes("Processing Speed") ||
-                 dataset.label.includes("Error Rate")) {
-        higherIsWorse = true;
-        thresholds = { low: 30, moderate: 50, high: 70 };
-      }
-
-      const thresholdAnalysis = detectThresholdCrossing(values, thresholds, higherIsWorse);
-      
-      // Estimate days per data point (assuming weekly assessments)
-      const daysPerPoint = 7;
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - (values.length * daysPerPoint));
-      
-      const futurePrediction = predictFutureDate(
-        values,
-        thresholds.moderate,
-        higherIsWorse,
-        startDate,
-        daysPerPoint
-      );
-
-      const earlyRisk = calculateEarlyRisk(values, {
-        thresholds,
-        higherIsWorse,
-        startDate,
-        daysPerPoint,
-        riskMetric: dataset.label
-      });
-
-      analysis[dataset.label] = {
-        trend,
-        trendLineData,
-        thresholdAnalysis,
-        futurePrediction,
-        earlyRisk,
-        values
-      };
-    });
-
-    return analysis;
-  }, [chartData, effectiveLabels, metricsType, visibleDatasets, dataRange, t]);
 
   const dementiaSummary = useMemo(() => {
     if (metricsType !== "dementia") return null;
