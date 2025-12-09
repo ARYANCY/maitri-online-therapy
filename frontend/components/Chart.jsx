@@ -715,10 +715,11 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       if (metricsType !== "dementia") return;
       const thresholdValue = opts?.value ?? 70;
       const yScale = chart.scales?.y;
-      if (!yScale || thresholdValue == null) return;
+      const area = chart.chartArea;
+      if (!yScale || !area || thresholdValue == null) return;
       const y = yScale.getPixelForValue(thresholdValue);
-      const { left, right, top, bottom } = chart.chartArea || {};
-      if (y == null || y < top || y > bottom) return;
+      const { left, right, top, bottom } = area;
+      if (y == null || Number.isNaN(y) || y < top || y > bottom) return;
 
       const ctx = chart.ctx;
       ctx.save();
@@ -741,7 +742,14 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
     },
   }), [metricsType, t]);
 
-  const options = useMemo(() => ({
+  const options = useMemo(() => {
+    const safeWindow = typeof window !== "undefined" ? window : { innerWidth: 1024 };
+    const isMobile = safeWindow.innerWidth < 576;
+    const isTablet = safeWindow.innerWidth < 1024;
+    const maxTicksLimit = isMobile ? 10 : isTablet ? 15 : 20;
+    const xFontSize = isMobile ? 9 : 11;
+
+    return {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { intersect: false, mode: 'index' },
@@ -827,8 +835,8 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           autoSkip: true,
           maxRotation: 30,
           minRotation: 0,
-          maxTicksLimit: window.innerWidth < 768 ? 10 : window.innerWidth < 1024 ? 15 : 20,
-          font: { size: window.innerWidth < 576 ? 9 : 11, weight: '500' },
+          maxTicksLimit,
+          font: { size: xFontSize, weight: '500' },
           color: '#5A5A5A',
           padding: 6,
         },
@@ -857,7 +865,8 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         border: { display: true, color: 'rgba(111, 174, 154, 0.2)' },
       },
     },
-  }), [data, metricsType, t, filteredLabels, visibleDatasets, setVisibleDatasets]);
+    };
+  }, [data, metricsType, t, filteredLabels, visibleDatasets, setVisibleDatasets]);
 
   
   const statistics = useMemo(() => {
