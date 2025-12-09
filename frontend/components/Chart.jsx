@@ -709,6 +709,38 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       .filter(Boolean);
   }, [buildStatRow, chartData, metricsType, t]);
 
+  const thresholdPlugin = useMemo(() => ({
+    id: "thresholdLine",
+    afterDraw: (chart, args, opts) => {
+      if (metricsType !== "dementia") return;
+      const thresholdValue = opts?.value ?? 70;
+      const yScale = chart.scales?.y;
+      if (!yScale || thresholdValue == null) return;
+      const y = yScale.getPixelForValue(thresholdValue);
+      const { left, right, top, bottom } = chart.chartArea || {};
+      if (y == null || y < top || y > bottom) return;
+
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = opts?.color || "rgba(220,53,69,0.8)";
+      ctx.lineWidth = opts?.width || 2;
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = opts?.labelColor || opts?.color || "rgba(220,53,69,0.9)";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      const label = opts?.label || t("chart.cognitiveThreshold", "70% cognitive impairment threshold");
+      ctx.fillText(label, right - 6, y - 4);
+      ctx.restore();
+    },
+  }), [metricsType, t]);
+
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
@@ -779,6 +811,15 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           },
         },
       },
+      thresholdLine: metricsType === "dementia"
+        ? {
+            value: 70,
+            color: "rgba(220,53,69,0.85)",
+            width: 2,
+            labelColor: "rgba(220,53,69,0.9)",
+            label: t("chart.cognitiveThreshold", "70% cognitive impairment threshold"),
+          }
+        : undefined,
     },
     scales: {
       x: {
@@ -1197,6 +1238,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                     ref={chartRef} 
                     data={data} 
                     options={options}
+                    plugins={[thresholdPlugin]}
                     style={{ display: 'block', width: '100%', height: '100%' }}
                   />
                 ) : (
@@ -1204,6 +1246,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                     ref={chartRef} 
                     data={data} 
                     options={options}
+                    plugins={[thresholdPlugin]}
                     style={{ display: 'block', width: '100%', height: '100%' }}
                   />
                 )}
