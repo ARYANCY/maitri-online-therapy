@@ -403,6 +403,11 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       }
     }
 
+    // If a trend filter is active (double-click), keep only that dataset (and threshold if present)
+    if (trendDatasetFilter) {
+      datasets = datasets.filter(ds => ds.label === trendDatasetFilter || ds.isThreshold);
+    }
+
     // Filter datasets based on visibility and range
     const filteredDatasets = datasets
       .filter(ds => visibleDatasets.size === 0 || visibleDatasets.has(ds.label))
