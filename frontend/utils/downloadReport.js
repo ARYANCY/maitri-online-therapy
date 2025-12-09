@@ -128,12 +128,29 @@ const buildStats = (arr = []) => {
 };
 
 // Wait for chart to be ready and visible
-const waitForChartReady = (maxWait = 3000, checkInterval = 100) => {
+const safeLocalStorageGet = (key, fallback = "en") => {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage.getItem(key) || fallback;
+    }
+  } catch (e) {
+    console.warn("localStorage unavailable", e);
+  }
+  return fallback;
+};
+
+// Wait for chart to be ready and visible
+const waitForChartReady = (
+  maxWait = 3000,
+  checkInterval = 100,
+  selectors = { canvas: ".chart-wrapper canvas", wrapper: ".chart-wrapper" }
+) => {
+  if (typeof document === "undefined") return Promise.resolve(null);
   return new Promise((resolve) => {
     const startTime = Date.now();
     const check = () => {
-      const canvas = document.querySelector(".chart-wrapper canvas");
-      const chartWrapper = document.querySelector(".chart-wrapper");
+      const canvas = document.querySelector(selectors.canvas);
+      const chartWrapper = document.querySelector(selectors.wrapper);
       
       if (canvas && chartWrapper) {
         const rect = canvas.getBoundingClientRect();
@@ -158,9 +175,11 @@ const waitForChartReady = (maxWait = 3000, checkInterval = 100) => {
 };
 
 // Optimized chart capture with Chart.js canvas support
-const captureChartImage = async () => {
+const captureChartImage = async (selectors) => {
+  if (typeof document === "undefined") return null;
+
   // Wait for chart to be ready
-  const canvas = await waitForChartReady();
+  const canvas = await waitForChartReady(3000, 100, selectors);
   
   if (!canvas) {
     console.warn("Chart canvas not found or not ready");
@@ -294,7 +313,7 @@ const generatePDFReport = async (
   pdf.text(`Email: ${user?.email || "N/A"}`, marginX, y);
   y += 6;
   pdf.text(
-    `Language: ${localStorage.getItem("preferredLang") || "en"}`,
+    `Language: ${safeLocalStorageGet("preferredLang", "en")}`,
     marginX,
     y
   );
@@ -370,6 +389,24 @@ const generatePDFReport = async (
     });
   }
 
+  // Data point summary by metric
+  const dataPointSummary = metricKeys.map((key) => ({
+    label: getMetricLabel(key),
+    count: Array.isArray(normalizedChartData[key]) ? normalizedChartData[key].length : 0,
+  }));
+  const totalDataPoints = dataPointSummary.reduce((sum, m) => sum + m.count, 0);
+
+  // Helper to format year prediction from timeline
+  const getCriticalYearPrediction = (timeline) => {
+    if (!timeline || !timeline.isValid) return null;
+    if (timeline.predictedDateCritical) return new Date(timeline.predictedDateCritical).getFullYear();
+    if (timeline.yearsToCritical != null) {
+      const nowYear = new Date().getFullYear();
+      return nowYear + Math.max(0, Math.round(timeline.yearsToCritical));
+    }
+    return null;
+  };
+
   pdf.setFont("helvetica", "bold").setFontSize(11);
   pdf.setTextColor(44, 62, 80);
   pdf.text("Cognitive Risk Snapshot", marginX, y);
@@ -431,6 +468,47 @@ const generatePDFReport = async (
     pdf.text("Timeline: Not enough data for timeline prediction", marginX, y);
     y += 8;
   }
+
+  // Data Point Summary section
+  pdf.setFont("helvetica", "bold").setFontSize(11);
+  pdf.setTextColor(44, 62, 80);
+  pdf.text("Data Points Summary", marginX, y);
+  y += 6;
+
+  autoTable(pdf, {
+    startY: y,
+    head: [["Metric", "Data Points"]],
+    body: dataPointSummary.map((row) => [row.label, row.count.toString()]),
+    theme: "striped",
+    headStyles: {
+      fillColor: [44, 62, 80],
+      textColor: 255,
+      halign: "center",
+      valign: "middle",
+      fontStyle: "bold",
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    bodyStyles: { fontSize: 9, cellPadding: 3, textColor: [33, 33, 33] },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    columnStyles: {
+      0: { cellWidth: 90, fontStyle: "bold", textColor: [44, 62, 80] },
+      1: { cellWidth: 25, halign: "center" },
+    },
+    margin: { left: marginX, right: marginX },
+  });
+
+  y = pdf.lastAutoTable.finalY + 8;
+
+  pdf.setFont("helvetica", "normal").setFontSize(9);
+  pdf.setTextColor(80);
+  pdf.text(
+    `Total recorded data points across all metrics: ${totalDataPoints}`,
+    marginX,
+    y
+  );
+  pdf.setTextColor(0, 0, 0);
+  y += 10;
 
   // Metrics Overview Table Section
   pdf.setFont("helvetica", "bold").setFontSize(11);
@@ -811,6 +889,16 @@ const generatePDFReport = async (
           "Confidence Level",
           `${Math.round(probabilityData.confidence * 100)}%`,
           probabilityData.confidence > 0.7 ? "High" : probabilityData.confidence > 0.4 ? "Medium" : "Low",
+        ]);
+      }
+
+      // Add critical-year prediction if available
+      const criticalYear = getCriticalYearPrediction(timelinePrediction);
+      if (criticalYear) {
+        riskScoreRows.push([
+          "Projected High-Risk Year",
+          criticalYear.toString(),
+          "Estimated year high-risk may be reached",
         ]);
       }
 
@@ -1280,7 +1368,7 @@ const generateJSONReport = (normalizedChartData, metricKeys, user) => {
     user: {
       name: user?.name || "Guest",
       email: user?.email || "N/A",
-      language: localStorage.getItem("preferredLang") || "en",
+      language: safeLocalStorageGet("preferredLang", "en"),
     },
     summary: {
       total_metrics: metricKeys.length,
@@ -1292,6 +1380,7 @@ const generateJSONReport = (normalizedChartData, metricKeys, user) => {
       dementia_risk_label: prob?.riskLabel ?? null,
       dementia_trend: prob?.trend ?? null,
       dementia_risk_points: prob?.dataPoints ?? riskScores.length,
+      projected_high_risk_year: getCriticalYearPrediction(timeline),
     },
     cognitiveRisk: {
       probabilityPercent: prob?.probabilityPercent ?? null,
@@ -1410,6 +1499,10 @@ const buildTableData = (chartData = {}, chartLabels = []) => {
 };
 
 const saveBlobToDisk = (payload, filename, mimeType) => {
+  if (typeof document === "undefined") {
+    throw new Error("Cannot download report: document is not available.");
+  }
+
   const blob =
     payload instanceof Blob
       ? payload
@@ -1544,7 +1637,10 @@ export const downloadReport = async (format = "pdf", user, API, options = {}) =>
     if (normalizedFormat === "pdf") {
       // Capture Chart.jsx canvas - wait for chart to be ready
       notify("request", { format: normalizedFormat, stage: "capturing_chart" });
-      const chartImageData = await captureChartImage().catch((err) => {
+      const chartImageData = await captureChartImage({
+        canvas: options.chartSelector || ".chart-wrapper canvas",
+        wrapper: options.chartWrapperSelector || ".chart-wrapper",
+      }).catch((err) => {
         console.warn("[Report] Chart capture failed:", err);
         return null;
       });
