@@ -44,9 +44,49 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [hasData, setHasData] = useState(false);
   const [visibleDatasets, setVisibleDatasets] = useState(new Set());
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
-  const [selectedDataPoint, setSelectedDataPoint] = useState(null); // kept for compatibility, no popup rendered
+  const [selectedDataPoint, setSelectedDataPoint] = useState(null);
   const [showTrends, setShowTrends] = useState(false);
   const chartRef = useRef(null);
+
+  // Auto-pick metrics type based on available data if current type has no data
+  useEffect(() => {
+    const countData = (keys) =>
+      keys.reduce((sum, key) => {
+        const val = chartData?.[key];
+        if (Array.isArray(val) && val.length > 0) return sum + val.length;
+        if (val != null) return sum + 1;
+        return sum;
+      }, 0);
+
+    const emotionalKeys = ["stress_level", "happiness_level", "anxiety_level", "overall_mood_level"];
+    const screeningKeys = ["phq9_score", "gad7_score", "ghq_score"];
+    const dementiaKeys = [
+      "reactionTimeAverage",
+      "accuracyPercentage",
+      "workingMemorySpan",
+      "executiveFunction",
+      "visuospatialAccuracy",
+      "attentionConsistency",
+      "processingSpeed",
+      "learningCurve",
+      "errorRate",
+      "dementia_risk_score"
+    ];
+
+    const counts = {
+      emotional: countData(emotionalKeys),
+      screening: countData(screeningKeys),
+      dementia: countData(dementiaKeys),
+    };
+
+    // If current type has no data but another has, switch to the richest dataset
+    if (counts[metricsType] === 0) {
+      const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      if (best && best[1] > 0 && best[0] !== metricsType) {
+        setMetricsType(best[0]);
+      }
+    }
+  }, [chartData, metricsType]);
 
   const normalizeArray = (arr, length) => {
     const targetLength = Number.isFinite(length) && length > 0 ? length : (Array.isArray(arr) ? arr.length : 0) || 0;
