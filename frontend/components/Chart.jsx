@@ -45,6 +45,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   const [visibleDatasets, setVisibleDatasets] = useState(new Set());
   const [dataRange, setDataRange] = useState({ start: 0, end: null });
   const [selectedDataPoint, setSelectedDataPoint] = useState(null); // kept for compatibility, no popup rendered
+  const [showTrends, setShowTrends] = useState(false);
   const chartRef = useRef(null);
 
   const normalizeArray = (arr, length) => {
@@ -415,7 +416,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
 
     // Add trend lines as additional datasets (only if trendAnalysis is available)
     const trendDatasets = [];
-    if (trendAnalysis && typeof trendAnalysis === 'object') {
+    if (showTrends && trendAnalysis && typeof trendAnalysis === 'object') {
       filteredDatasets.forEach((ds, index) => {
         const trendData = trendAnalysis[ds.label];
         if (trendData && trendData.trend && trendData.trend.isValid && chartType === "line") {
@@ -1186,7 +1187,12 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           </div>
         )}
 
-        <div className="chart-wrapper mb-4 position-relative">
+        <div
+          className="chart-wrapper mb-4 position-relative"
+          onDoubleClick={() => setShowTrends((prev) => !prev)}
+          title={t("chart.toggleTrends", "Double-click to toggle trend lines")}
+          role="presentation"
+        >
           <div className="chart-container-responsive" style={{ minHeight: "400px", width: "100%" }}>
             {data && data.labels && data.labels.length > 0 && data.datasets && data.datasets.length > 0 ? (
               <>
