@@ -131,7 +131,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
   }, [effectiveLabels, dataRange]);
 
   // Get all available dataset labels for toggle buttons
-  const riskThresholdLabel = t("chart.riskThreshold", "Risk Threshold (50%)");
+  const riskThresholdLabel = t("chart.riskThreshold", "Risk Threshold (70%)");
 
   const allDatasetLabels = useMemo(() => {
     let labels = [];
@@ -392,7 +392,7 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
       if (chartType === "line") {
         datasets.push({
           label: riskThresholdLabel,
-          data: Array(len).fill(50),
+          data: Array(len).fill(70),
           color: "120,120,120",
           borderDash: [8, 8],
           isThreshold: true
@@ -1066,68 +1066,6 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
           )}
         </div>
 
-        {/* Dataset Visibility Toggle */}
-        {allDatasetLabels.length > 0 && (
-          <div className="d-flex flex-column gap-2 w-100 mt-2">
-            <label className="form-label d-flex align-items-center gap-2 mb-0">
-              <span>👁️</span>
-              <strong className="small">{t("chart.showDatasets", "Show/Hide Datasets")}</strong>
-            </label>
-            <div className="d-flex flex-wrap gap-2">
-              {allDatasetLabels.map((label, idx) => {
-                const isVisible = visibleDatasets.has(label);
-                return (
-                  <button
-                    key={`${label}-${idx}`}
-                    type="button"
-                    className={`btn btn-sm ${isVisible ? 'btn-primary' : 'btn-outline-secondary'}`}
-                    onClick={() => {
-                      const newVisible = new Set(visibleDatasets);
-                      if (isVisible) {
-                        newVisible.delete(label);
-                      } else {
-                        newVisible.add(label);
-                      }
-                      setVisibleDatasets(newVisible);
-                      if (chartRef.current) {
-                        const chart = chartRef.current;
-                        // Find dataset index by label
-                        const datasetIndex = data.datasets.findIndex(ds => ds.label === label);
-                        if (datasetIndex >= 0) {
-                          const meta = chart.getDatasetMeta(datasetIndex);
-                          meta.hidden = !isVisible;
-                          chart.update();
-                        }
-                      }
-                    }}
-                    title={isVisible ? t("chart.hideDataset", "Click to hide") : t("chart.showDataset", "Click to show")}
-                  >
-                    {isVisible ? '✓' : '✗'} <span className="d-none d-md-inline">{label}</span>
-                    <span className="d-md-none">{label.split(' ')[0]}</span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-info"
-                onClick={() => {
-                  const allLabels = new Set(allDatasetLabels);
-                  setVisibleDatasets(allLabels);
-                  if (chartRef.current) {
-                    const chart = chartRef.current;
-                    data.datasets.forEach((_, idx) => {
-                      chart.getDatasetMeta(idx).hidden = false;
-                    });
-                    chart.update();
-                  }
-                }}
-                title={t("chart.showAll", "Show all datasets")}
-              >
-                {t("chart.showAll", "Show All")}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="card-body">
@@ -1584,30 +1522,32 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
                             </div>
                           </div>
 
-                          <div className="card">
-                            <div className="card-body">
-                              {dementiaSummary.trendAnalysis.earlyRisk.earlyWarning ? (
-                                <div className="alert alert-warning mb-0">
-                                  <strong>⚠️ {t("chart.earlyRiskWarning", "Early Risk Warning")}</strong>
-                                  <div className="small mt-1">
-                                    {t("chart.earlyRiskText", "Trend analysis indicates potential risk threshold crossing. Consider consulting a healthcare professional.")}
-                                  </div>
-                                  {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk && (
-                                    <div className="mt-2">
-                                      <strong>{t("chart.projectedRisk", "Projected Risk")}:</strong> {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk.toFixed(1)}%
+                          {!(dementiaSummary.timelinePrediction && dementiaSummary.timelinePrediction.isValid && (dementiaSummary.timelinePrediction.currentRisk === 'high' || dementiaSummary.timelinePrediction.currentRisk === 'very_high')) && (
+                            <div className="card">
+                              <div className="card-body">
+                                {dementiaSummary.trendAnalysis.earlyRisk.earlyWarning ? (
+                                  <div className="alert alert-warning mb-0">
+                                    <strong>⚠️ {t("chart.earlyRiskWarning", "Early Risk Warning")}</strong>
+                                    <div className="small mt-1">
+                                      {t("chart.earlyRiskText", "Trend analysis indicates potential risk threshold crossing. Consider consulting a healthcare professional.")}
                                     </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="alert alert-success mb-0">
-                                  <strong>✅ {t("chart.noEarlyRisk", "No Early Risk Detected")}</strong>
-                                  <div className="small mt-1">
-                                    {t("chart.noEarlyRiskText", "Current trends do not indicate immediate risk threshold crossing.")}
+                                    {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk && (
+                                      <div className="mt-2">
+                                        <strong>{t("chart.projectedRisk", "Projected Risk")}:</strong> {dementiaSummary.trendAnalysis.earlyRisk.projectedRisk.toFixed(1)}%
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="alert alert-success mb-0">
+                                    <strong>✅ {t("chart.noEarlyRisk", "No Early Risk Detected")}</strong>
+                                    <div className="small mt-1">
+                                      {t("chart.noEarlyRiskText", "Current trends do not indicate immediate risk threshold crossing.")}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                         </div>
                       </div>
