@@ -214,11 +214,6 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
   return () => observer.disconnect();
 }, []);
 
-
-
-   
-  
-  
   const handleManualRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -243,10 +238,7 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
     if (listening) {
       stopVoskListening();
     }
-
-    
     isSendingRef.current = true;
-    
     const userText = input.trim();
     const userMessage = { sender: "user", text: userText };
 
@@ -260,14 +252,12 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
 
-    
     progressIntervalRef.current = setInterval(() => {
       setSendProgress((prev) => {
         if (prev >= 90) return prev; 
         return prev + Math.random() * 10;
       });
     }, 200);
-
     
     let retries = 2;
     let success = false;
@@ -305,17 +295,7 @@ export default function Chatbot({ onTodosUpdate, onDataUpdate }) {
             const progressPercent = Math.min(100, (userMessages / 10) * 100); 
             setConversationProgress(progressPercent);
             
-            if (onTodosUpdate && res?.todos?.data) onTodosUpdate(res.todos.data);
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+            if (onTodosUpdate && res?.todos?.data) onTodosUpdate(res.todos.data);            
             success = true;
             setTimeout(() => setSendProgress(0), 500); 
             break; 

@@ -504,16 +504,37 @@ export default function Chart({ chartData = {}, chartLabels = [], onRefresh }) {
         highRiskThreshold: 80
       });
 
+      // Normalize dates so rendering is consistent even if serialized
+      const normalizeDate = (val) => {
+        if (!val) return null;
+        const d = val instanceof Date ? val : new Date(val);
+        return Number.isNaN(d.getTime()) ? null : d;
+      };
+
+      const normalizedFuturePrediction = {
+        ...futurePrediction,
+        predictedDate: normalizeDate(futurePrediction.predictedDate)
+      };
+
+      const normalizedTimeline = timelinePrediction
+        ? {
+            ...timelinePrediction,
+            predictedDateModerate: normalizeDate(timelinePrediction.predictedDateModerate),
+            predictedDateCritical: normalizeDate(timelinePrediction.predictedDateCritical),
+            predictedDateHighRisk: normalizeDate(timelinePrediction.predictedDateHighRisk)
+          }
+        : null;
+
       return {
         ...baseSummary,
         trendAnalysis: {
           trend,
           trendLineData,
           thresholdAnalysis,
-          futurePrediction,
+          futurePrediction: normalizedFuturePrediction,
           earlyRisk
         },
-        timelinePrediction
+        timelinePrediction: normalizedTimeline
       };
     }
 
