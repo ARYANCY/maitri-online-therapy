@@ -183,10 +183,10 @@ Return a balanced, conservative risk assessment based strictly on these cognitiv
     // Deterministic safeguard: adjust risk based on actual scores/times to avoid false highs
     const scoresArr = gameResults.map(r => Number.isFinite(r.score) ? Math.max(0, r.score) : 0);
     const timesArr = gameResults.map(r => Number.isFinite(r.time) ? Math.max(0, r.time) : null).filter(v => v !== null);
-    const avgScore = average(scoresArr);
-    const minScore = minVal(scoresArr);
-    const maxScore = maxVal(scoresArr);
-    const avgTime = average(timesArr);
+    const perfAvgScore = average(scoresArr);
+    const perfMinScore = minVal(scoresArr);
+    const perfMaxScore = maxVal(scoresArr);
+    const perfAvgTime = average(timesArr);
 
     // Heuristic risk from raw performance
     const deterministicRisk = computeDeterministicRisk(scoresArr, timesArr);
@@ -195,21 +195,21 @@ Return a balanced, conservative risk assessment based strictly on these cognitiv
     let adjustedRisk = clamp01((result.riskScore * 0.6) + (deterministicRisk * 0.4));
 
     // Strong performance: cap risk lower
-    if (avgScore !== null && minScore !== null) {
-      if (avgScore >= 85 && minScore >= 60) {
+    if (perfAvgScore !== null && perfMinScore !== null) {
+      if (perfAvgScore >= 85 && perfMinScore >= 60) {
         adjustedRisk = Math.min(adjustedRisk, 0.30);
-      } else if (avgScore >= 75 && minScore >= 50) {
+      } else if (perfAvgScore >= 75 && perfMinScore >= 50) {
         adjustedRisk = Math.min(adjustedRisk, 0.40);
       }
     }
 
     // Weak performance: push risk higher modestly
-    if (avgScore !== null && avgScore < 50 && minScore !== null && minScore < 40) {
+    if (perfAvgScore !== null && perfAvgScore < 50 && perfMinScore !== null && perfMinScore < 40) {
       adjustedRisk = Math.max(adjustedRisk, 0.55);
     }
 
     // Fast times can indicate better processing speed; modest nudge down
-    if (avgTime !== null && avgTime > 0 && avgTime <= 2000) {
+    if (perfAvgTime !== null && perfAvgTime > 0 && perfAvgTime <= 2000) {
       adjustedRisk = Math.max(0, adjustedRisk - 0.05);
     }
 
