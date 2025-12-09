@@ -14,5 +14,10 @@
 .game-instructions-card {
   position: relative !important;
   z-index: 10021 !important;
+  width: 90% !important;
+  max-width: 720px !important;
+  min-width: 320px !important;
+  height: 85vh !important;
+  border-radius: 12px !important;
 }
 

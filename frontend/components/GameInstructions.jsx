@@ -50,15 +50,11 @@ export default function GameInstructions({ gameKey, onClose, onStart }) {
       onClick={onClose}
     >
       <div 
-        className="card shadow-lg h-100 game-instructions-card" 
+        className="card shadow-lg game-instructions-card" 
         style={{ 
-          maxWidth: '800px', 
-          width: '100%', 
-          height: '100vh',
           overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column',
-          borderRadius: '0'
+          flexDirection: 'column'
         }}
         onClick={(e) => e.stopPropagation()}
       >
