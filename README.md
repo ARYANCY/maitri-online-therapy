@@ -2,13 +2,13 @@
 
 A comprehensive full-stack web application for mental health support, cognitive assessment, and therapy management. Maitri provides early detection of cognitive decline through gamified assessments, connects users with healthcare professionals, and offers AI-powered mental health support.
 
-## 🎯 Project Overview
+## Project Overview
 
 Maitri is a production-ready platform that combines cognitive assessment games, therapy booking, AI chatbot support, and comprehensive health monitoring. The platform is designed to be accessible, multilingual, and scientifically grounded in neuropsychological research.
 
-## ✨ Core Features
+## Core Features
 
-### 🧠 Cognitive Assessment Games
+### Cognitive Assessment Games
 - **Digit Span**: Tests working memory and attention span
 - **Memory Match**: Assesses visual memory and pattern recognition
 - **Pattern Recall**: Evaluates sequential memory and visual processing
@@ -20,7 +20,7 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **Matching Cards**: Tests visual memory and concentration
 - **Symbol Match**: Assesses pattern recognition and memory
 
-### 📊 Risk Assessment & Analytics
+### Risk Assessment & Analytics
 - **Age-Based Normalization**: Adjusts scores based on age groups (10-15, 15-20, 20-30, 30-40, 40-50, 50-60, 60-70, 70-80, 80-90)
 - **Weighted Domain Scoring**: Memory (35%), Language (20%), Attention (20%), Orientation (12.5%), Executive Function (12.5%)
 - **Cognitive Domain Mapping**: Maps game results to cognitive domains
@@ -28,7 +28,7 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **Progress Tracking**: Historical performance monitoring
 - **Detailed Reports**: PDF, CSV, and JSON export formats
 
-### 🏥 Healthcare Professional Management
+### Healthcare Professional Management
 - **Therapist Applications**: Complete application system for therapists
 - **Healthcare Professional Registration**: Multi-step registration process
 - **Profile Management**: Comprehensive profile with qualifications, experience, and credentials
@@ -36,33 +36,33 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **Appointment Booking**: Real-time appointment scheduling
 - **Status Management**: Accept, reject, or delete applications
 
-### 💬 AI-Powered Chatbot
+### AI-Powered Chatbot
 - **Google Gemini Integration**: Advanced AI conversation support
 - **Multi-language Support**: English, Hindi, Assamese
 - **Context-Aware Responses**: Maintains conversation context
 - **Mental Health Support**: Provides guidance and information
 - **Session Management**: Persistent conversation history
 
-### 📅 Appointment System
+### Appointment System
 - **Real-time Booking**: Book appointments with therapists and healthcare professionals
 - **Appointment Management**: View, cancel, and reschedule appointments
 - **Status Tracking**: Track appointment status (pending, confirmed, completed, cancelled)
 - **Reminder System**: Email notifications for upcoming appointments
 - **Calendar Integration**: Visual calendar interface
 
-### 🌐 Internationalization (i18n)
+### Internationalization (i18n)
 - **Multi-language Support**: English, Hindi, Assamese
 - **Dynamic Language Switching**: Change language on the fly
 - **Localized Content**: All UI elements translated
 - **RTL Support**: Right-to-left language support ready
 
-### 📱 Mobile Responsive Design
+### Mobile Responsive Design
 - **Fully Responsive**: Optimized for all screen sizes
 - **Touch-Friendly**: Large touch targets and gestures
 - **Mobile-First CSS**: Comprehensive mobile styling
 - **Progressive Enhancement**: Works on all devices
 
-### 🔐 Security Features
+### Security Features
 - **Google OAuth 2.0**: Secure authentication
 - **JWT Tokens**: Token-based session management
 - **Session Management**: Secure server-side sessions
@@ -73,21 +73,21 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **Helmet.js**: Security headers configuration
 - **CORS**: Configured cross-origin resource sharing
 
-### 📈 Dashboard & Analytics
+### Dashboard & Analytics
 - **User Dashboard**: Comprehensive user statistics
 - **Game Progress**: Track completed games and scores
 - **Appointment History**: View past and upcoming appointments
 - **Health Metrics**: Cognitive performance trends
 - **Chart Visualizations**: Interactive charts and graphs
 
-### 📄 Report Generation
+### Report Generation
 - **PDF Reports**: Professional PDF generation
 - **CSV Export**: Data export for analysis
 - **JSON Export**: Machine-readable format
 - **Detailed Metrics**: Comprehensive performance data
 - **Visual Charts**: Embedded charts in reports
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 18.3**: Modern React with hooks
@@ -116,7 +116,7 @@ Maitri is a production-ready platform that combines cognitive assessment games, 
 - **express-session**: Session management
 - **connect-mongo**: MongoDB session store
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 maitri/
@@ -336,7 +336,7 @@ Each cognitive game has:
 - **Algorithm file** (`.js`): Core game logic, scoring, and validation
 - **Documentation** (`.md`): Algorithm explanation and methodology
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Node.js 18 or higher
@@ -407,7 +407,7 @@ npm run start:backend
 npm run start:frontend
 ```
 
-## 🗂️ API Routes & Controllers
+## API Routes & Controllers
 
 ### Authentication Routes (`/api/auth`)
 - `POST /api/auth/login` - User login
@@ -505,7 +505,7 @@ npm run start:frontend
 - `GET /api/health/live` - Liveness probe
 - `GET /api/health/metrics` - Application metrics
 
-## 🎮 Game Algorithms
+## Game Algorithms
 
 ### Cognitive Domain Mapping
 Games are mapped to cognitive domains:
@@ -549,7 +549,7 @@ Each game has its own algorithm file in `frontend/pages/game-components/game-alg
 - `symbolMatch.js`: Symbol recognition
 - `ageNormalization.js`: Age-based score adjustment
 
-## 🔒 Security Features
+## Security Features
 
 ### Authentication & Authorization
 - **Google OAuth 2.0**: Secure third-party authentication
@@ -585,7 +585,7 @@ Each game has its own algorithm file in `frontend/pages/game-components/game-alg
 - **CORS Configuration**: Restricted cross-origin requests
 - **Helmet.js**: Security headers middleware
 
-## 🌍 Internationalization
+## Internationalization
 
 ### Supported Languages
 - **English (en)**: Default language
@@ -605,7 +605,7 @@ Located in `frontend/src/i18n/`:
 - `hi.js`: Hindi translations
 - `as.js`: Assamese translations
 
-## 💾 Database Models
+## Database Models
 
 ### User Model
 - `_id`: Unique identifier
@@ -674,7 +674,7 @@ Located in `frontend/src/i18n/`:
 - `gameResults`: Array of game results
 - `timestamp`: Assessment date
 
-## 🚀 Deployment
+## Deployment
 
 ### Environment Setup
 1. Set all required environment variables
@@ -712,7 +712,7 @@ npm run start:backend
 - **Error Tracking**: Error logs separated
 - **Metrics**: Application metrics endpoint
 
-## 📝 Environment Variables
+## Environment Variables
 
 ### Backend Required Variables
 - `NODE_ENV`: Environment (development/production)
@@ -733,7 +733,7 @@ npm run start:backend
 - `VITE_API_URL`: Backend API URL
 - `VITE_CLIENT_URL`: Frontend URL
 
-## 🧪 Testing
+## Testing
 
 ### Manual Testing
 - Test all game components
@@ -750,7 +750,7 @@ npm run start:backend
 - Check rate limiting
 - Validate error responses
 
-## 📚 Additional Resources
+## Additional Resources
 
 ### Game Documentation
 Detailed game algorithm documentation available in:
@@ -768,7 +768,7 @@ Detailed game algorithm documentation available in:
 - Risk assessment methodology
 - Score interpretation guidelines
 
-## 🎯 Key Features Summary
+## Key Features Summary
 
 1. **10 Cognitive Games**: Comprehensive assessment suite
 2. **Age-Based Scoring**: Normalized for age groups
@@ -781,7 +781,7 @@ Detailed game algorithm documentation available in:
 9. **Progress Tracking**: Historical performance
 10. **Admin Dashboard**: Application management
 
-## 🔄 Development Workflow
+## Development Workflow
 
 1. **Feature Development**: Create feature branch
 2. **Local Testing**: Test on local environment
@@ -789,7 +789,7 @@ Detailed game algorithm documentation available in:
 4. **Build Verification**: Ensure build succeeds
 5. **Deployment**: Deploy to production
 
-## 📞 Support
+## Support
 
 For issues, questions, or contributions, please refer to the project repository or contact the development team.
 
